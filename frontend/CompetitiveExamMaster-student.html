@@ -28,7 +28,7 @@ footer{text-align:center;padding:25px;color:#64748b;font-size:12px}
 .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:99999;padding:16px}
 .modal-box{background:var(--card);color:var(--fg);border-radius:14px;padding:22px;max-width:560px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)}
 
-/* ---- Testbook-style result page ---- */
+
 .result-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid var(--border)}
 .result-header h3{margin:0;font-size:19px}
 .result-header .rh-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -81,7 +81,7 @@ table.sec-table td.sec-name{font-weight:700}
 .theme-colors{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}
 .theme-colors .form-row{margin:0;min-width:120px}
 .form-row input:-webkit-autofill,.form-row input:-webkit-autofill:hover,.form-row input:-webkit-autofill:focus{-webkit-text-fill-color:#172033;box-shadow:0 0 0 1000px #fff inset;-webkit-box-shadow:0 0 0 1000px #fff inset;transition:background-color 9999s ease-in-out 0s}
-.primary-btn,.danger-btn,.success-btn,.warn-btn{border:0;padding:9px 12px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
+.auth-card{position:relative;overflow:hidden}.auth-card::before{content:"";position:absolute;inset:-40% -10% auto auto;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,#2563eb22,transparent 70%);pointer-events:none}.auth-card .form-row{animation:authFieldIn .45s ease both}.auth-card .form-row:nth-of-type(1){animation-delay:.03s}.auth-card .form-row:nth-of-type(2){animation-delay:.06s}.auth-card .form-row:nth-of-type(3){animation-delay:.09s}.auth-card .form-row:nth-of-type(4){animation-delay:.12s}.auth-card .form-row:nth-of-type(5){animation-delay:.15s}.auth-card button[onclick^="register"]{position:relative;overflow:hidden;transition:transform .2s ease,box-shadow .2s ease}.auth-card button[onclick^="register"]:hover{transform:translateY(-2px);box-shadow:0 10px 24px #2563eb33}.auth-card button[onclick^="register"]:active{transform:translateY(0)}.auth-card button.loading{pointer-events:none;opacity:.85}.auth-card button.loading::after{content:"";display:inline-block;width:14px;height:14px;margin-left:8px;vertical-align:-2px;border:2px solid #ffffff66;border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}@keyframes authFieldIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}.primary-btn,.danger-btn,.success-btn,.warn-btn{border:0;padding:9px 12px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
 .primary-btn{background:var(--primary);color:#fff}.success-btn{background:#17833b;color:#fff}.danger-btn{background:#b42318;color:#fff}.warn-btn{background:#9a6700;color:#fff}
 .status-pending{color:#9a6700;font-weight:700}.status-approved{color:#17833b;font-weight:700}.status-rejected{color:#b42318;font-weight:700}.status-blocked{color:#b42318;font-weight:700}
 .user-pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eee;margin:4px 0;font-size:.9rem}
@@ -102,7 +102,7 @@ table.sec-table td.sec-name{font-weight:700}
 .legend-item{display:inline-flex;align-items:center;gap:5px;font-size:12px;margin-right:10px;margin-bottom:4px}
 .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
 .dot-answered{background:#17833b}.dot-not-answered{background:#b42318}.dot-marked{background:#7c3aed}.dot-not-visited{background:#9ca3af}
-/* ---------- testbook-style exam interface ---------- */
+
 .tb-exam{background:var(--card);border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 3px 12px #0001}
 .tb-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#0f1b3d;color:#fff;padding:12px 16px;flex-wrap:wrap}
 .tb-topbar .tb-title{font-weight:700;font-size:14px}
@@ -188,7 +188,7 @@ button.icon-opt:hover{background:#e5e7eb}
 button.icon-opt:focus-visible{outline:2px solid #111827;outline-offset:1px}
 button.icon-opt.sel{background:#dbeafe;border-color:#2563eb}
 @media(max-width:600px){table{font-size:.86rem}.table-wrap{overflow-x:auto}}
-/* ---- Modern student / teacher client experience ---- */
+
 body{background:radial-gradient(circle at 10% 0%,#e0e7ff 0,transparent 30%),radial-gradient(circle at 90% 10%,#fee2e2 0,transparent 28%),#f5f7fb}
 header{background:rgba(15,23,42,.94);backdrop-filter:blur(16px);box-shadow:0 8px 30px rgba(15,23,42,.16);border-bottom:1px solid rgba(255,255,255,.08)}
 .brand{letter-spacing:-.3px}.brand-row{max-width:1400px;margin:auto}nav{max-width:1400px;margin:14px auto 0}
@@ -520,10 +520,10 @@ main{max-width:1400px;margin:auto;padding-top:28px}.hero{position:relative;overf
 </section>
 
 </main>
-<footer id="siteFooter">Competitive Exam Master • Firebase Auth + Realtime Database<br><a href="CompetitiveExamMaster-admin.html" style="color:inherit">🛡️ Admin Panel</a></footer>
+<footer id="siteFooter">Competitive Exam Master<br><a href="CompetitiveExamMaster-admin.html" style="color:inherit">🛡️ Admin Panel</a></footer>
 
 <script>
-/* ---------- Firebase + real backend integration ---------- */
+
 let cemAuth = null;
 function loadScript(src){return new Promise((resolve,reject)=>{if(document.querySelector('script[src="'+src+'"]'))return resolve();const s=document.createElement('script');s.src=src;s.async=false;s.onload=resolve;s.onerror=()=>reject(new Error('Could not load Firebase SDK.'));document.head.appendChild(s);});}
 const firebaseReady=(async()=>{const cfgRes=await fetch('/api/config');if(!cfgRes.ok)throw new Error('Backend is not running. Start the Exam server first.');const cfg=await cfgRes.json();await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js');if(!window.firebase)throw new Error('Firebase SDK failed to load.');if(!firebase.apps.length)firebase.initializeApp(cfg.firebase);cemAuth=firebase.auth();return cfg;})();
@@ -538,7 +538,7 @@ async function firebaseLogin(email,password){await firebaseReady;await cemAuth.s
 async function firebaseReauth(password){await firebaseReady;const u=cemAuth.currentUser;if(!u||!u.email)throw new Error('Please log in again.');await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,password));}
 async function refreshUser(){const {user}=await api('GET','/api/auth/me');currentUser=user;updateUI();return user;}
 
-/* ---------- navigation ---------- */
+
 let currentUser = null;
 let activeCategory = null;
 
@@ -563,7 +563,7 @@ function showTests(category){
 }
 function filterCards(v){v=v.toLowerCase();document.querySelectorAll('.searchable').forEach(c=>c.style.display=c.innerText.toLowerCase().includes(v)?'block':'none')}
 
-/* ---------- auth page tabs (Login <-> Register, Student <-> Teacher) ---------- */
+
 window.showAuthTab = function(tab){
   const isLogin = tab === 'login';
   document.getElementById('authPaneLogin').classList.toggle('hidden', !isLogin);
@@ -579,7 +579,7 @@ window.showRegisterType = function(type){
   document.getElementById('regTabTeacher').className = !isStudent ? 'primary-btn' : 'secondary';
 };
 
-/* ---------- institution branding ---------- */
+
 const THEME_PRESETS = { light:{bg:'#f3f5f9', fg:'#172033', primary:'#2563eb'}, dark:{bg:'#0f172a', fg:'#e2e8f0', primary:'#3b82f6'} };
 function applyTheme(mode, bg, fg, primary){
   const p = THEME_PRESETS[mode==='dark'?'dark':'light'];
@@ -612,16 +612,16 @@ async function loadBranding(){
       document.getElementById('brandName').textContent = '📚 ' + settings.institutionName;
       document.title = settings.institutionName;
       document.getElementById('heroTitle').textContent = settings.institutionName + ' — Prepare Smarter.';
-      document.getElementById('siteFooter').textContent = settings.institutionName + ' • Competitive Exam Master • Connected version';
+      document.getElementById('siteFooter').textContent = settings.institutionName + ' • Competitive Exam Master';
     }
     const logo = document.getElementById('brandLogo');
     if(settings.logoDataUrl){ logo.src = settings.logoDataUrl; logo.classList.remove('hidden'); }
     else logo.classList.add('hidden');
     applyTheme(settings.themeMode, settings.backgroundColor, settings.foregroundColor, settings.primaryColor);
-  }catch(e){ /* non-fatal */ }
+  }catch(e){  }
 }
 
-/* ---------- auth ---------- */
+
 async function refreshUser(){
   const { user } = await api('GET','/api/auth/me');
   currentUser = user;
@@ -630,32 +630,39 @@ async function refreshUser(){
 }
 
 window.registerStudent = async function(){
-  const password = document.getElementById('studentPassword').value;
-  const confirmPassword = document.getElementById('studentConfirmPassword').value;
-  const email = document.getElementById('studentEmail').value.trim();
-  if(password !== confirmPassword){ msg('studentMsg', 'Passwords do not match.'); return; }
-  if(!email){ msg('studentMsg', 'Please enter your email address.'); return; }
+  const btn=document.querySelector('#regPaneStudent button[onclick="registerStudent()"]');
+  const password=document.getElementById('studentPassword').value;
+  const confirmPassword=document.getElementById('studentConfirmPassword').value;
+  const email=document.getElementById('studentEmail').value.trim();
+  if(password!==confirmPassword){ msg('studentMsg','Passwords do not match.'); return; }
+  if(!email){ msg('studentMsg','Please enter your email address.'); return; }
+  btn?.classList.add('loading'); btn && (btn.textContent='Creating account…');
   try{
-    const body = { name: document.getElementById('studentName').value.trim(), mobile: document.getElementById('studentMobile').value.trim(), email, password };
-    const r = await registerFirebaseAccount('student', body);
-    msg('studentMsg', r.message, true);
-    document.getElementById('studentPassword').value='';
-    document.getElementById('studentConfirmPassword').value='';
-  }catch(e){ msg('studentMsg', authError(e)); }
+    const body={name:document.getElementById('studentName').value.trim(),mobile:document.getElementById('studentMobile').value.trim(),email,password};
+    const r=await registerFirebaseAccount('student',body);
+    msg('studentMsg',r.message,true);
+    ['studentName','studentMobile','studentEmail','studentPassword','studentConfirmPassword'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    await refreshUser();
+  }catch(e){ msg('studentMsg',authError(e)); }
+  finally{ if(btn){btn.classList.remove('loading');btn.textContent='Register as Student';} }
 };
 
 window.registerTeacher = async function(){
-  const password = document.getElementById('teacherPassword').value;
-  const confirmPassword = document.getElementById('teacherConfirmPassword').value;
-  const email = document.getElementById('teacherEmail').value.trim();
-  if(password !== confirmPassword){ msg('teacherMsg', 'Passwords do not match.'); return; }
-  if(!email){ msg('teacherMsg', 'Please enter your email address.'); return; }
+  const btn=document.querySelector('#regPaneTeacher button[onclick="registerTeacher()"]');
+  const password=document.getElementById('teacherPassword').value;
+  const confirmPassword=document.getElementById('teacherConfirmPassword').value;
+  const email=document.getElementById('teacherEmail').value.trim();
+  if(password!==confirmPassword){ msg('teacherMsg','Passwords do not match.'); return; }
+  if(!email){ msg('teacherMsg','Please enter your email address.'); return; }
+  btn?.classList.add('loading'); btn && (btn.textContent='Creating account…');
   try{
-    const body = { name: document.getElementById('teacherName').value.trim(), mobile: document.getElementById('teacherMobile').value.trim(), email, subject: document.getElementById('teacherSubject').value.trim(), password };
-    const r = await registerFirebaseAccount('teacher', body);
-    msg('teacherMsg', r.message, true);
-    ['teacherName','teacherMobile','teacherEmail','teacherSubject','teacherPassword','teacherConfirmPassword'].forEach(id=>document.getElementById(id).value='');
-  }catch(e){ msg('teacherMsg', authError(e)); }
+    const body={name:document.getElementById('teacherName').value.trim(),mobile:document.getElementById('teacherMobile').value.trim(),email,subject:document.getElementById('teacherSubject').value.trim(),password};
+    const r=await registerFirebaseAccount('teacher',body);
+    msg('teacherMsg',r.message,true);
+    ['teacherName','teacherMobile','teacherEmail','teacherSubject','teacherPassword','teacherConfirmPassword'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    await refreshUser();
+  }catch(e){ msg('teacherMsg',authError(e)); }
+  finally{ if(btn){btn.classList.remove('loading');btn.textContent='Register as Teacher';} }
 };
 
 window.loginUser = async function(){
@@ -715,12 +722,12 @@ function updateUI(){
   }
 }
 
-/* ---------- Firebase password reset ---------- */
+
 window.toggleForgot=function(){document.getElementById('forgotBox').classList.toggle('hidden');};
 window.requestPasswordReset=async function(){try{await firebaseReady;const email=document.getElementById('forgotEmail').value.trim();if(!email)throw new Error('Enter your email address.');await cemAuth.sendPasswordResetEmail(email,{url:location.origin+location.pathname});msg('forgotMsg','If the account exists, Firebase has sent a password-reset email. Check your inbox and spam folder.',true);}catch(e){msg('forgotMsg',authError(e));}};
 window.performPasswordReset=async function(){msg('resetMsg','Password reset is handled by the secure Firebase email link sent to your inbox.',true);};
 
-/* ---------- my account ---------- */
+
 async function loadAccount(){
   try{
     const { user } = await api('GET','/api/account/me');
@@ -746,7 +753,7 @@ window.saveAccount = async function(){
 window.changeEmail=async function(){try{const newEmail=document.getElementById('emailNew').value.trim(),currentPassword=document.getElementById('emailPwCurrent').value;if(!newEmail||!currentPassword)throw new Error('New email and current password are required.');await firebaseReauth(currentPassword);await cemAuth.currentUser.updateEmail(newEmail);await cemAuth.currentUser.getIdToken(true);const r=await api('PUT','/api/account/me',{name:currentUser.name,mobile:currentUser.mobile,subject:currentUser.subject});currentUser=r.user;updateUI();msg('emailMsg','Login email changed successfully.',true);document.getElementById('emailNew').value='';document.getElementById('emailPwCurrent').value='';}catch(e){msg('emailMsg',authError(e));}};
 window.changePassword=async function(){const newPassword=document.getElementById('pwNew').value,confirmPassword=document.getElementById('pwConfirm').value,currentPassword=document.getElementById('pwCurrent').value;if(newPassword!==confirmPassword){msg('pwMsg','Passwords do not match.');return;}try{await firebaseReauth(currentPassword);await cemAuth.currentUser.updatePassword(newPassword);msg('pwMsg','Password changed successfully.',true);['pwCurrent','pwNew','pwConfirm'].forEach(id=>document.getElementById(id).value='');}catch(e){msg('pwMsg',authError(e));}};
 
-/* ---------- admin: users ---------- */
+
 window.approveTeacher = async function(id, approved){
   try{ await api('POST', '/api/admin/teachers/'+encodeURIComponent(id)+'/approve', { approved }); renderAdmin(); }
   catch(e){ alert(e.message); }
@@ -796,7 +803,7 @@ async function renderAdmin(){
   }
 }
 
-/* ---------- admin: paid test access requests ---------- */
+
 async function loadPurchaseRequests(){
   const tbody = document.getElementById('purchaseTable');
   try{
@@ -820,7 +827,7 @@ window.decidePurchase = async function(id, approved){
   catch(e){ alert(e.message); }
 };
 
-/* ---------- admin: institution settings ---------- */
+
 async function loadSettingsIntoForm(){
   try{
     const { settings } = await api('GET','/api/settings');
@@ -870,7 +877,7 @@ window.saveSettings = async function(){
   }catch(e){ msg('settingsMsg', e.message); }
 };
 
-/* ---------- admin: backup & restore ---------- */
+
 window.downloadBackup = async function(){
   try{
     const dbObj = await api('GET','/api/admin/backup');
@@ -895,7 +902,7 @@ window.restoreBackup = async function(){
   }catch(e){ msg('backupMsg', 'Restore failed: ' + e.message); }
 };
 
-/* ---------- exam modules: shown on Home, in the module filter and in the teacher's publish form ---------- */
+
 let MODULES = [];
 
 async function refreshModuleViews(){
@@ -1025,7 +1032,7 @@ async function loadTeacherModules(){
   }
 }
 
-/* ---------- test series: browse + attempt ---------- */
+
 let activeTest = null;
 let activeAnswers = {};
 let activeMarked = {};
@@ -1054,7 +1061,7 @@ async function loadTests(){
 
     let premiumActive = false;
     if(currentUser && currentUser.role === 'student'){
-      try{ premiumActive = (await api('GET','/api/subscription/mine')).active; }catch(e){ /* non-fatal */ }
+      try{ premiumActive = (await api('GET','/api/subscription/mine')).active; }catch(e){  }
     }
 
     const attemptedSet = new Set(attemptedIds||[]);
@@ -1095,7 +1102,7 @@ window.viewSolution = async function(id){
   }catch(e){ alert(e.message); }
 };
 
-/* ---------- Premium: one payment unlocks every paid test series ---------- */
+
 const fmtDate = d => new Date(d).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
 let premiumData = null;
 async function loadPremium(){
@@ -1132,7 +1139,7 @@ async function loadPremium(){
   }catch(e){ status.innerHTML = `<p class="muted">${esc(e.message)}</p>`; }
 }
 async function gw(base,path,body){await firebaseReady;const token=await getIdToken();const headers={'Content-Type':'application/json'};if(token)headers.Authorization='Bearer '+token;const r=await fetch(base+path,{method:body?'POST':'GET',headers,body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Payment server error.');return j;}
-async function syncGateway(base){ try{ await gw(base,'/api/entitlements?studentId='+encodeURIComponent(currentUser.id)); }catch(_){ /* payment server may be offline */ } }
+async function syncGateway(base){ try{ await gw(base,'/api/entitlements?studentId='+encodeURIComponent(currentUser.id)); }catch(_){  } }
 function loadRazorpay(){
   return new Promise((ok,fail)=>{
     if(window.Razorpay) return ok();
@@ -1221,7 +1228,7 @@ window.submitPremium = async function(planId){
 
 let tbTimerInterval = null;
 
-/* ---------- exam undertaking (instructions + language choice) before the test starts ---------- */
+
 window.startTest = async function(id){
   try{
     pendingTest = await api('GET', '/api/tests/'+encodeURIComponent(id));
@@ -1281,11 +1288,11 @@ window.beginExam = async function(){
   enterExamFullscreen();
 };
 
-/* ---------- full-screen handling while the exam is in progress ---------- */
+
 function enterExamFullscreen(){
   const el = document.getElementById('quiz');
   const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-  if(req){ try{ req.call(el).catch(()=>{}); }catch(e){ /* some browsers require a direct user gesture; ignore if blocked */ } }
+  if(req){ try{ req.call(el).catch(()=>{}); }catch(e){  } }
 }
 function exitExamFullscreen(){
   const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
@@ -1398,7 +1405,7 @@ window.markForReviewAndNext = function(){
   loadQ();
 };
 
-/* ---------- question palette (right-side "answered / not answered / marked" view) ---------- */
+
 function questionStatus(i){
   const answered = activeAnswers[i] !== undefined;
   const marked = !!activeMarked[i];
@@ -1431,7 +1438,7 @@ window.jumpToQuestionIndex = function(i){
   activeQi = i;
   loadQ();
 };
-/* ---------- generic modal ---------- */
+
 function showModal(html){
   const root = document.getElementById('modalRoot');
   // Always re-attach the modal root to whichever element is actually
@@ -1452,7 +1459,7 @@ function fmtTime(totalSeconds){
   return m+'m '+String(r).padStart(2,'0')+'s';
 }
 
-/* ---------- pre-submit summary: answered / not answered / marked / not visited, by section ---------- */
+
 window.confirmSubmitTest = function(){
   if(!activeTest) return;
   const bySection = {};
@@ -1531,7 +1538,7 @@ window.showResultScreen = function(r){
     `;
 };
 
-/* ---------- per-question solution viewer ---------- */
+
 window.openSolutionViewer = function(idx){
   if(!lastResult) return;
   svIndex = idx || 0;
@@ -1602,7 +1609,7 @@ function renderSolutionViewer(){
   `;
 }
 
-/* ---------- teacher: build + publish a test ---------- */
+
 function currentSubjectsList(){
   return [...document.querySelectorAll('#ntQuestions .nt-sec')].map(x=>x.dataset.name);
 }
@@ -1772,7 +1779,7 @@ function addQuestionRow(prefill, sectionName){
 }
 syncSections();
 
-/* ---------- teacher: import questions from an Excel/CSV file ---------- */
+
 window.importExcel = function(){
   const input = document.getElementById('excelFile');
   const file = input.files && input.files[0];
@@ -1872,7 +1879,7 @@ async function loadMyTests(){
   }catch(e){ box.innerHTML = `<p class="muted">${esc(e.message)}</p>`; }
 }
 
-/* ---------- boot ---------- */
+
 loadBranding();
 refreshModuleViews();
 refreshUser().then(()=>{ if(!location.search.includes('resetToken')) showSection('home'); });
