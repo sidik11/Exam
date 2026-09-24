@@ -1125,7 +1125,9 @@ function showModal(html){
   const fsEl = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
   const target = fsEl || document.body;
   if(root.parentElement !== target) target.appendChild(root);
-  root.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this) closeModal()"><div class="modal-box">${html}</div></div>`;
+  root.innerHTML = '<div class="modal-overlay" onclick="if(event.target===this) closeModal()"><div class="modal-box"></div></div>';
+  const box = root.querySelector('.modal-box');
+  if(box) box.innerHTML = String(html || '');
 }
 function closeModal(){ document.getElementById('modalRoot').innerHTML = ''; }
 window.closeModal = closeModal;
