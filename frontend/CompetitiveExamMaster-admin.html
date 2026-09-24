@@ -237,7 +237,7 @@ nav button{background:#1f2937}nav a.navlink{background:#374151;color:#fff;text-d
     <p class="admin-login-sub">Secure administrator verification</p>
     <div class="admin-email-lock"><span>🔐</span><div><small>Authorized Admin Gmail</small><strong>mjdeveloperodisha@gmail.com</strong></div></div>
     <div id="adminOtpEmailPane">
-      <div class="form-row"><label>Admin Gmail</label><input id="loginEmail" type="email" value="mjdeveloperodisha@gmail.com" autocomplete="email" readonly></div>
+      <div class="form-row"><label>Admin Gmail</label><input id="loginEmail" type="email" value="mjdeveloperodisha@gmail.com" autocomplete="email"></div>
       <button class="admin-login-btn" style="width:100%" onclick="requestAdminOtp()">Send OTP to Gmail</button>
       <p class="admin-login-hint">A 6-digit one-time password will be sent through the configured Gmail API.</p>
       <p id="loginMsg"></p>
@@ -338,7 +338,6 @@ nav button{background:#1f2937}nav a.navlink{background:#374151;color:#fff;text-d
 
 <script>
 /* ---------- Firebase + real backend integration ---------- */
-activeCategory = null;
 let cemAuth = null;
 function loadScript(src){return new Promise((resolve,reject)=>{if(document.querySelector('script[src="'+src+'"]'))return resolve();const s=document.createElement('script');s.src=src;s.async=false;s.onload=resolve;s.onerror=()=>reject(new Error('Could not load Firebase SDK.'));document.head.appendChild(s);});}
 const firebaseReady=(async()=>{const cfgRes=await fetch('/api/config');if(!cfgRes.ok)throw new Error('Backend is not running. Start the Exam server first.');const cfg=await cfgRes.json();await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js');if(!window.firebase)throw new Error('Firebase SDK failed to load.');if(!firebase.apps.length)firebase.initializeApp(cfg.firebase);cemAuth=firebase.auth();return cfg;})();
@@ -467,11 +466,11 @@ window.registerTeacher = async function(){
 };
 
 window.requestAdminOtp = async function(){
-  try{ const r=await api('POST','/api/admin/request-otp',{email:'mjdeveloperodisha@gmail.com'}); msg('loginMsg',r.message,true); document.getElementById('adminOtpEmailPane').classList.add('hidden'); document.getElementById('adminOtpPane').classList.remove('hidden'); document.getElementById('adminOtp').focus(); }
+  try{ const email=document.getElementById('loginEmail').value.trim(); if(email!=='mjdeveloperodisha@gmail.com'){msg('loginMsg','Enter the authorized Admin Gmail exactly: mjdeveloperodisha@gmail.com');return;} const r=await api('POST','/api/admin/request-otp',{email}); msg('loginMsg',r.message,true); document.getElementById('adminOtpEmailPane').classList.add('hidden'); document.getElementById('adminOtpPane').classList.remove('hidden'); document.getElementById('adminOtp').focus(); }
   catch(e){ msg('loginMsg',e.message); }
 };
 window.verifyAdminOtp = async function(){
-  try{ const otp=document.getElementById('adminOtp').value.trim(); if(!/^\d{6}$/.test(otp)){msg('otpMsg','Enter the 6-digit OTP sent to the Admin Gmail.');return;} const r=await api('POST','/api/admin/verify-otp',{email:'mjdeveloperodisha@gmail.com',otp}); localStorage.setItem('cem_admin_session',r.sessionToken); currentUser=r.user; msg('otpMsg','Admin login successful.',true); updateUI(); showSection('admin'); }
+  try{ const otp=document.getElementById('adminOtp').value.trim(); if(!/^\d{6}$/.test(otp)){msg('otpMsg','Enter the 6-digit OTP sent to the Admin Gmail.');return;} const email=document.getElementById('loginEmail').value.trim(); const r=await api('POST','/api/admin/verify-otp',{email,otp}); localStorage.setItem('cem_admin_session',r.sessionToken); currentUser=r.user; msg('otpMsg','Admin login successful.',true); updateUI(); showSection('admin'); }
   catch(e){ msg('otpMsg',e.message); }
 };
 window.resetAdminOtp = function(){ document.getElementById('adminOtpPane').classList.add('hidden'); document.getElementById('adminOtpEmailPane').classList.remove('hidden'); document.getElementById('adminOtp').value=''; document.getElementById('otpMsg').textContent=''; };
