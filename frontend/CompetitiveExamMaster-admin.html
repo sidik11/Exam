@@ -28,7 +28,7 @@ footer{text-align:center;padding:25px;color:#64748b;font-size:12px}
 .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:99999;padding:16px}
 .modal-box{background:var(--card);color:var(--fg);border-radius:14px;padding:22px;max-width:560px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)}
 
-/* ---- Testbook-style result page ---- */
+
 .result-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid var(--border)}
 .result-header h3{margin:0;font-size:19px}
 .result-header .rh-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
@@ -102,7 +102,7 @@ table.sec-table td.sec-name{font-weight:700}
 .legend-item{display:inline-flex;align-items:center;gap:5px;font-size:12px;margin-right:10px;margin-bottom:4px}
 .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
 .dot-answered{background:#17833b}.dot-not-answered{background:#b42318}.dot-marked{background:#7c3aed}.dot-not-visited{background:#9ca3af}
-/* ---------- testbook-style exam interface ---------- */
+
 .tb-exam{background:var(--card);border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 3px 12px #0001}
 .tb-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#0f1b3d;color:#fff;padding:12px 16px;flex-wrap:wrap}
 .tb-topbar .tb-title{font-weight:700;font-size:14px}
@@ -188,7 +188,7 @@ button.icon-opt:hover{background:#e5e7eb}
 button.icon-opt:focus-visible{outline:2px solid #111827;outline-offset:1px}
 button.icon-opt.sel{background:#dbeafe;border-color:#2563eb}
 @media(max-width:600px){table{font-size:.86rem}.table-wrap{overflow-x:auto}}
-/* ---- Secure Admin OTP login ---- */
+
 .admin-login-shell{max-width:460px;margin:7vh auto 30px;background:linear-gradient(145deg,#ffffff,#f8fafc);border:1px solid #e5e7eb;border-radius:24px;padding:34px;box-shadow:0 24px 70px rgba(15,23,42,.16);text-align:center}
 .admin-login-brand{width:72px;height:72px;margin:0 auto 16px;border-radius:22px;display:grid;place-items:center;background:linear-gradient(135deg,#dc2626,#7f1d1d);color:#fff;font-size:34px;box-shadow:0 12px 28px rgba(220,38,38,.25)}
 .admin-login-shell h2{margin:0;font-size:28px;color:#111827}.admin-login-sub{margin:7px 0 22px;color:#64748b}
@@ -202,7 +202,7 @@ button.icon-opt.sel{background:#dbeafe;border-color:#2563eb}
 #adminOtp{text-align:center;letter-spacing:9px;font-size:25px;font-weight:800}
 @media(max-width:520px){.admin-login-shell{margin:20px auto;padding:24px 18px;border-radius:20px}}
 
-/* ---- Admin Panel design ---- */
+
 :root{--primary:#dc2626}
 body{background:#eef0f4}
 header{background:linear-gradient(90deg,#0b1220,#3b0a0a);border-bottom:3px solid #dc2626}
@@ -298,58 +298,20 @@ nav button{background:#1f2937}nav a.navlink{background:#374151;color:#fff;text-d
     <h3>🏫 Institution Settings</h3>
     <div class="row" style="align-items:center">
       <img id="settingsLogoPreview" class="logo-preview hidden" alt="logo preview">
-      <div class="form-row" style="flex:1"><label>Institution Logo</label><input type="file" id="settingsLogoFile" accept="image/*" onchange="previewLogo()"></div>
-    </div>
-    <div class="form-row"><label>Institution Name</label><input id="settingsName"></div>
-    <div class="form-row">
-      <label>Theme</label>
-      <label class="theme-switch"><input type="checkbox" id="settingsDarkMode" onchange="onThemeSwitch()"><span class="switch-track"><span class="switch-thumb"></span></span><span id="settingsThemeModeLabel">Light mode</span></label>
-      <div class="theme-colors">
-        <div class="form-row"><label>Background</label><input type="color" id="settingsBgColor" oninput="previewTheme()"></div>
-        <div class="form-row"><label>Foreground (text)</label><input type="color" id="settingsFgColor" oninput="previewTheme()"></div>
-        <div class="form-row"><label>Theme color (buttons, highlights)</label><input type="color" id="settingsPrimaryColor" oninput="previewTheme()"></div>
-      </div>
-      <p class="muted" style="margin:6px 0 0">Applies for anyone using this browser. <a href="#" onclick="resetThemeDefaults();return false">Reset to default</a></p>
-    </div>
-    <div class="form-row"><label>Address</label><input id="settingsAddress"></div>
-    <div class="row">
-      <div class="form-row" style="flex:1"><label>Contact Email</label><input id="settingsEmail" type="email"></div>
-      <div class="form-row" style="flex:1"><label>Contact Phone</label><input id="settingsPhone"></div>
-    </div>
-    <button class="primary-btn" onclick="saveSettings()">Save Institution Settings</button>
-    <p id="settingsMsg"></p>
-  </div>
-
-  <div class="panel-card" style="margin-top:18px">
-    <h3>💾 Backup &amp; Restore</h3>
-    <p class="muted">Download everything in this browser's storage (users, exam modules, test series, settings) as a JSON file, or restore from one. Restoring overwrites current data — a safety copy of what's currently in place is kept automatically in this browser.</p>
-    <div class="row">
-      <button class="secondary" onclick="downloadBackup()">⬇️ Download Backup</button>
-      <input type="file" id="restoreFile" accept="application/json">
-      <button class="danger-btn" onclick="restoreBackup()">⬆️ Restore From File</button>
-    </div>
-    <p id="backupMsg"></p>
-  </div>
-</section>
-
-</main>
-
-<footer id="siteFooter">Admin Panel • Competitive Exam Master</footer>
-
-<script>
-/* ---------- Firebase + real backend integration ---------- */
+      <div class="form-row" style="flex:1"><label>Institution Logo</label><input type="file" id="settingsLogoFile" accept="image
 let cemAuth = null;
 function loadScript(src){return new Promise((resolve,reject)=>{if(document.querySelector('script[src="'+src+'"]'))return resolve();const s=document.createElement('script');s.src=src;s.async=false;s.onload=resolve;s.onerror=()=>reject(new Error('Could not load Firebase SDK.'));document.head.appendChild(s);});}
 const firebaseReady=(async()=>{const cfgRes=await fetch('/api/config');if(!cfgRes.ok)throw new Error('Backend is not running. Start the Exam server first.');const cfg=await cfgRes.json();await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js');if(!window.firebase)throw new Error('Firebase SDK failed to load.');if(!firebase.apps.length)firebase.initializeApp(cfg.firebase);cemAuth=firebase.auth();return cfg;})();
 function ensureAdmin(){}
 async function getIdToken(){await firebaseReady;const session=localStorage.getItem('cem_admin_session');if(session)return session;const u=cemAuth&&cemAuth.currentUser;return u?u.getIdToken():null;}
 async function api(method,url,body){await firebaseReady;const headers={'Content-Type':'application/json'};const token=await getIdToken();if(token)headers.Authorization='Bearer '+token;const r=await fetch(url,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||data.message||'Request failed.');return data;}
+function msg(id,text,ok=false){const el=document.getElementById(id);if(!el)return;el.textContent=String(text||'');el.className=ok?'msg-ok':'msg-err';}
 function authError(e){const map={'auth/email-already-in-use':'An account with this email already exists.','auth/invalid-email':'Please enter a valid email address.','auth/weak-password':'Password is too weak.','auth/invalid-credential':'Invalid email or password.','auth/user-not-found':'Invalid email or password.','auth/wrong-password':'Invalid email or password.'};return map[e.code]||e.message||'Authentication failed.';}
 async function registerFirebaseAccount(kind,data){await firebaseReady;const cred=await cemAuth.createUserWithEmailAndPassword(data.email,data.password);try{await cred.user.updateProfile({displayName:data.name});const r=await api('POST','/api/auth/register/'+kind,data);try{await cred.user.sendEmailVerification();}catch(_){}await cemAuth.signOut();return r;}catch(e){try{await cred.user.delete();}catch(_){}throw e;}}
 async function firebaseReauth(password){await firebaseReady;const u=cemAuth.currentUser;if(!u||!u.email)throw new Error('Please log in again.');await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,password));}
 async function refreshUser(){const {user}=await api('GET','/api/auth/me');currentUser=user;updateUI();return user;}
 
-/* ---------- navigation ---------- */
+
 let currentUser = null;
 let activeCategory = null;
 
@@ -373,7 +335,7 @@ function showTests(category){
 }
 function filterCards(v){v=v.toLowerCase();document.querySelectorAll('.searchable').forEach(c=>c.style.display=c.innerText.toLowerCase().includes(v)?'block':'none')}
 
-/* ---------- auth page tabs (Login <-> Register, Student <-> Teacher) ---------- */
+
 window.showAuthTab = function(tab){
   const isLogin = tab === 'login';
   document.getElementById('authPaneLogin').classList.toggle('hidden', !isLogin);
@@ -389,7 +351,7 @@ window.showRegisterType = function(type){
   document.getElementById('regTabTeacher').className = !isStudent ? 'primary-btn' : 'secondary';
 };
 
-/* ---------- institution branding ---------- */
+
 const THEME_PRESETS = { light:{bg:'#f3f5f9', fg:'#172033', primary:'#2563eb'}, dark:{bg:'#0f172a', fg:'#e2e8f0', primary:'#3b82f6'} };
 function applyTheme(mode, bg, fg, primary){
   const p = THEME_PRESETS[mode==='dark'?'dark':'light'];
@@ -428,10 +390,10 @@ async function loadBranding(){
     if(settings.logoDataUrl){ logo.src = settings.logoDataUrl; logo.classList.remove('hidden'); }
     else logo.classList.add('hidden');
     applyTheme(settings.themeMode, settings.backgroundColor, settings.foregroundColor, settings.primaryColor);
-  }catch(e){ /* non-fatal */ }
+  }catch(e){  }
 }
 
-/* ---------- auth ---------- */
+
 async function refreshUser(){
   const { user } = await api('GET','/api/auth/me');
   currentUser = user;
@@ -499,12 +461,12 @@ function updateUI(){
   }
 }
 
-/* ---------- Firebase password reset ---------- */
+
 window.toggleForgot=function(){document.getElementById('forgotBox').classList.toggle('hidden');};
 window.requestPasswordReset=async function(){try{await firebaseReady;const email=document.getElementById('forgotEmail').value.trim();if(!email)throw new Error('Enter your email address.');await cemAuth.sendPasswordResetEmail(email,{url:location.origin+location.pathname});msg('forgotMsg','If the account exists, Firebase has sent a password-reset email. Check your inbox and spam folder.',true);}catch(e){msg('forgotMsg',authError(e));}};
 window.performPasswordReset=async function(){msg('resetMsg','Password reset is handled by the secure Firebase email link sent to your inbox.',true);};
 
-/* ---------- my account ---------- */
+
 async function loadAccount(){
   try{
     const { user } = await api('GET','/api/account/me');
@@ -530,7 +492,7 @@ window.saveAccount = async function(){
 window.changeEmail=async function(){try{const newEmail=document.getElementById('emailNew').value.trim(),currentPassword=document.getElementById('emailPwCurrent').value;if(!newEmail||!currentPassword)throw new Error('New email and current password are required.');await firebaseReauth(currentPassword);await cemAuth.currentUser.updateEmail(newEmail);await cemAuth.currentUser.getIdToken(true);const r=await api('PUT','/api/account/me',{name:currentUser.name,mobile:currentUser.mobile,subject:currentUser.subject});currentUser=r.user;updateUI();msg('emailMsg','Login email changed successfully.',true);document.getElementById('emailNew').value='';document.getElementById('emailPwCurrent').value='';}catch(e){msg('emailMsg',authError(e));}};
 window.changePassword=async function(){const newPassword=document.getElementById('pwNew').value,confirmPassword=document.getElementById('pwConfirm').value,currentPassword=document.getElementById('pwCurrent').value;if(newPassword!==confirmPassword){msg('pwMsg','Passwords do not match.');return;}try{await firebaseReauth(currentPassword);await cemAuth.currentUser.updatePassword(newPassword);msg('pwMsg','Password changed successfully.',true);['pwCurrent','pwNew','pwConfirm'].forEach(id=>document.getElementById(id).value='');}catch(e){msg('pwMsg',authError(e));}};
 
-/* ---------- admin: users ---------- */
+
 window.approveTeacher = async function(id, approved){
   try{ await api('POST', '/api/admin/teachers/'+encodeURIComponent(id)+'/approve', { approved }); renderAdmin(); }
   catch(e){ alert(e.message); }
@@ -580,7 +542,7 @@ async function renderAdmin(){
   }
 }
 
-/* ---------- admin: paid test access requests ---------- */
+
 async function loadPurchaseRequests(){
   const tbody = document.getElementById('purchaseTable');
   try{
@@ -604,7 +566,7 @@ window.decidePurchase = async function(id, approved){
   catch(e){ alert(e.message); }
 };
 
-/* ---------- admin: institution settings ---------- */
+
 async function loadSettingsIntoForm(){
   try{
     const { settings } = await api('GET','/api/settings');
@@ -654,7 +616,7 @@ window.saveSettings = async function(){
   }catch(e){ msg('settingsMsg', e.message); }
 };
 
-/* ---------- admin: backup & restore ---------- */
+
 window.downloadBackup = async function(){
   try{
     const dbObj = await api('GET','/api/admin/backup');
@@ -679,7 +641,7 @@ window.restoreBackup = async function(){
   }catch(e){ msg('backupMsg', 'Restore failed: ' + e.message); }
 };
 
-/* ---------- exam modules: shown on Home, in the module filter and in the teacher's publish form ---------- */
+
 let MODULES = [];
 
 async function refreshModuleViews(){
@@ -794,7 +756,7 @@ window.deleteModule = async function(btn, p){
     if(p==='tch') loadMyTests();
   }catch(e){ msg(p+'ModMsg', e.message); }
 };
-// Teacher dashboard: full module manager only if the Admin has granted access
+
 async function loadTeacherModules(){
   const box = document.getElementById('teacherModules');
   if(!box) return;
@@ -809,7 +771,7 @@ async function loadTeacherModules(){
   }
 }
 
-/* ---------- test series: browse + attempt ---------- */
+
 let activeTest = null;
 let activeAnswers = {};
 let activeMarked = {};
@@ -841,7 +803,7 @@ async function loadTests(){
       try{
         const { purchases } = await api('GET','/api/purchases/mine');
         purchases.forEach(p => purchaseMap[p.testId] = p.status);
-      }catch(e){ /* non-fatal */ }
+      }catch(e){  }
     }
 
     const attemptedSet = new Set(attemptedIds||[]);
@@ -926,7 +888,7 @@ window.requestAccess = async function(id){
 
 let tbTimerInterval = null;
 
-/* ---------- exam undertaking (instructions + language choice) before the test starts ---------- */
+
 window.startTest = async function(id){
   try{
     pendingTest = await api('GET', '/api/tests/'+encodeURIComponent(id));
@@ -986,11 +948,11 @@ window.beginExam = async function(){
   enterExamFullscreen();
 };
 
-/* ---------- full-screen handling while the exam is in progress ---------- */
+
 function enterExamFullscreen(){
   const el = document.getElementById('quiz');
   const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
-  if(req){ try{ req.call(el).catch(()=>{}); }catch(e){ /* some browsers require a direct user gesture; ignore if blocked */ } }
+  if(req){ try{ req.call(el).catch(()=>{}); }catch(e){  } }
 }
 function exitExamFullscreen(){
   const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
@@ -1075,7 +1037,7 @@ window.selectAnswer = function(letter){
 window.nextQuestion = function(){
   if(navClickBlocked()) return; // ignore the 2nd click of a double-click
   trackTimeSpent();
-  // Save & Next: keep the answer and clear any "marked for review" flag on this question
+
   delete activeMarked[activeQi];
   activeQi = (activeQi + 1) % activeTest.questions.length;
   loadQ();
@@ -1103,7 +1065,7 @@ window.markForReviewAndNext = function(){
   loadQ();
 };
 
-/* ---------- question palette (right-side "answered / not answered / marked" view) ---------- */
+
 function questionStatus(i){
   const answered = activeAnswers[i] !== undefined;
   const marked = !!activeMarked[i];
@@ -1136,13 +1098,13 @@ window.jumpToQuestionIndex = function(i){
   activeQi = i;
   loadQ();
 };
-/* ---------- generic modal ---------- */
+
 function showModal(html){
   const root = document.getElementById('modalRoot');
-  // Always re-attach the modal root to whichever element is actually
-  // fullscreen right now (or <body> if nothing is), so the popup is
-  // guaranteed to render inside the browser's fullscreen "top layer"
-  // instead of being hidden behind it.
+
+
+
+
   const fsEl = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
   const target = fsEl || document.body;
   if(root.parentElement !== target) target.appendChild(root);
@@ -1157,7 +1119,7 @@ function fmtTime(totalSeconds){
   return m+'m '+String(r).padStart(2,'0')+'s';
 }
 
-/* ---------- pre-submit summary: answered / not answered / marked / not visited, by section ---------- */
+
 window.confirmSubmitTest = function(){
   if(!activeTest) return;
   const bySection = {};
@@ -1233,7 +1195,7 @@ window.submitTest = async function(){
   }catch(e){ alert(e.message); }
 };
 
-/* ---------- per-question solution viewer ---------- */
+
 window.openSolutionViewer = function(idx){
   if(!lastResult) return;
   svIndex = idx || 0;
@@ -1304,7 +1266,7 @@ function renderSolutionViewer(){
   `;
 }
 
-/* ---------- teacher: build + publish a test ---------- */
+
 function currentSubjectsList(){
   return [...document.querySelectorAll('#ntQuestions .nt-sec')].map(x=>x.dataset.name);
 }
@@ -1475,7 +1437,7 @@ function addQuestionRow(prefill, sectionName){
 }
 syncSections();
 
-/* ---------- teacher: import questions from an Excel/CSV file ---------- */
+
 window.importExcel = function(){
   const input = document.getElementById('excelFile');
   const file = input.files && input.files[0];
@@ -1575,7 +1537,7 @@ async function loadMyTests(){
   }catch(e){ box.innerHTML = `<p class="muted">${esc(e.message)}</p>`; }
 }
 
-/* ---------- boot ---------- */
+
 loadBranding();
 refreshModuleViews();
 refreshUser().then(()=>{ showSection(currentUser && currentUser.role==='admin' ? 'admin' : 'auth'); });
