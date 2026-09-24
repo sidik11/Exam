@@ -1,2 +1,427 @@
 const http = require('http');
-// placeholder
+const fs = require('fs');
+const path = require('path');
+const crypto = require('crypto');
+const { google } = require('googleapis');
+const admin = require('firebase-admin');
+
+function loadEnv(file = path.join(__dirname, '.env')) {
+  try {
+    for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+      const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+      if (!m) continue;
+      let v = m[2].trim();
+      if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
+      process.env[m[1]] ??= v.replace(/\\n/g, '\n');
+    }
+  } catch (_) {}
+}
+loadEnv();
+
+const CFG = {
+  port: Number(process.env.PORT || 3000),
+  dbUrl: process.env.FIREBASE_DATABASE_URL || '',
+  projectId: process.env.FIREBASE_PROJECT_ID || '',
+  clientEmail: process.env.FIREBASE_CLIENT_EMAIL || '',
+  privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+  web: {
+    apiKey: process.env.FIREBASE_API_KEY || '',
+    authDomain: process.env.FIREBASE_AUTH_DOMAIN || '',
+    databaseURL: process.env.FIREBASE_DATABASE_URL || '',
+    projectId: process.env.FIREBASE_PROJECT_ID || '',
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || '',
+    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '',
+    appId: process.env.FIREBASE_APP_ID || ''
+  },
+  gmail: {
+    clientId: process.env.GMAIL_CLIENT_ID || '',
+    clientSecret: process.env.GMAIL_CLIENT_SECRET || '',
+    refreshToken: process.env.GMAIL_REFRESH_TOKEN || '',
+    redirectUri: process.env.GMAIL_REDIRECT_URI || '',
+    sender: process.env.GMAIL_SENDER_EMAIL || ''
+  },
+  admin: {
+    email: (process.env.ADMIN_EMAIL || '').trim().toLowerCase(),
+    password: process.env.ADMIN_PASSWORD || '',
+    name: process.env.ADMIN_NAME || 'Administrator'
+  }
+};
+
+if (!CFG.dbUrl || !CFG.projectId || !CFG.clientEmail || !CFG.privateKey) {
+  console.error('Missing Firebase Admin configuration. Set FIREBASE_DATABASE_URL, FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY in .env');
+  process.exit(1);
+}
+
+admin.initializeApp({
+  credential: admin.credential.cert({
+    projectId: CFG.projectId,
+    clientEmail: CFG.clientEmail,
+    privateKey: CFG.privateKey
+  }),
+  databaseURL: CFG.dbUrl
+});
+
+const db = admin.database();
+const auth = admin.auth();
+
+const DEFAULT_MODULES = [
+  { name:'SSC', icon:'🏛️', description:'CGL • CHSL • MTS • GD' },
+  { name:'Banking', icon:'🏦', description:'IBPS • SBI • RBI' },
+  { name:'Railway', icon:'🚆', description:'RRB NTPC • Group D' },
+  { name:'CTET / OTET', icon:'🎓', description:'TET preparation' },
+  { name:'Odisha Exams', icon:'🌐', description:'OSSC • OSSSC • OPSC • Police • Other exams' },
+  { name:'Defence', icon:'🪖', description:'General preparation' }
+];
+const DEFAULT_PLANS = [
+  { id:'plan-1m', name:'Monthly', days:30, price:99 },
+  { id:'plan-3m', name:'Quarterly', days:90, price:249 },
+  { id:'plan-12m', name:'Yearly', days:365, price:799 }
+];
+const DEFAULT_SETTINGS = {
+  institutionName:'Competitive Exam Master', logoDataUrl:'', address:'', contactEmail:'', contactPhone:'',
+  themeMode:'light', backgroundColor:'#f3f5f9', foregroundColor:'#172033', primaryColor:'#2563eb'
+};
+const DEFAULT_PAYMENT = { upiId:'', payeeName:'', note:'', gatewayUrl: process.env.PAYMENT_GATEWAY_URL || '' };
+
+const nowIso = () => new Date().toISOString();
+const uid = (prefix='') => prefix + Date.now().toString(36) + '-' + crypto.randomBytes(5).toString('hex');
+const cleanEmail = v => String(v || '').trim().toLowerCase();
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MOBILE_RE = /^[0-9+\-\s]{7,15}$/;
+
+async function get(pathName) {
+  const snap = await db.ref(pathName).once('value');
+  return snap.val();
+}
+async function set(pathName, value) { await db.ref(pathName).set(value); }
+async function update(pathName, value) { await db.ref(pathName).update(value); }
+async function remove(pathName) { await db.ref(pathName).remove(); }
+
+async function ensureSeeds() {
+  if (!(await get('settings'))) await set('settings', DEFAULT_SETTINGS);
+  if (!(await get('payment'))) await set('payment', DEFAULT_PAYMENT);
+  const modules = await get('modules');
+  if (!modules) {
+    const obj = {};
+    DEFAULT_MODULES.forEach((m, i) => { obj['m-default-'+(i+1)] = { ...m, id:'m-default-'+(i+1), createdBy:'system', createdAt:nowIso() }; });
+    await set('modules', obj);
+  }
+  if (!(await get('plans'))) {
+    const obj = {}; DEFAULT_PLANS.forEach(p => { obj[p.id] = p; });
+    await set('plans', obj);
+  }
+  if (!(await get('tests'))) await set('tests', {});
+  if (!(await get('submissions'))) await set('submissions', {});
+  if (!(await get('subscriptions'))) await set('subscriptions', {});
+  if (!(await get('purchases'))) await set('purchases', {});
+  if (!(await get('orders'))) await set('orders', {});
+}
+
+async function bootstrapAdmin() {
+  if (!CFG.admin.email || !CFG.admin.password) return;
+  let u;
+  try { u = await auth.getUserByEmail(CFG.admin.email); }
+  catch (e) {
+    if (e.code !== 'auth/user-not-found') throw e;
+    u = await auth.createUser({ email:CFG.admin.email, password:CFG.admin.password, displayName:CFG.admin.name, emailVerified:true });
+  }
+  await update('users/'+u.uid, {
+    uid:u.uid, name:CFG.admin.name, email:CFG.admin.email, role:'admin', status:'approved', blocked:false,
+    createdAt:(await get('users/'+u.uid+'/createdAt')) || nowIso()
+  });
+  await auth.setCustomUserClaims(u.uid, { role:'admin' });
+  console.log('Admin account ready:', CFG.admin.email);
+}
+
+async function ensureProfile(uidValue, decoded = {}) {
+  const p = await get('users/'+uidValue);
+  if (p) return p;
+  const profile = {
+    uid:uidValue, name:decoded.name || decoded.email?.split('@')[0] || 'User',
+    email:cleanEmail(decoded.email), role:'student', status:'approved', blocked:false, createdAt:nowIso()
+  };
+  await set('users/'+uidValue, profile);
+  return profile;
+}
+function publicUser(u) {
+  if (!u) return null;
+  const copy = { ...u };
+  delete copy.password; delete copy.passwordHash; delete copy.resetToken; delete copy.resetTokenExpiry;
+  return copy;
+}
+async function currentUser(req, roles) {
+  const header = req.headers.authorization || '';
+  if (!header.startsWith('Bearer ')) throw Object.assign(new Error('Please log in.'), { status:401 });
+  let decoded;
+  try { decoded = await auth.verifyIdToken(header.slice(7)); }
+  catch (_) { throw Object.assign(new Error('Your login session has expired. Please log in again.'), { status:401 }); }
+  const user = await ensureProfile(decoded.uid, decoded);
+  if (user.blocked) throw Object.assign(new Error('Your account has been blocked. Contact the administrator.'), { status:403 });
+  if (roles && !roles.includes(user.role)) throw Object.assign(new Error('Not authorized.'), { status:403 });
+  if (user.role === 'teacher' && user.status !== 'approved' && (!roles || roles.includes('teacher'))) {
+    throw Object.assign(new Error('Teacher account is pending Admin approval.'), { status:403 });
+  }
+  return { uid:decoded.uid, decoded, user };
+}
+function requireRole(req, role) { return currentUser(req, [role]); }
+
+async function sendEmail(to, subject, html, text='') {
+  if (!CFG.gmail.clientId || !CFG.gmail.clientSecret || !CFG.gmail.refreshToken || !CFG.gmail.sender || !to) {
+    console.warn('Gmail not configured; email skipped:', subject, to);
+    return false;
+  }
+  try {
+    const oauth2 = new google.auth.OAuth2(CFG.gmail.clientId, CFG.gmail.clientSecret, CFG.gmail.redirectUri || undefined);
+    oauth2.setCredentials({ refresh_token: CFG.gmail.refreshToken });
+    const gmail = google.gmail({ version:'v1', auth:oauth2 });
+    const mime = [
+      'From: '+CFG.gmail.sender,
+      'To: '+to,
+      'Subject: '+subject,
+      'MIME-Version: 1.0',
+      'Content-Type: text/html; charset=UTF-8',
+      '',
+      html
+    ].join('\r\n');
+    const raw = Buffer.from(mime).toString('base64url');
+    await gmail.users.messages.send({ userId:'me', requestBody:{ raw } });
+    return true;
+  } catch (e) {
+    console.error('Gmail send failed:', e.message);
+    return false;
+  }
+}
+const emailShell = (title, body) => '<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px"><h2>'+title+'</h2>'+body+'<hr><p style="color:#64748b;font-size:12px">Competitive Exam Master</p></div>';
+
+function summarizeTest(t) {
+  return {
+    id:t.id,title:t.title,exam:t.exam,category:t.category,subjects:t.subjects||['General'],
+    languages:t.languages?.length?t.languages:['English'],type:t.type,attemptPolicy:t.attemptPolicy==='once'?'once':'reattempt',
+    price:t.price||0,duration:t.duration,questionCount:t.questionCount,createdBy:t.createdBy,createdAt:t.createdAt,published:t.published
+  };
+}
+async function allMap(name) { return (await get(name)) || {}; }
+async function activeSubscription(uidValue) {
+  const subs = Object.values(await allMap('subscriptions')).filter(s => s.studentId===uidValue && s.status==='approved' && new Date(s.expiresAt).getTime()>Date.now());
+  return subs.sort((a,b)=>new Date(b.expiresAt)-new Date(a.expiresAt))[0] || null;
+}
+async function paidAccessBlocked(test, user) {
+  if (test.type !== 'paid' || user.role !== 'student') return false;
+  if (await activeSubscription(user.uid)) return false;
+  const purchases = Object.values(await allMap('purchases'));
+  return !purchases.some(p=>p.testId===test.id && p.studentId===user.uid && p.status==='approved');
+}
+async function attemptBlocked(test, user) {
+  if (test.attemptPolicy !== 'once' || user.role !== 'student') return false;
+  const submissions = Object.values(await allMap('submissions'));
+  return submissions.some(s=>s.testId===test.id && s.userId===user.uid);
+}
+async function body(req) {
+  return new Promise((resolve,reject)=>{
+    const chunks=[]; let size=0;
+    req.on('data', c=>{ size+=c.length; if(size>5e6){ reject(new Error('Request too large')); req.destroy(); return; } chunks.push(c); });
+    req.on('end',()=>{ try{ resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')||'{}')); }catch(e){ reject(new Error('Invalid JSON body.')); }});
+    req.on('error',reject);
+  });
+}
+function send(res, status, data) {
+  res.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'Content-Type, Authorization','Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS'});
+  res.end(JSON.stringify(data));
+}
+function errorStatus(e){ return Number(e.status)||500; }
+
+async function route(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  const method = req.method;
+  if (method==='OPTIONS') return send(res,204,{});
+  if (url.pathname==='/api/config' && method==='GET') return send(res,200,{ firebase:CFG.web, paymentGatewayUrl: process.env.PAYMENT_GATEWAY_URL || '' });
+  if (url.pathname==='/api/health' && method==='GET') return send(res,200,{ok:true, firebase:true, gmail:!!CFG.gmail.refreshToken});
+
+  if (url.pathname==='/api/auth/me' && method==='GET') {
+    try { const {user}=await currentUser(req); return send(res,200,{user:publicUser(user)}); }
+    catch(e){ if(errorStatus(e)===401) return send(res,200,{user:null}); throw e; }
+  }
+  if (url.pathname==='/api/auth/register/student' && method==='POST') {
+    const b=await body(req); const {uid,decoded}=await currentUser(req);
+    const name=String(b.name||'').trim(), mobile=String(b.mobile||'').trim();
+    if(!name || !EMAIL_RE.test(cleanEmail(decoded.email)) || !mobile || !MOBILE_RE.test(mobile)) throw new Error('Please provide a valid name, email and mobile number.');
+    const existing=await get('users/'+uid);
+    if(existing && existing.registrationComplete) throw new Error('This account is already registered.');
+    const profile={uid,name,email:cleanEmail(decoded.email),mobile,role:'student',status:'approved',blocked:false,registrationComplete:true,createdAt:existing?.createdAt||nowIso()};
+    await set('users/'+uid,profile); return send(res,200,{message:'Student registration successful. You can now use the platform.',user:publicUser(profile)});
+  }
+  if (url.pathname==='/api/auth/register/teacher' && method==='POST') {
+    const b=await body(req); const {uid,decoded}=await currentUser(req);
+    const name=String(b.name||'').trim(), mobile=String(b.mobile||'').trim(), subject=String(b.subject||'').trim();
+    if(!name || !mobile || !subject || !MOBILE_RE.test(mobile)) throw new Error('Please fill all fields with a valid mobile number.');
+    const existing=await get('users/'+uid);
+    if(existing && existing.registrationComplete) throw new Error('This account is already registered.');
+    const profile={uid,name,email:cleanEmail(decoded.email),mobile,subject,role:'teacher',status:'pending',blocked:false,registrationComplete:true,createdAt:existing?.createdAt||nowIso()};
+    await set('users/'+uid,profile); return send(res,200,{message:'Registration submitted. Wait for Admin approval before logging in.',user:publicUser(profile)});
+  }
+  if (url.pathname==='/api/auth/login' && method==='POST') {
+    const {user}=await currentUser(req); if(user.role==='teacher' && user.status!=='approved') throw Object.assign(new Error('Teacher account is pending Admin approval.'),{status:403});
+    return send(res,200,{message:'Login successful.',user:publicUser(user)});
+  }
+  if (url.pathname==='/api/auth/logout' && method==='POST') return send(res,200,{message:'Logged out.'});
+
+  if (url.pathname==='/api/account/me' && method==='GET') { const {user}=await currentUser(req); return send(res,200,{user:publicUser(user)}); }
+  if (url.pathname==='/api/account/me' && method==='PUT') {
+    const {uid,user}=await currentUser(req); const b=await body(req);
+    const name=b.name!==undefined?String(b.name).trim():user.name, mobile=b.mobile!==undefined?String(b.mobile).trim():user.mobile, subject=b.subject!==undefined?String(b.subject).trim():user.subject;
+    if(!name) throw new Error("Name can't be empty.");
+    if(mobile && !MOBILE_RE.test(mobile)) throw new Error('Please enter a valid mobile number.');
+    const email=cleanEmail(user.email);
+    const updated={...user,name,mobile,email,updatedAt:nowIso()}; if(user.role==='teacher') updated.subject=subject||'';
+    await set('users/'+uid,updated); return send(res,200,{message:'Account updated.',user:publicUser(updated)});
+  }
+
+  if (url.pathname==='/api/admin/users' && method==='GET') {
+    const {user}=await requireRole(req,'admin'); void user;
+    const users=Object.values(await allMap('users')); const teachers=users.filter(u=>u.role==='teacher').map(publicUser), students=users.filter(u=>u.role==='student').map(publicUser);
+    return send(res,200,{teachers,students,counts:{students:students.length,approvedTeachers:teachers.filter(t=>t.status==='approved').length,pendingTeachers:teachers.filter(t=>t.status==='pending').length}});
+  }
+  const mTeacher=url.pathname.match(/^\/api\/admin\/teachers\/([^/]+)\/(approve|module-access)$/);
+  if(mTeacher && method==='POST'){
+    await requireRole(req,'admin'); const id=decodeURIComponent(mTeacher[1]), action=mTeacher[2], b=await body(req);
+    const u=await get('users/'+id); if(!u || u.role!=='teacher') throw new Error('Teacher not found.');
+    if(action==='approve'){ u.status=!!b.approved?'approved':'rejected'; await set('users/'+id,u); if(u.status==='approved') await sendEmail(u.email,'Teacher account approved',emailShell('Teacher account approved','<p>Your teacher account has been approved. You can now log in and publish test series.</p>')); }
+    else { if(u.status!=='approved') throw new Error('Approve this teacher before giving module access.'); u.canManageModules=!!b.allowed; await set('users/'+id,u); }
+    return send(res,200,{message:action==='approve'?('Teacher '+(u.status==='approved'?'approved':'rejected')+'.'):(u.canManageModules?'Module access granted.':'Module access removed.'),user:publicUser(u)});
+  }
+  const mBlock=url.pathname.match(/^\/api\/admin\/users\/([^/]+)\/block$/);
+  if(mBlock && method==='POST'){ await requireRole(req,'admin'); const id=decodeURIComponent(mBlock[1]), b=await body(req), u=await get('users/'+id); if(!u) throw new Error('User not found.'); if(u.role==='admin') throw new Error("Admin accounts can't be blocked."); u.blocked=!!b.blocked; await set('users/'+id,u); return send(res,200,{message:u.blocked?'User blocked.':'User unblocked.',user:publicUser(u)}); }
+  const mDeleteUser=url.pathname.match(/^\/api\/admin\/users\/([^/]+)$/);
+  if(mDeleteUser && method==='DELETE'){ await requireRole(req,'admin'); const id=decodeURIComponent(mDeleteUser[1]), u=await get('users/'+id); if(!u) throw new Error('User not found.'); if(u.role==='admin') throw new Error("Admin accounts can't be deleted."); await remove('users/'+id); try{ await auth.deleteUser(id); }catch(_){} return send(res,200,{message:'User deleted.'}); }
+
+  if(url.pathname==='/api/settings' && method==='GET') return send(res,200,{settings:(await get('settings'))||DEFAULT_SETTINGS});
+  if(url.pathname==='/api/settings' && method==='PUT'){
+    await requireRole(req,'admin'); const b=await body(req), s={...(await get('settings')||DEFAULT_SETTINGS)};
+    for(const k of ['backgroundColor','foregroundColor','primaryColor']) if(b[k]!==undefined && !/^#[0-9a-f]{6}$/i.test(String(b[k]))) throw new Error(k+' must be a 6-digit hex color.');
+    for(const k of ['institutionName','address','contactEmail','contactPhone']) if(b[k]!==undefined) s[k]=String(b[k]).trim();
+    if(b.logoDataUrl!==undefined){ if(b.logoDataUrl && !String(b.logoDataUrl).startsWith('data:image/')) throw new Error('Logo must be an image file.'); if(String(b.logoDataUrl).length>2800000) throw new Error('Logo image is too large.'); s.logoDataUrl=String(b.logoDataUrl); }
+    if(b.themeMode!==undefined) s.themeMode=b.themeMode==='dark'?'dark':'light';
+    for(const k of ['backgroundColor','foregroundColor','primaryColor']) if(b[k]!==undefined) s[k]=String(b[k]);
+    await set('settings',s); return send(res,200,{message:'Institution settings updated.',settings:s});
+  }
+
+  if(url.pathname==='/api/modules' && method==='GET'){ const mods=Object.values(await allMap('modules')), tests=Object.values(await allMap('tests')); return send(res,200,{modules:mods.map(m=>({...m,testCount:tests.filter(t=>t.category===m.name).length}))}); }
+  if(url.pathname==='/api/modules' && method==='POST'){
+    const {user}=await currentUser(req); if(!(user.role==='admin'||(user.role==='teacher'&&user.status==='approved'&&user.canManageModules))) throw new Error('You do not have permission to manage exam modules.');
+    const b=await body(req), name=String(b.name||'').replace(/\s+/g,' ').trim(); if(!name||name.length>40) throw new Error('Module name is required and must be 40 characters or less.');
+    const mods=await allMap('modules'); if(Object.values(mods).some(m=>m.name.toLowerCase()===name.toLowerCase())) throw new Error('That module already exists.');
+    const mod={id:uid('m-'),name,icon:Array.from(String(b.icon||'📘').trim()).slice(0,2).join('')||'📘',description:String(b.description||'').trim().slice(0,80),createdBy:user.email||user.name,createdAt:nowIso()};
+    mods[mod.id]=mod; await set('modules',mods); return send(res,200,{message:'Module "'+name+'" added.',module:mod});
+  }
+  const mDelMod=url.pathname.match(/^\/api\/modules\/([^/]+)$/);
+  if(mDelMod && method==='DELETE'){ const {user}=await currentUser(req); if(!(user.role==='admin'||(user.role==='teacher'&&user.status==='approved'&&user.canManageModules))) throw new Error('Not authorized.'); const id=decodeURIComponent(mDelMod[1]), mods=await allMap('modules'), mod=mods[id]; if(!mod) throw new Error('Module not found.'); const tests=await allMap('tests'), affected=Object.values(tests).filter(t=>t.category===mod.name); if(affected.length&&user.role!=='admin') throw new Error('Module still has test series.'); for(const t of affected) delete tests[t.id]; delete mods[id]; await set('modules',mods); await set('tests',tests); return send(res,200,{message:affected.length?'Module and its test series were deleted.':'Module deleted.'}); }
+
+  if(url.pathname==='/api/tests' && method==='GET'){
+    const {user}=await currentUser(req); let tests=Object.values(await allMap('tests')).filter(t=>t.published); if(url.searchParams.get('category')) tests=tests.filter(t=>t.category===url.searchParams.get('category'));
+    const submissions=Object.values(await allMap('submissions')); const attemptedIds=[...new Set(submissions.filter(s=>s.userId===user.uid).map(s=>s.testId))];
+    const modules=Object.values(await allMap('modules')); return send(res,200,{tests:tests.map(summarizeTest),attemptedIds,categories:modules.map(m=>m.name)});
+  }
+  if(url.pathname==='/api/tests/mine' && method==='GET'){ const {user}=await requireRole(req,'teacher'); const tests=Object.values(await allMap('tests')).filter(t=>t.createdBy===user.email); return send(res,200,{tests:tests.map(summarizeTest)}); }
+  if(url.pathname==='/api/tests/all' && method==='GET'){ await requireRole(req,'admin'); const tests=Object.values(await allMap('tests')); const submissions=Object.values(await allMap('submissions')); const counts={}; submissions.forEach(s=>counts[s.testId]=(counts[s.testId]||0)+1); return send(res,200,{tests:tests.map(t=>({...summarizeTest(t),attempts:counts[t.id]||0}))}); }
+  const mAttempt=url.pathname.match(/^\/api\/tests\/([^/]+)\/attempts$/);
+  if(mAttempt&&method==='POST'){ const {user}=await currentUser(req); const tests=await allMap('tests'), t=tests[decodeURIComponent(mAttempt[1])]; if(!t) throw new Error('Test series not found.'); if(!['teacher','admin'].includes(user.role)) throw new Error('Not authorized.'); if(user.role==='teacher'&&t.createdBy!==user.email) throw new Error('You can only change your own test series.'); t.attemptPolicy=(await body(req)).attemptPolicy==='once'?'once':'reattempt'; tests[t.id]=t; await set('tests',tests); return send(res,200,{message:t.attemptPolicy==='once'?'Students can attempt this test only once.':'Students can reattempt this test.',test:summarizeTest(t)}); }
+  const mTest=url.pathname.match(/^\/api\/tests\/([^/]+)(?:\/(solution|submit))?$/);
+  if(mTest && method==='GET' && !mTest[2]) {
+    const {user}=await currentUser(req), tests=await allMap('tests'), t=tests[decodeURIComponent(mTest[1])]; if(!t||!t.published) throw new Error('Test not found.'); if(await paidAccessBlocked(t,user)) throw new Error('This is a Premium test series. Subscribe to Premium to access all paid test series.'); if(await attemptBlocked(t,user)) throw new Error('You have already attempted this test. Only one attempt is allowed for this test series.');
+    return send(res,200,{...summarizeTest(t),questions:t.questions.map((q,i)=>({index:i,question:q.question,options:q.options,subject:q.subject||'General',marks:q.marks,negative:q.negative,translations:q.translations||{}}))});
+  }
+  if(mTest && method==='GET' && mTest[2]==='solution'){
+    const {user}=await currentUser(req), tests=await allMap('tests'), t=tests[decodeURIComponent(mTest[1])]; if(!t) throw new Error('Test not found.');
+    const submissions=Object.values(await allMap('submissions')).filter(s=>s.testId===t.id&&s.userId===user.uid); const saved=submissions.at(-1); if(!saved) throw new Error('Attempt this test first to view its solution.');
+    return send(res,200,await calculateResult(t,saved.answers||{},saved.timeBySubject||{},false,user,true));
+  }
+  if(mTest && method==='POST' && mTest[2]==='submit'){
+    const {user}=await currentUser(req), tests=await allMap('tests'), t=tests[decodeURIComponent(mTest[1])]; if(!t) throw new Error('Test not found.'); if(await paidAccessBlocked(t,user)) throw new Error('This is a Premium test series. Subscribe to Premium to access all paid test series.'); if(await attemptBlocked(t,user)) throw new Error('You have already attempted this test. Only one attempt is allowed for this test series.');
+    const b=await body(req); const result=await calculateResult(t,b.answers||{},b.timeBySubject||{},true,user,false); return send(res,200,result);
+  }
+  if(url.pathname==='/api/tests' && method==='POST'){
+    const {user}=await requireRole(req,'teacher'); const b=await body(req); const mods=await allMap('modules'); if(!mods || !Object.values(mods).some(m=>m.name===b.category)) throw new Error('Please choose a valid exam module.');
+    if(!b.title || !Array.isArray(b.questions) || !b.questions.length) throw new Error('Test title and at least one question are required.');
+    let subjects=Array.isArray(b.subjects)?b.subjects.map(String).map(s=>s.trim()).filter(Boolean):['General']; subjects=[...new Set(subjects)]; let languages=Array.isArray(b.languages)?b.languages.map(String).map(s=>s.trim()).filter(Boolean):['English']; languages=[...new Set(languages.length?languages:['English'])];
+    const secondary=languages.slice(1), qs=[];
+    b.questions.forEach((q,i)=>{ const question=String(q.question||'').trim(), options=Array.isArray(q.options)?q.options.map(x=>String(x).trim()):[], answer=String(q.answer||'').toUpperCase(); if(!question||options.length!==4||options.some(x=>!x)||!['A','B','C','D'].includes(answer)) throw new Error('Question '+(i+1)+' is invalid.'); let translations={}; for(const lang of secondary){const tr=q.translations?.[lang]; if(tr && (tr.question||tr.options?.some(Boolean))) translations[lang]={question:String(tr.question||''),options:[0,1,2,3].map(k=>String(tr.options?.[k]||''))};} qs.push({question,options,answer,subject:String(q.subject||'General').trim()||'General',marks:Number.isFinite(Number(q.marks))?Number(q.marks):1,negative:Number.isFinite(Number(q.negative))?Number(q.negative):0,explanation:String(q.explanation||''),translations});});
+    const t={id:uid('T'),title:String(b.title).trim(),exam:String(b.exam||'Competitive Exam').trim(),category:b.category,subjects,languages,type:String(b.type||'FREE').toUpperCase()==='PAID'?'paid':'free',price:0,duration:Number.parseInt(b.duration,10)||30,questions:qs,questionCount:qs.length,createdBy:user.email,createdAt:nowIso(),published:true,attemptPolicy:b.attemptPolicy==='once'?'once':'reattempt'};
+    const tests=await allMap('tests'); tests[t.id]=t; await set('tests',tests); return send(res,200,{message:'Test Series added successfully and published.',test:summarizeTest(t)});
+  }
+  const mDeleteTest=url.pathname.match(/^\/api\/tests\/([^/]+)$/);
+  if(mDeleteTest&&method==='DELETE'){ const {user}=await currentUser(req), tests=await allMap('tests'), id=decodeURIComponent(mDeleteTest[1]), t=tests[id]; if(!t) throw new Error('Test series not found.'); if(!['teacher','admin'].includes(user.role)||user.role==='teacher'&&t.createdBy!==user.email) throw new Error('Not authorized.'); delete tests[id]; await set('tests',tests); return send(res,200,{message:'Test series deleted.'}); }
+
+  if(url.pathname==='/api/plans'&&method==='GET'){ await currentUser(req); const plans=Object.values(await allMap('plans')); return send(res,200,{plans,payment:(await get('payment'))||DEFAULT_PAYMENT}); }
+  if(url.pathname==='/api/plans'&&method==='POST'){ await requireRole(req,'admin'); const b=await body(req), name=String(b.name||'').trim(), days=parseInt(b.days,10), price=parseFloat(b.price); if(!name||!Number.isFinite(days)||days<1||!Number.isFinite(price)||price<0) throw new Error('Enter a valid plan.'); const p={id:uid('plan-'),name,days,price}; const plans=await allMap('plans'); plans[p.id]=p; await set('plans',plans); return send(res,200,{message:'Plan added.',plans:Object.values(plans)}); }
+  const mPlan=url.pathname.match(/^\/api\/plans\/([^/]+)$/);
+  if(mPlan&&method==='DELETE'){ await requireRole(req,'admin'); const plans=await allMap('plans'); delete plans[decodeURIComponent(mPlan[1])]; await set('plans',plans); return send(res,200,{message:'Plan removed.',plans:Object.values(plans)}); }
+  if(url.pathname==='/api/payment-settings'&&method==='PUT'){ await requireRole(req,'admin'); const b=await body(req); const payment={upiId:String(b.upiId||'').trim(),payeeName:String(b.payeeName||'').trim(),note:String(b.note||'').trim(),gatewayUrl:String(b.gatewayUrl||process.env.PAYMENT_GATEWAY_URL||'').trim().replace(/\/+$/,'')}; await set('payment',payment); return send(res,200,{message:'Payment details saved.',payment}); }
+
+  if(url.pathname==='/api/subscription/mine'&&method==='GET'){ const {user}=await requireRole(req,'student'); const subs=Object.values(await allMap('subscriptions')).filter(s=>s.studentId===user.uid).sort((a,b)=>new Date(b.requestedAt)-new Date(a.requestedAt)); const act=await activeSubscription(user.uid); return send(res,200,{active:!!act,expiresAt:act?.expiresAt||null,planName:act?.planName||null,requests:subs}); }
+  if(url.pathname==='/api/subscription/request'&&method==='POST'){ const {user}=await requireRole(req,'student'), b=await body(req), plans=await allMap('plans'), p=plans[b.planId]; if(!p) throw new Error('Please choose a plan.'); const txn=String(b.txnId||'').trim(); if(txn.length<6) throw new Error('Enter the transaction / UTR ID.'); const subs=await allMap('subscriptions'); if(Object.values(subs).some(s=>s.studentId===user.uid&&s.status==='pending')) throw new Error('You already have a payment waiting for verification.'); if(Object.values(subs).some(s=>String(s.txnId).toLowerCase()===txn.toLowerCase())) throw new Error('This transaction ID has already been submitted.'); const sub={id:uid('sub-'),studentId:user.uid,studentName:user.name,studentEmail:user.email,planId:p.id,planName:p.name,days:p.days,amount:p.price,txnId:txn,method:'UPI',status:'pending',requestedAt:nowIso(),decidedAt:null,startsAt:null,expiresAt:null}; subs[sub.id]=sub; await set('subscriptions',subs); return send(res,200,{message:'Payment submitted. Premium starts after Admin verifies it.',subscription:sub}); }
+  if(url.pathname==='/api/subscription'&&method==='GET'){ await requireRole(req,'admin'); const subs=Object.values(await allMap('subscriptions')).sort((a,b)=>new Date(b.requestedAt)-new Date(a.requestedAt)); return send(res,200,{subscriptions:subs}); }
+  const mSub=url.pathname.match(/^\/api\/subscription\/([^/]+)\/decide$/);
+  if(mSub&&method==='POST'){ await requireRole(req,'admin'); const b=await body(req), subs=await allMap('subscriptions'), sub=subs[decodeURIComponent(mSub[1])]; if(!sub) throw new Error('Request not found.'); if(sub.status!=='pending') throw new Error('This request was already '+sub.status+'.'); if(b.approved){const act=await activeSubscription(sub.studentId);const start=act?new Date(act.expiresAt):new Date();sub.status='approved';sub.startsAt=start.toISOString();sub.expiresAt=new Date(start.getTime()+sub.days*86400000).toISOString();}else sub.status='rejected';sub.decidedAt=nowIso();subs[sub.id]=sub;await set('subscriptions',subs); await sendEmail(sub.studentEmail,'Premium subscription '+sub.status,emailShell('Premium subscription '+sub.status,'<p>Your '+sub.planName+' subscription request is <b>'+sub.status+'</b>.</p>'+ (sub.expiresAt?'<p>Valid until: <b>'+new Date(sub.expiresAt).toLocaleString()+'</b></p>':''))); return send(res,200,{message:'Payment '+sub.status+'.',subscription:sub}); }
+
+  if(url.pathname==='/api/purchases'&&method==='GET'){ await requireRole(req,'admin'); let list=Object.values(await allMap('purchases')); const st=url.searchParams.get('status'); if(st) list=list.filter(p=>p.status===st); return send(res,200,{purchases:list.sort((a,b)=>new Date(b.requestedAt)-new Date(a.requestedAt))}); }
+  if(url.pathname==='/api/purchases/mine'&&method==='GET'){ const {user}=await requireRole(req,'student'); return send(res,200,{purchases:Object.values(await allMap('purchases')).filter(p=>p.studentId===user.uid)}); }
+  if(url.pathname==='/api/purchases/request'&&method==='POST'){ const {user}=await requireRole(req,'student'), b=await body(req), tests=await allMap('tests'), t=tests[b.testId]; if(!t||!t.published) throw new Error('Test not found.'); if(t.type!=='paid') throw new Error('That test is free.'); const ps=await allMap('purchases'); const existing=Object.values(ps).find(p=>p.testId===t.id&&p.studentId===user.uid); if(existing) return send(res,200,{message:'You already have a '+existing.status+' request for this test.',purchase:existing}); const p={id:uid('pur-'),testId:t.id,testTitle:t.title,price:t.price,studentId:user.uid,studentName:user.name,studentEmail:user.email,status:'pending',requestedAt:nowIso(),decidedAt:null}; ps[p.id]=p; await set('purchases',ps); return send(res,200,{message:'Access request submitted. Waiting for Admin approval.',purchase:p}); }
+  const mPur=url.pathname.match(/^\/api\/purchases\/([^/]+)\/decide$/);
+  if(mPur&&method==='POST'){ await requireRole(req,'admin'); const b=await body(req), ps=await allMap('purchases'), p=ps[decodeURIComponent(mPur[1])]; if(!p) throw new Error('Request not found.'); p.status=b.approved?'approved':'rejected';p.decidedAt=nowIso();ps[p.id]=p;await set('purchases',ps);await sendEmail(p.studentEmail,'Test access request '+p.status,emailShell('Test access '+p.status,'<p>Your access request for <b>'+p.testTitle+'</b> has been '+p.status+'.</p>'));return send(res,200,{message:'Request '+p.status+'.',purchase:p}); }
+
+  if(url.pathname==='/api/admin/backup'&&method==='GET'){ await requireRole(req,'admin'); const names=['users','tests','purchases','subscriptions','plans','payment','modules','settings','submissions']; const out={}; for(const n of names) out[n]=await get(n); return send(res,200,out); }
+  if(url.pathname==='/api/admin/restore'&&method==='POST'){ await requireRole(req,'admin'); const b=await body(req); if(!b.users||!b.tests) throw new Error('Backup is missing users/tests.'); for(const n of ['users','tests','purchases','subscriptions','plans','payment','modules','settings','submissions']) if(b[n]!==undefined) await set(n,b[n]); return send(res,200,{message:'Restore complete.'}); }
+
+  throw Object.assign(new Error('Not found.'),{status:404});
+}
+
+async function calculateResult(t, answers, timeBySubject, saveAttempt, user, solutionMode) {
+  let score=0,correct=0,incorrect=0,unattempted=0; const sectionMap={};
+  const review=t.questions.map((q,i)=>{
+    const given=answers[i]!==undefined?String(answers[i]).trim().toUpperCase():null; const subj=q.subject||'General';
+    const sec=sectionMap[subj] ||= {section:subj,score:0,correct:0,incorrect:0,attempted:0,total:0,maxScore:0};
+    sec.total++; sec.maxScore+=Number(q.marks)||0;
+    let outcome='unattempted';
+    if(given){sec.attempted++;if(given===q.answer){score+=Number(q.marks)||0;correct++;sec.correct++;outcome='correct';}else{score-=Number(q.negative)||0;incorrect++;sec.incorrect++;outcome='incorrect';}}
+    else unattempted++;
+    return {index:i,question:q.question,options:q.options,correctAnswer:q.answer,givenAnswer:given,outcome,explanation:q.explanation||''};
+  });
+  score=Math.round(score*100)/100; const maxScore=Math.round(t.questions.reduce((s,q)=>s+(Number(q.marks)||0),0)*100)/100; const attempted=correct+incorrect; const accuracy=attempted?Math.round(correct/attempted*1000)/10:0;
+  const sections=Object.values(sectionMap).map(s=>({...s,score:Math.round(s.score*100)/100,maxScore:Math.round(s.maxScore*100)/100,accuracy:s.attempted?Math.round(s.correct/s.attempted*1000)/10:0,timeSeconds:Math.round(Number(timeBySubject[s.section]||0))}));
+  if(saveAttempt){const subs=await allMap('submissions');const s={id:uid('att-'),testId:t.id,userId:user.uid,score,answers,timeBySubject,submittedAt:nowIso()};subs[s.id]=s;await set('submissions',subs);}
+  const allScores=Object.values(await allMap('submissions')).filter(s=>s.testId===t.id).map(s=>Number(s.score)||0); const totalAttempts=allScores.length; const rank=allScores.filter(s=>s>score).length+1; const below=allScores.filter(s=>s<score).length; const percentile=totalAttempts>1?Math.round(below/(totalAttempts-1)*1000)/10:100;
+  return {testId:t.id,title:t.title,score,maxScore,correct,incorrect,unattempted,attempted,total:t.questions.length,accuracy,rank,totalAttempts,percentile,sections,review};
+}
+
+function mimeFile(filePath) {
+  const ext=path.extname(filePath).toLowerCase(); return ({'.html':'text/html; charset=utf-8','.js':'application/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8'})[ext]||'application/octet-stream';
+}
+function serveStatic(req,res) {
+  const url=new URL(req.url,'http://localhost'); let p;
+  if(url.pathname==='/') p=path.join(__dirname,'frontend','CompetitiveExamMaster-student.html');
+  else if(url.pathname==='/student') p=path.join(__dirname,'frontend','CompetitiveExamMaster-student.html');
+  else if(url.pathname==='/admin') p=path.join(__dirname,'frontend','CompetitiveExamMaster-admin.html');
+  else if(url.pathname.startsWith('/frontend/')) p=path.join(__dirname,url.pathname);
+  else return false;
+  if(!fs.existsSync(p)) return false;
+  const realRoot=path.join(__dirname,'frontend'); const real=path.resolve(p);
+  if(real!==path.resolve(realRoot, path.basename(real)) && !real.startsWith(realRoot+path.sep)) return false;
+  res.writeHead(200,{'Content-Type':mimeFile(p),'Cache-Control':'no-store'}); fs.createReadStream(p).pipe(res); return true;
+}
+
+const server=http.createServer(async(req,res)=>{
+  try {
+    if(req.url.startsWith('/api/')) return await route(req,res);
+    if(serveStatic(req,res)) return;
+    send(res,404,{error:'Not found.'});
+  } catch(e) {
+    console.error(e);
+    send(res,errorStatus(e),{error:e.message||'Server error.'});
+  }
+});
+
+(async()=>{
+  await ensureSeeds();
+  await bootstrapAdmin();
+  server.listen(CFG.port,()=>console.log('Exam server running: http://localhost:'+CFG.port+'  |  student: /student  |  admin: /admin'));
+})();
