@@ -188,6 +188,20 @@ button.icon-opt:hover{background:#e5e7eb}
 button.icon-opt:focus-visible{outline:2px solid #111827;outline-offset:1px}
 button.icon-opt.sel{background:#dbeafe;border-color:#2563eb}
 @media(max-width:600px){table{font-size:.86rem}.table-wrap{overflow-x:auto}}
+/* ---- Secure Admin OTP login ---- */
+.admin-login-shell{max-width:460px;margin:7vh auto 30px;background:linear-gradient(145deg,#ffffff,#f8fafc);border:1px solid #e5e7eb;border-radius:24px;padding:34px;box-shadow:0 24px 70px rgba(15,23,42,.16);text-align:center}
+.admin-login-brand{width:72px;height:72px;margin:0 auto 16px;border-radius:22px;display:grid;place-items:center;background:linear-gradient(135deg,#dc2626,#7f1d1d);color:#fff;font-size:34px;box-shadow:0 12px 28px rgba(220,38,38,.25)}
+.admin-login-shell h2{margin:0;font-size:28px;color:#111827}.admin-login-sub{margin:7px 0 22px;color:#64748b}
+.admin-email-lock{display:flex;align-items:center;gap:12px;text-align:left;padding:13px 15px;margin-bottom:18px;border-radius:14px;background:#fff1f2;border:1px solid #fecdd3;color:#7f1d1d}
+.admin-email-lock span{font-size:24px}.admin-email-lock small{display:block;color:#9f1239;font-size:11px;margin-bottom:2px}.admin-email-lock strong{font-size:14px}
+.admin-login-shell .form-row{text-align:left}.admin-login-shell .form-row input{height:48px;border-radius:12px;border:1px solid #cbd5e1}
+.admin-login-shell .form-row input:focus{outline:3px solid rgba(220,38,38,.14);border-color:#dc2626}
+.admin-login-btn{background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;border:0;padding:13px 16px;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 8px 18px rgba(220,38,38,.22)}
+.admin-back-btn{background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;padding:11px;border-radius:12px;font-weight:700;cursor:pointer}
+.admin-login-hint{font-size:12px;color:#64748b;line-height:1.5}.otp-sent{background:#ecfdf5;color:#166534;border:1px solid #bbf7d0;border-radius:12px;padding:12px;margin-bottom:14px;font-size:13px}
+#adminOtp{text-align:center;letter-spacing:9px;font-size:25px;font-weight:800}
+@media(max-width:520px){.admin-login-shell{margin:20px auto;padding:24px 18px;border-radius:20px}}
+
 /* ---- Admin Panel design ---- */
 :root{--primary:#dc2626}
 body{background:#eef0f4}
@@ -217,62 +231,23 @@ nav button{background:#1f2937}nav a.navlink{background:#374151;color:#fff;text-d
 <main>
 
 <section id="auth" class="section hidden">
-  <h2>🛡️ Admin Login</h2>
-  <div class="auth-card" style="max-width:480px;margin:0 auto">
-
-    <div id="authPaneLogin">
-      <div class="form-row"><label>Email</label><input id="loginEmail" type="email" placeholder="you@example.com" autocomplete="username"></div>
-      <div class="form-row"><label>Password</label><input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password"></div>
-      <label style="display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:14px"><input type="checkbox" id="rememberLogin" style="width:18px;height:18px"> Remember this email on this device</label>
-      <button class="primary-btn" style="width:100%" onclick="loginUser()">Login</button>
+  <div class="admin-login-shell">
+    <div class="admin-login-brand">🛡️</div>
+    <h2>Admin Control Panel</h2>
+    <p class="admin-login-sub">Secure administrator verification</p>
+    <div class="admin-email-lock"><span>🔐</span><div><small>Authorized Admin Gmail</small><strong>mjdeveloperodisha@gmail.com</strong></div></div>
+    <div id="adminOtpEmailPane">
+      <div class="form-row"><label>Admin Gmail</label><input id="loginEmail" type="email" value="mjdeveloperodisha@gmail.com" autocomplete="email" readonly></div>
+      <button class="admin-login-btn" style="width:100%" onclick="requestAdminOtp()">Send OTP to Gmail</button>
+      <p class="admin-login-hint">A 6-digit one-time password will be sent through the configured Gmail API.</p>
       <p id="loginMsg"></p>
-
-      <div id="forgotBox" class="hidden" style="margin-top:10px;border-top:1px solid #eee;padding-top:10px">
-        <div class="form-row"><label>Email</label><input id="forgotEmail" type="email" placeholder="Your account email"></div>
-        <button class="secondary" onclick="requestPasswordReset()">Send Reset Link</button>
-        <p id="forgotMsg"></p>
-
-        <div id="resetBox" class="hidden" style="margin-top:10px">
-          <p class="muted">Firebase Authentication sends the password-reset email securely. Check your inbox and spam folder.</p>
-          <div class="form-row"><label>Reset Token</label><input id="resetToken" placeholder="Paste the token from your reset link"></div>
-          <div class="form-row"><label>New Password</label><input id="resetNewPassword" type="password" placeholder="New password"></div>
-          <div class="form-row"><label>Confirm New Password</label><input id="resetConfirmPassword" type="password" placeholder="Re-enter new password"></div>
-          <button class="primary-btn" onclick="performPasswordReset()">Reset Password</button>
-          <p id="resetMsg"></p>
-        </div>
-      </div>
     </div>
-
-    <div id="authPaneRegister" class="hidden">
-      <div class="row" style="gap:8px;margin-bottom:14px">
-        <button id="regTabStudent" class="primary-btn" style="flex:1" onclick="showRegisterType('student')">Student</button>
-        <button id="regTabTeacher" class="secondary" style="flex:1" onclick="showRegisterType('teacher')">Teacher</button>
-      </div>
-
-      <div id="regPaneStudent">
-        <p class="muted">Students can register themselves and use the platform immediately.</p>
-        <div class="form-row"><label>Full name</label><input id="studentName" placeholder="Full name"></div>
-        <div class="form-row"><label>Mobile Number</label><input id="studentMobile" type="tel" placeholder="e.g. 9876543210"></div>
-        <div class="form-row"><label>Email</label><input id="studentEmail" type="email" placeholder="Email"></div>
-        <div class="form-row"><label>Password</label><input id="studentPassword" type="password" placeholder="Password"></div>
-        <div class="form-row"><label>Confirm Password</label><input id="studentConfirmPassword" type="password" placeholder="Re-enter password"></div>
-        <button class="primary-btn" style="width:100%" onclick="registerStudent()">Register as Student</button>
-        <p id="studentMsg"></p>
-      </div>
-
-      <div id="regPaneTeacher" class="hidden">
-        <p class="muted">Teachers can register themselves. <strong>Admin approval is required before teacher login is activated.</strong></p>
-        <div class="form-row"><label>Full name</label><input id="teacherName" placeholder="Full name"></div>
-        <div class="form-row"><label>Mobile Number</label><input id="teacherMobile" type="tel" placeholder="e.g. 9876543210"></div>
-        <div class="form-row"><label>Email</label><input id="teacherEmail" type="email" placeholder="Email"></div>
-        <div class="form-row"><label>Subject / Expertise</label><input id="teacherSubject" placeholder="e.g. Mathematics"></div>
-        <div class="form-row"><label>Password</label><input id="teacherPassword" type="password" placeholder="Password"></div>
-        <div class="form-row"><label>Confirm Password</label><input id="teacherConfirmPassword" type="password" placeholder="Re-enter password"></div>
-        <button class="primary-btn" style="width:100%" onclick="registerTeacher()">Register as Teacher</button>
-        <p id="teacherMsg"></p>
-      </div>
-
-      <p class="muted" style="margin-top:14px;text-align:center">Already have an account? <a href="javascript:void(0)" onclick="showAuthTab('login')">Login</a></p>
+    <div id="adminOtpPane" class="hidden">
+      <div class="otp-sent">✉️ OTP sent to <b>mjdeveloperodisha@gmail.com</b></div>
+      <div class="form-row"><label>Enter 6-digit OTP</label><input id="adminOtp" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="••••••" autocomplete="one-time-code"></div>
+      <button class="admin-login-btn" style="width:100%" onclick="verifyAdminOtp()">Verify OTP &amp; Login</button>
+      <button class="admin-back-btn" style="width:100%;margin-top:8px" onclick="resetAdminOtp()">← Send a new OTP</button>
+      <p id="otpMsg"></p>
     </div>
   </div>
 </section>
@@ -368,7 +343,7 @@ let cemAuth = null;
 function loadScript(src){return new Promise((resolve,reject)=>{if(document.querySelector('script[src="'+src+'"]'))return resolve();const s=document.createElement('script');s.src=src;s.async=false;s.onload=resolve;s.onerror=()=>reject(new Error('Could not load Firebase SDK.'));document.head.appendChild(s);});}
 const firebaseReady=(async()=>{const cfgRes=await fetch('/api/config');if(!cfgRes.ok)throw new Error('Backend is not running. Start the Exam server first.');const cfg=await cfgRes.json();await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js');if(!window.firebase)throw new Error('Firebase SDK failed to load.');if(!firebase.apps.length)firebase.initializeApp(cfg.firebase);cemAuth=firebase.auth();return cfg;})();
 function ensureAdmin(){}
-async function getIdToken(){await firebaseReady;const u=cemAuth&&cemAuth.currentUser;return u?u.getIdToken():null;}
+async function getIdToken(){await firebaseReady;const session=localStorage.getItem('cem_admin_session');if(session)return session;const u=cemAuth&&cemAuth.currentUser;return u?u.getIdToken():null;}
 async function api(method,url,body){await firebaseReady;const headers={'Content-Type':'application/json'};const token=await getIdToken();if(token)headers.Authorization='Bearer '+token;const r=await fetch(url,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||data.message||'Request failed.');return data;}
 function authError(e){const map={'auth/email-already-in-use':'An account with this email already exists.','auth/invalid-email':'Please enter a valid email address.','auth/weak-password':'Password is too weak.','auth/invalid-credential':'Invalid email or password.','auth/user-not-found':'Invalid email or password.','auth/wrong-password':'Invalid email or password.'};return map[e.code]||e.message||'Authentication failed.';}
 async function registerFirebaseAccount(kind,data){await firebaseReady;const cred=await cemAuth.createUserWithEmailAndPassword(data.email,data.password);try{await cred.user.updateProfile({displayName:data.name});const r=await api('POST','/api/auth/register/'+kind,data);try{await cred.user.sendEmailVerification();}catch(_){}await cemAuth.signOut();return r;}catch(e){try{await cred.user.delete();}catch(_){}throw e;}}
@@ -491,41 +466,20 @@ window.registerTeacher = async function(){
   }catch(e){ msg('teacherMsg', e.message); }
 };
 
-window.loginUser = async function(){
-  try{
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const r = await api('POST','/api/auth/login', { email, password });
-    currentUser = r.user;
-    try{
-      if(document.getElementById('rememberLogin').checked){
-        localStorage.setItem('cem_saved_login_admin', JSON.stringify({e:email,p:password}));
-      } else localStorage.removeItem('cem_saved_login_admin');
-    }catch(_){}
-    msg('loginMsg','Login successful.',true);
-    updateUI();
-    if(currentUser.role==='admin') showSection('admin');
-    else if(currentUser.role==='teacher') showSection('teacher');
-    else showSection('home');
-  }catch(e){ msg('loginMsg', e.message); }
+window.requestAdminOtp = async function(){
+  try{ const r=await api('POST','/api/admin/request-otp',{email:'mjdeveloperodisha@gmail.com'}); msg('loginMsg',r.message,true); document.getElementById('adminOtpEmailPane').classList.add('hidden'); document.getElementById('adminOtpPane').classList.remove('hidden'); document.getElementById('adminOtp').focus(); }
+  catch(e){ msg('loginMsg',e.message); }
 };
+window.verifyAdminOtp = async function(){
+  try{ const otp=document.getElementById('adminOtp').value.trim(); if(!/^\d{6}$/.test(otp)){msg('otpMsg','Enter the 6-digit OTP sent to the Admin Gmail.');return;} const r=await api('POST','/api/admin/verify-otp',{email:'mjdeveloperodisha@gmail.com',otp}); localStorage.setItem('cem_admin_session',r.sessionToken); currentUser=r.user; msg('otpMsg','Admin login successful.',true); updateUI(); showSection('admin'); }
+  catch(e){ msg('otpMsg',e.message); }
+};
+window.resetAdminOtp = function(){ document.getElementById('adminOtpPane').classList.add('hidden'); document.getElementById('adminOtpEmailPane').classList.remove('hidden'); document.getElementById('adminOtp').value=''; document.getElementById('otpMsg').textContent=''; };
 
-(function(){
-  function init(){
-    const em=document.getElementById('loginEmail'), pw=document.getElementById('loginPassword'), rm=document.getElementById('rememberLogin');
-    if(!em||!pw) return;
-    try{
-      const d=JSON.parse(localStorage.getItem('cem_saved_login_admin')||'null');
-      if(d){ em.value=d.e||''; pw.value=d.p||''; if(rm) rm.checked=true; }
-    }catch(_){}
-    [em,pw].forEach(el=>el.addEventListener('keydown',ev=>{
-      if(ev.key==='Enter'){ ev.preventDefault(); window.loginUser(); }
-    }));
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
-})();
+
 
 window.logout = async function(){
+  localStorage.removeItem('cem_admin_session');
   await api('POST','/api/auth/logout');
   currentUser = null;
   updateUI();
