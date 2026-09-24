@@ -41,8 +41,7 @@ const CFG = {
     sender: process.env.GMAIL_SENDER_EMAIL || ''
   },
   admin: {
-    email: (process.env.ADMIN_EMAIL || '').trim().toLowerCase(),
-    password: process.env.ADMIN_PASSWORD || '',
+    email: 'mjdeveloperodisha@gmail.com',
     name: process.env.ADMIN_NAME || 'Administrator'
   }
 };
@@ -117,13 +116,28 @@ async function ensureSeeds() {
   if (!(await get('orders'))) await set('orders', {});
 }
 
+const ADMIN_OTP_SECRET = process.env.ADMIN_OTP_SECRET || crypto.randomBytes(32).toString('hex');
+const ADMIN_OTP_TTL_MS = 10 * 60 * 1000;
+const adminOtpState = { hash:'', expiresAt:0, attempts:0, sentAt:0 };
+function hashAdminOtp(otp) { return crypto.createHmac('sha256', ADMIN_OTP_SECRET).update(String(otp)).digest('hex'); }
+function createAdminSession(uidValue) {
+  const payload = Buffer.from(JSON.stringify({ uid:uidValue, email:CFG.admin.email, exp:Date.now()+12*60*60*1000 })).toString('base64url');
+  const sig = crypto.createHmac('sha256', ADMIN_OTP_SECRET).update(payload).digest('base64url');
+  return 'ADM1.' + payload + '.' + sig;
+}
+function verifyAdminSession(token) {
+  if (!String(token||'').startsWith('ADM1.')) return null;
+  const parts = String(token).split('.'); if (parts.length!==3) return null;
+  const expected = crypto.createHmac('sha256', ADMIN_OTP_SECRET).update(parts[1]).digest('base64url');
+  if (parts[2].length!==expected.length || !crypto.timingSafeEqual(Buffer.from(parts[2]), Buffer.from(expected))) return null;
+  try { const p=JSON.parse(Buffer.from(parts[1],'base64url').toString('utf8')); if(p.email!==CFG.admin.email || Number(p.exp)<Date.now()) return null; return p; } catch(_) { return null; }
+}
 async function bootstrapAdmin() {
-  if (!CFG.admin.email || !CFG.admin.password) return;
   let u;
   try { u = await auth.getUserByEmail(CFG.admin.email); }
   catch (e) {
     if (e.code !== 'auth/user-not-found') throw e;
-    u = await auth.createUser({ email:CFG.admin.email, password:CFG.admin.password, displayName:CFG.admin.name, emailVerified:true });
+    u = await auth.createUser({ email:CFG.admin.email, password:crypto.randomBytes(24).toString('base64url')+'A1!', displayName:CFG.admin.name, emailVerified:true });
   }
   await update('users/'+u.uid, {
     uid:u.uid, name:CFG.admin.name, email:CFG.admin.email, role:'admin', status:'approved', blocked:false,
@@ -152,9 +166,14 @@ function publicUser(u) {
 async function currentUser(req, roles) {
   const header = req.headers.authorization || '';
   if (!header.startsWith('Bearer ')) throw Object.assign(new Error('Please log in.'), { status:401 });
+  const bearer = header.slice(7);
+  const adminSession = verifyAdminSession(bearer);
   let decoded;
-  try { decoded = await auth.verifyIdToken(header.slice(7)); }
-  catch (_) { throw Object.assign(new Error('Your login session has expired. Please log in again.'), { status:401 }); }
+  if (adminSession) decoded = { uid:adminSession.uid, email:CFG.admin.email, name:CFG.admin.name, adminSession:true };
+  else {
+    try { decoded = await auth.verifyIdToken(bearer); }
+    catch (_) { throw Object.assign(new Error('Your login session has expired. Please log in again.'), { status:401 }); }
+  }
   const user = await ensureProfile(decoded.uid, decoded);
   if (user.blocked) throw Object.assign(new Error('Your account has been blocked. Contact the administrator.'), { status:403 });
   if (roles && !roles.includes(user.role)) throw Object.assign(new Error('Not authorized.'), { status:403 });
@@ -235,7 +254,29 @@ async function route(req, res) {
   const method = req.method;
   if (method==='OPTIONS') return send(res,204,{});
   if (url.pathname==='/api/config' && method==='GET') return send(res,200,{ firebase:CFG.web, paymentGatewayUrl: process.env.PAYMENT_GATEWAY_URL || '' });
-  if (url.pathname==='/api/health' && method==='GET') return send(res,200,{ok:true, firebase:true, gmail:!!CFG.gmail.refreshToken});
+  if (url.pathname==='/api/health' && method==='GET') return send(res,200,{ok:true, firebase:true, gmail:!!CFG.gmail.refreshToken, adminOtp:true});
+
+  if (url.pathname==='/api/admin/request-otp' && method==='POST') {
+    const b=await body(req), email=cleanEmail(b.email);
+    if(email!==CFG.admin.email) throw Object.assign(new Error('This email is not authorized for Admin access.'),{status:403});
+    if(Date.now()-adminOtpState.sentAt < 60*1000) throw Object.assign(new Error('Please wait 60 seconds before requesting another OTP.'),{status:429});
+    const otp=String(crypto.randomInt(100000,1000000));
+    adminOtpState.hash=hashAdminOtp(otp); adminOtpState.expiresAt=Date.now()+ADMIN_OTP_TTL_MS; adminOtpState.attempts=0; adminOtpState.sentAt=Date.now();
+    const sent=await sendEmail(CFG.admin.email,'Competitive Exam Master Admin OTP',emailShell('Admin login verification','<p>Your one-time Admin login OTP is:</p><div style="font-size:32px;font-weight:800;letter-spacing:8px;padding:14px 0">'+otp+'</div><p>This OTP expires in 10 minutes. If you did not request this, ignore this email.</p>'));
+    if(!sent){ adminOtpState.hash=''; adminOtpState.expiresAt=0; throw new Error('OTP email could not be sent. Check Gmail API configuration.'); }
+    return send(res,200,{message:'OTP sent to the authorized Admin Gmail address.'});
+  }
+  if (url.pathname==='/api/admin/verify-otp' && method==='POST') {
+    const b=await body(req), email=cleanEmail(b.email), otp=String(b.otp||'').trim();
+    if(email!==CFG.admin.email) throw Object.assign(new Error('This email is not authorized for Admin access.'),{status:403});
+    if(!/^\d{6}$/.test(otp) || !adminOtpState.hash || Date.now()>adminOtpState.expiresAt) throw Object.assign(new Error('OTP is invalid or expired. Request a new OTP.'),{status:401});
+    adminOtpState.attempts++;
+    if(adminOtpState.attempts>5){ adminOtpState.hash=''; throw Object.assign(new Error('Too many OTP attempts. Request a new OTP.'),{status:429}); }
+    if(!crypto.timingSafeEqual(Buffer.from(hashAdminOtp(otp)),Buffer.from(adminOtpState.hash))) throw Object.assign(new Error('Incorrect OTP.'),{status:401});
+    const u=await auth.getUserByEmail(CFG.admin.email);
+    adminOtpState.hash=''; adminOtpState.expiresAt=0; adminOtpState.attempts=0;
+    return send(res,200,{message:'Admin login successful.',sessionToken:createAdminSession(u.uid),user:{uid:u.uid,name:CFG.admin.name,email:CFG.admin.email,role:'admin',status:'approved',blocked:false}});
+  }
 
   if (url.pathname==='/api/auth/me' && method==='GET') {
     try { const {user}=await currentUser(req); return send(res,200,{user:publicUser(user)}); }
