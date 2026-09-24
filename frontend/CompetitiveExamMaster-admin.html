@@ -334,7 +334,7 @@ nav button{background:#1f2937}nav a.navlink{background:#374151;color:#fff;text-d
 
 </main>
 
-<footer id="siteFooter">Admin Panel • Competitive Exam Master • Data stored only in this browser</footer>
+<footer id="siteFooter">Admin Panel • Competitive Exam Master</footer>
 
 <script>
 /* ---------- Firebase + real backend integration ---------- */
@@ -346,7 +346,6 @@ async function getIdToken(){await firebaseReady;const session=localStorage.getIt
 async function api(method,url,body){await firebaseReady;const headers={'Content-Type':'application/json'};const token=await getIdToken();if(token)headers.Authorization='Bearer '+token;const r=await fetch(url,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||data.message||'Request failed.');return data;}
 function authError(e){const map={'auth/email-already-in-use':'An account with this email already exists.','auth/invalid-email':'Please enter a valid email address.','auth/weak-password':'Password is too weak.','auth/invalid-credential':'Invalid email or password.','auth/user-not-found':'Invalid email or password.','auth/wrong-password':'Invalid email or password.'};return map[e.code]||e.message||'Authentication failed.';}
 async function registerFirebaseAccount(kind,data){await firebaseReady;const cred=await cemAuth.createUserWithEmailAndPassword(data.email,data.password);try{await cred.user.updateProfile({displayName:data.name});const r=await api('POST','/api/auth/register/'+kind,data);try{await cred.user.sendEmailVerification();}catch(_){}await cemAuth.signOut();return r;}catch(e){try{await cred.user.delete();}catch(_){}throw e;}}
-async function firebaseLogin(email,password){await firebaseReady;await cemAuth.signInWithEmailAndPassword(email,password);try{return await api('POST','/api/auth/login',{email});}catch(e){await cemAuth.signOut();throw e;}}
 async function firebaseReauth(password){await firebaseReady;const u=cemAuth.currentUser;if(!u||!u.email)throw new Error('Please log in again.');await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,password));}
 async function refreshUser(){const {user}=await api('GET','/api/auth/me');currentUser=user;updateUI();return user;}
 
@@ -482,7 +481,7 @@ window.logout = async function(){
   await api('POST','/api/auth/logout');
   currentUser = null;
   updateUI();
-  { const m=document.getElementById('loginMsg'); if(m) m.textContent=''; const pw=document.getElementById('loginPassword'); if(pw && !document.getElementById('rememberLogin')?.checked) pw.value=''; }
+  { const m=document.getElementById('loginMsg'); if(m) m.textContent=''; }
   showSection('auth');
 };
 
