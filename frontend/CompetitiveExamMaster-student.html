@@ -214,7 +214,7 @@ button.icon-opt.sel{background:#dbeafe;border-color:#2563eb}
 <main>
 
 <section id="home" class="section">
-<div class="notice">⚠️ <b>Standalone offline version.</b> There's no server — everything (accounts, test series, approvals) is saved only in <i>this browser</i>. Nothing syncs between different devices, browsers, or people. This is meant for a single-device demo, not a real multi-user website — see the note at the very bottom of the page for details.</div>
+<div class="notice">✅ <b>Connected version.</b> Firebase Authentication handles accounts and Firebase Realtime Database stores exams, users, results and subscriptions. The Node.js backend protects all database operations.</div>
 <div class="hero"><h1 id="heroTitle">Prepare Smarter. Practice Better.</h1><p>Log in and take timed mock tests from our Test Series.</p></div>
 <input class="search" placeholder="🔍 Search test series..." oninput="filterCards(this.value)">
 <div class="grid" id="examGrid"><p class="muted">Loading exam modules…</p></div>
@@ -343,7 +343,7 @@ button.icon-opt.sel{background:#dbeafe;border-color:#2563eb}
         <p id="forgotMsg"></p>
 
         <div id="resetBox" class="hidden" style="margin-top:10px">
-          <p class="muted">There's no email service here either — the reset link is shown below directly instead of being emailed.</p>
+          <p class="muted">Firebase Authentication sends the password-reset email securely. Check your inbox and spam folder.</p>
           <div class="form-row"><label>Reset Token</label><input id="resetToken" placeholder="Paste the token from your reset link"></div>
           <div class="form-row"><label>New Password</label><input id="resetNewPassword" type="password" placeholder="New password"></div>
           <div class="form-row"><label>Confirm New Password</label><input id="resetConfirmPassword" type="password" placeholder="Re-enter new password"></div>
