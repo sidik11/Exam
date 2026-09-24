@@ -1134,8 +1134,7 @@ window.payWithGateway = async function(planId){
       handler: async resp => {
         try{
           m.textContent = 'Confirming payment…';
-          const v = await gw(base,'/api/verify',resp);
-          await api('POST','/api/subscription/gateway-activate',{ entitlement:v.entitlement });
+          await gw(base,'/api/verify',resp);
           alert('Payment successful — Premium is now active! 🎉');
           loadPremium();
         }catch(e){ m.textContent = e.message + ' If money was deducted, reopen this page — it activates automatically.'; }
