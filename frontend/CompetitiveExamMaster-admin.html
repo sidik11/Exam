@@ -1425,8 +1425,8 @@ function addQuestionRow(prefill, sectionName){
           <option ${ans==='C'?'selected':''}>C</option><option ${ans==='D'?'selected':''}>D</option>
         </select>
       </div>
-      <div class="form-row" style="flex:1"><label>Marks</label><input type="number" step="any" class="q-marks" value="${p.marks!==undefined?p.marks:defMarks}"></div>
-      <div class="form-row" style="flex:1"><label>Negative Marks</label><input type="number" step="any" class="q-neg" value="${p.negative!==undefined?p.negative:defNeg}"></div>
+      <div class="form-row" style="flex:1"><label>Marks</label><input type="number" step="any" class="q-marks" value="${esc(p.marks!==undefined ? p.marks : defMarks)}"></div>
+      <div class="form-row" style="flex:1"><label>Negative Marks</label><input type="number" step="any" class="q-neg" value="${esc(p.negative!==undefined ? p.negative : defNeg)}"></div>
     </div>
     <div class="form-row"><label>Explanation / Solution (shown to students after they submit — optional)</label><textarea class="q-exp" rows="2" placeholder="Explain why the correct option is right...">${esc(p.explanation||'')}</textarea></div>
   `;
@@ -1541,6 +1541,42 @@ async function loadMyTests(){
 loadBranding();
 refreshModuleViews();
 refreshUser().then(()=>{ showSection(currentUser && currentUser.role==='admin' ? 'admin' : 'auth'); }).catch(()=>{ currentUser=null; updateUI(); showSection('auth'); });
+</script>
+
+<script>
+(function(){
+  if(!window.msg) window.msg=function(id,text,ok){
+    var el=document.getElementById(id);
+    if(!el)return;
+    el.textContent=String(text||'');
+    el.className=ok?'msg-ok':'msg-err';
+  };
+  if(!window.requestAdminOtp) window.requestAdminOtp=async function(){
+    try{
+      var email=(document.getElementById('loginEmail')||{}).value.trim();
+      if(email!=='mjdeveloperodisha@gmail.com') throw new Error('Enter the authorized Admin Gmail exactly: mjdeveloperodisha@gmail.com');
+      var r=await fetch('/api/admin/request-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})});
+      var data=await r.json().catch(function(){return{}});
+      if(!r.ok) throw new Error(data.error||data.message||'Could not send OTP.');
+      msg('loginMsg',data.message,true);
+      document.getElementById('adminOtpEmailPane').classList.add('hidden');
+      document.getElementById('adminOtpPane').classList.remove('hidden');
+      document.getElementById('adminOtp').focus();
+    }catch(e){msg('loginMsg',e.message);}
+  };
+  if(!window.verifyAdminOtp) window.verifyAdminOtp=async function(){
+    try{
+      var otp=(document.getElementById('adminOtp')||{}).value.trim();
+      if(!/^\d{6}$/.test(otp)) throw new Error('Enter the 6-digit OTP sent to the Admin Gmail.');
+      var email=(document.getElementById('loginEmail')||{}).value.trim();
+      var r=await fetch('/api/admin/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,otp:otp})});
+      var data=await r.json().catch(function(){return{}});
+      if(!r.ok) throw new Error(data.error||data.message||'OTP verification failed.');
+      localStorage.setItem('cem_admin_session',data.sessionToken);
+      window.location.reload();
+    }catch(e){msg('otpMsg',e.message);}
+  };
+})();
 </script>
 </body>
 </html>
