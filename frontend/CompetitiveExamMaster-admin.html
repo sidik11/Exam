@@ -1540,7 +1540,7 @@ async function loadMyTests(){
 
 loadBranding();
 refreshModuleViews();
-refreshUser().then(()=>{ showSection(currentUser && currentUser.role==='admin' ? 'admin' : 'auth'); });
+refreshUser().then(()=>{ showSection(currentUser && currentUser.role==='admin' ? 'admin' : 'auth'); }).catch(()=>{ currentUser=null; updateUI(); showSection('auth'); });
 </script>
 </body>
 </html>
