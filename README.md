@@ -101,7 +101,7 @@ Recommended events:
 
 - `payment.captured`
 - `payment.failed`
-- `order.paid` (optional; the server is idempotent)
+- Do not rely on `order.paid` for activation; `payment.captured` is the activation event
 
 ## RTDB security
 
