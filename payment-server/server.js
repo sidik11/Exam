@@ -103,7 +103,7 @@ async function route(req,res){
   if(!CFG.webhookSecret||!safeEq(hmac(CFG.webhookSecret,raw),req.headers['x-razorpay-signature']||''))return send(res,400,{error:'Bad signature.'});
   const ev=JSON.parse(raw),eventId=ev.id||crypto.createHash('sha256').update(raw).digest('hex'),seen=await get('webhookEvents/'+eventId);if(seen)return send(res,200,{ok:true,duplicate:true});await set('webhookEvents/'+eventId,{event:ev.event,receivedAt:new Date().toISOString()});
   const entity=ev.payload?.payment?.entity||ev.payload?.order?.entity;const oid=entity?.order_id||entity?.id,order=await get('orders/'+oid);
-  if(ev.event==='payment.captured'||ev.event==='order.paid'){if(order)await activate(order,entity.id,new Date().toISOString());}
+  if(ev.event==='payment.captured'){if(order)await activate(order,entity.id,new Date().toISOString());}
   else if(ev.event==='payment.failed'){if(order)await markFailed(order,entity.id,entity.error_description||entity.error_reason);}
   return send(res,200,{ok:true});
  }
