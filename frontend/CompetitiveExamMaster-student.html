@@ -532,8 +532,8 @@ async function getIdToken(){await firebaseReady;const u=cemAuth&&cemAuth.current
 async function api(method,url,body){await firebaseReady;const headers={'Content-Type':'application/json'};const token=await getIdToken();if(token)headers.Authorization='Bearer '+token;const r=await fetch(url,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||data.message||'Request failed.');return data;}
 function esc(value){const s=String(value??'');return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function msg(id,text,ok=false){const el=document.getElementById(id);if(!el)return;el.textContent=String(text||'');el.className=ok?'success':'error';}
-function authError(e){const map={'auth/email-already-in-use':'An account with this email already exists.','auth/invalid-email':'Please enter a valid email address.','auth/weak-password':'Password is too weak.','auth/invalid-credential':'Invalid email or password.','auth/user-not-found':'Invalid email or password.','auth/wrong-password':'Invalid email or password.'};return map[e.code]||e.message||'Authentication failed.';}
-async function registerFirebaseAccount(kind,data){await firebaseReady;const cred=await cemAuth.createUserWithEmailAndPassword(data.email,data.password);try{await cred.user.updateProfile({displayName:data.name});const r=await api('POST','/api/auth/register/'+kind,data);try{await cred.user.sendEmailVerification();}catch(_){}await cemAuth.signOut();return r;}catch(e){try{await cred.user.delete();}catch(_){}throw e;}}
+function authError(e){const map={'auth/email-already-in-use':'An account with this email already exists.','auth/invalid-email':'Please enter a valid email address.','auth/weak-password':'Password must contain at least 6 characters.','auth/invalid-credential':'Invalid email or password.','auth/user-not-found':'Invalid email or password.','auth/wrong-password':'Invalid email or password.','auth/operation-not-allowed':'Email/password sign-in is disabled. Enable Email/Password in Firebase Authentication.','auth/too-many-requests':'Too many attempts. Please wait and try again.','auth/network-request-failed':'Network error. Check your internet connection.'};return map[e.code]||e.message||'Authentication failed.';}
+async function registerFirebaseAccount(kind,data){await firebaseReady;const cred=await cemAuth.createUserWithEmailAndPassword(data.email,data.password);try{await cred.user.updateProfile({displayName:data.name});const r=await api('POST','/api/auth/register/'+kind,data);try{await cred.user.sendEmailVerification();}catch(_){}return r;}catch(e){try{await cred.user.delete();}catch(_){}throw e;}}
 async function firebaseLogin(email,password){await firebaseReady;await cemAuth.signInWithEmailAndPassword(email,password);try{return await api('POST','/api/auth/login',{email});}catch(e){await cemAuth.signOut();throw e;}}
 async function firebaseReauth(password){await firebaseReady;const u=cemAuth.currentUser;if(!u||!u.email)throw new Error('Please log in again.');await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,password));}
 async function refreshUser(){const {user}=await api('GET','/api/auth/me');currentUser=user;updateUI();return user;}
@@ -669,7 +669,7 @@ window.loginUser = async function(){
   try{
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
-    const r = await api('POST','/api/auth/login', { email, password });
+    const r = await firebaseLogin(email,password);
     currentUser = r.user;
     try{
       if(document.getElementById('rememberLogin').checked){
