@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Competitive Exam Master – Teacher & Student</title>
+<meta name="description" content="Comprehensive online test and competitive examination platform featuring mock tests, timed exams, automated ranking, student performance analytics, and administrative management.">
+<meta property="og:title" content="Competitive Exam Master – Teacher & Student">
+<meta property="og:description" content="Comprehensive online test and competitive examination platform featuring mock tests, timed exams, automated ranking, student performance analytics, and administrative management.">
 <style>
 :root{--bg:#f3f5f9;--fg:#172033;--primary:#2563eb;--card:#ffffff;--border:#e5e7eb}
 :root[data-theme="dark"]{--card:#1e293b;--border:#334155}
@@ -526,17 +529,63 @@ main{max-width:1400px;margin:auto;padding-top:28px}.hero{position:relative;overf
 
 let cemAuth = null;
 function loadScript(src){return new Promise((resolve,reject)=>{if(document.querySelector('script[src="'+src+'"]'))return resolve();const s=document.createElement('script');s.src=src;s.async=false;s.onload=resolve;s.onerror=()=>reject(new Error('Could not load Firebase SDK.'));document.head.appendChild(s);});}
-const firebaseReady=(async()=>{const cfgRes=await fetch('/api/config');if(!cfgRes.ok)throw new Error('Backend is not running. Start the Exam server first.');const cfg=await cfgRes.json();await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js');if(!window.firebase)throw new Error('Firebase SDK failed to load.');if(!firebase.apps.length)firebase.initializeApp(cfg.firebase);cemAuth=firebase.auth();return cfg;})();
+const firebaseReady=(async()=>{
+  const cfgRes=await fetch('/api/config');
+  if(!cfgRes.ok)throw new Error('Backend is not running. Start the Exam server first.');
+  const cfg=await cfgRes.json();
+  if (cfg.firebase && cfg.firebase.apiKey) {
+    try {
+      await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
+      await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js');
+      if(window.firebase && !firebase.apps.length) firebase.initializeApp(cfg.firebase);
+      if(window.firebase) cemAuth=firebase.auth();
+    } catch(err) {
+      console.warn('Firebase init fallback:', err);
+    }
+  }
+  return cfg;
+})();
 function ensureAdmin(){}
-async function getIdToken(){await firebaseReady;const u=cemAuth&&cemAuth.currentUser;return u?u.getIdToken():null;}
+async function getIdToken(){
+  await firebaseReady;
+  const adminSession = localStorage.getItem('cem_admin_session');
+  if (adminSession) return adminSession;
+  const session = localStorage.getItem('cem_session');
+  if (session) return session;
+  const u = cemAuth && cemAuth.currentUser;
+  return u ? u.getIdToken() : null;
+}
 async function api(method,url,body){await firebaseReady;const headers={'Content-Type':'application/json'};const token=await getIdToken();if(token)headers.Authorization='Bearer '+token;const r=await fetch(url,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||data.message||'Request failed.');return data;}
 function esc(value){const s=String(value??'');return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function msg(id,text,ok=false){const el=document.getElementById(id);if(!el)return;el.textContent=String(text||'');el.className=ok?'success':'error';}
 function authError(e){const map={'auth/email-already-in-use':'An account with this email already exists.','auth/invalid-email':'Please enter a valid email address.','auth/weak-password':'Password must contain at least 6 characters.','auth/invalid-credential':'Invalid email or password.','auth/user-not-found':'Invalid email or password.','auth/wrong-password':'Invalid email or password.','auth/operation-not-allowed':'Email/password sign-in is disabled. Enable Email/Password in Firebase Authentication.','auth/too-many-requests':'Too many attempts. Please wait and try again.','auth/network-request-failed':'Network error. Check your internet connection.'};return map[e.code]||e.message||'Authentication failed.';}
-async function registerFirebaseAccount(kind,data){await firebaseReady;const cred=await cemAuth.createUserWithEmailAndPassword(data.email,data.password);try{await cred.user.updateProfile({displayName:data.name});const r=await api('POST','/api/auth/register/'+kind,data);try{await cred.user.sendEmailVerification();}catch(_){}return r;}catch(e){try{await cred.user.delete();}catch(_){}throw e;}}
-async function firebaseLogin(email,password){await firebaseReady;await cemAuth.signInWithEmailAndPassword(email,password);try{return await api('POST','/api/auth/login',{email});}catch(e){await cemAuth.signOut();throw e;}}
-async function firebaseReauth(password){await firebaseReady;const u=cemAuth.currentUser;if(!u||!u.email)throw new Error('Please log in again.');await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,password));}
-async function refreshUser(){const {user}=await api('GET','/api/auth/me');currentUser=user;updateUI();return user;}
+async function registerFirebaseAccount(kind,data){
+  await firebaseReady;
+  if (!cemAuth || !cemAuth.app || !cemAuth.app.options || !cemAuth.app.options.apiKey) {
+    const r=await api('POST','/api/auth/register/'+kind,data);
+    if(r.sessionToken) localStorage.setItem('cem_session', r.sessionToken);
+    return r;
+  }
+  const cred=await cemAuth.createUserWithEmailAndPassword(data.email,data.password);
+  try{await cred.user.updateProfile({displayName:data.name});const r=await api('POST','/api/auth/register/'+kind,data);try{await cred.user.sendEmailVerification();}catch(_){}return r;}catch(e){try{await cred.user.delete();}catch(_){}throw e;}
+}
+async function firebaseLogin(email,password){
+  await firebaseReady;
+  if (!cemAuth || !cemAuth.app || !cemAuth.app.options || !cemAuth.app.options.apiKey) {
+    const r=await api('POST','/api/auth/login',{email,password});
+    if(r.sessionToken) localStorage.setItem('cem_session', r.sessionToken);
+    return r;
+  }
+  await cemAuth.signInWithEmailAndPassword(email,password);
+  try{return await api('POST','/api/auth/login',{email});}catch(e){await cemAuth.signOut();throw e;}
+}
+async function firebaseReauth(password){
+  await firebaseReady;
+  const u=cemAuth&&cemAuth.currentUser;
+  if(!u||!u.email) return;
+  await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,password));
+}
+async function refreshUser(){try{const {user}=await api('GET','/api/auth/me');currentUser=user;updateUI();return user;}catch(e){currentUser=null;updateUI();return null;}}
 
 
 let currentUser = null;
@@ -700,7 +749,10 @@ window.loginUser = async function(){
 })();
 
 window.logout = async function(){
-  await api('POST','/api/auth/logout');
+  localStorage.removeItem('cem_session');
+  localStorage.removeItem('cem_admin_session');
+  if (cemAuth) try { await cemAuth.signOut(); } catch(_) {}
+  try { await api('POST','/api/auth/logout'); } catch(_) {}
   currentUser = null;
   updateUI();
   { const m=document.getElementById('loginMsg'); if(m) m.textContent=''; const pw=document.getElementById('loginPassword'); if(pw && !document.getElementById('rememberLogin')?.checked) pw.value=''; }

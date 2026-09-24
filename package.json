@@ -4,6 +4,8 @@
     "firebase-admin": "^13.5.0"
   },
   "scripts": {
+    "build": "node -c server.js",
+    "dev": "node server.js",
     "start": "node server.js"
   },
   "engines": {

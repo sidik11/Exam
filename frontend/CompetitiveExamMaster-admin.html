@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Admin Panel – Competitive Exam Master</title>
+<meta name="description" content="Comprehensive online test and competitive examination platform featuring mock tests, timed exams, automated ranking, student performance analytics, and administrative management.">
+<meta property="og:title" content="Admin Panel – Competitive Exam Master">
+<meta property="og:description" content="Comprehensive online test and competitive examination platform featuring mock tests, timed exams, automated ranking, student performance analytics, and administrative management.">
 <style>
 :root{--bg:#f3f5f9;--fg:#172033;--primary:#2563eb;--card:#ffffff;--border:#e5e7eb}
 :root[data-theme="dark"]{--card:#1e293b;--border:#334155}
@@ -298,12 +301,76 @@ nav button{background:#1f2937}nav a.navlink{background:#374151;color:#fff;text-d
     <h3>🏫 Institution Settings</h3>
     <div class="row" style="align-items:center">
       <img id="settingsLogoPreview" class="logo-preview hidden" alt="logo preview">
-      <div class="form-row" style="flex:1"><label>Institution Logo</label><input type="file" id="settingsLogoFile" accept="image
+      <div class="form-row" style="flex:1">
+        <label>Institution Logo</label>
+        <input type="file" id="settingsLogoFile" accept="image/*" onchange="previewLogo()">
+      </div>
+    </div>
+    <div class="form-row"><label>Institution Name</label><input id="settingsName" placeholder="e.g. Competitive Exam Master"></div>
+    <div class="form-row">
+      <label class="theme-switch">
+        <input type="checkbox" id="settingsDarkMode" onchange="onThemeSwitch()">
+        <span class="switch-track"><span class="switch-thumb"></span></span>
+        <span id="settingsThemeModeLabel">Light mode</span>
+      </label>
+    </div>
+    <div class="theme-colors">
+      <div class="form-row"><label>Background</label><input type="color" id="settingsBgColor" value="#f3f5f9" oninput="previewTheme()"></div>
+      <div class="form-row"><label>Text</label><input type="color" id="settingsFgColor" value="#172033" oninput="previewTheme()"></div>
+      <div class="form-row"><label>Primary Accent</label><input type="color" id="settingsPrimaryColor" value="#2563eb" oninput="previewTheme()"></div>
+    </div>
+    <div class="form-row" style="margin-top:8px"><button type="button" class="secondary" onclick="resetThemeDefaults()">Reset theme colors to default</button></div>
+    <div class="form-row"><label>Address</label><textarea id="settingsAddress" rows="2"></textarea></div>
+    <div class="row">
+      <div class="form-row" style="flex:1"><label>Contact Email</label><input id="settingsEmail" type="email"></div>
+      <div class="form-row" style="flex:1"><label>Contact Phone</label><input id="settingsPhone"></div>
+    </div>
+    <button class="primary-btn" onclick="saveSettings()">Save Institution Settings</button> <span id="settingsMsg"></span>
+  </div>
+
+  <div class="panel-card" style="margin-top:18px">
+    <h3>💾 Backup &amp; Restore</h3>
+    <p class="muted">Download a complete JSON backup of all users, tests, modules, subscriptions, and settings, or restore from a previously exported backup file.</p>
+    <div class="row" style="align-items:center;gap:12px;margin-bottom:12px">
+      <button class="secondary" onclick="downloadBackup()">📥 Download Full Backup (.json)</button>
+    </div>
+    <div class="row" style="align-items:center;gap:12px">
+      <input type="file" id="restoreFile" accept=".json">
+      <button class="danger-btn" onclick="restoreBackup()">Restore Backup</button>
+    </div>
+    <p id="backupMsg"></p>
+  </div>
+
+  <div class="panel-card" style="margin-top:18px">
+    <h3>Individual Test Access Requests</h3>
+    <div class="table-wrap"><table><thead><tr><th>Student</th><th>Test Series</th><th>Price</th><th>Submitted</th><th>Status</th><th>Action</th></tr></thead><tbody id="purchaseTable"></tbody></table></div>
+  </div>
+</section>
+
+</main>
+<footer id="siteFooter">Competitive Exam Master • Admin Panel</footer>
+
+<script>
 let cemAuth = null;
 function loadScript(src){return new Promise((resolve,reject)=>{if(document.querySelector('script[src="'+src+'"]'))return resolve();const s=document.createElement('script');s.src=src;s.async=false;s.onload=resolve;s.onerror=()=>reject(new Error('Could not load Firebase SDK.'));document.head.appendChild(s);});}
-const firebaseReady=(async()=>{const cfgRes=await fetch('/api/config');if(!cfgRes.ok)throw new Error('Backend is not running. Start the Exam server first.');const cfg=await cfgRes.json();await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js');if(!window.firebase)throw new Error('Firebase SDK failed to load.');if(!firebase.apps.length)firebase.initializeApp(cfg.firebase);cemAuth=firebase.auth();return cfg;})();
+const firebaseReady=(async()=>{
+  const cfgRes=await fetch('/api/config');
+  if(!cfgRes.ok)throw new Error('Backend is not running. Start the Exam server first.');
+  const cfg=await cfgRes.json();
+  if (cfg.firebase && cfg.firebase.apiKey) {
+    try {
+      await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
+      await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js');
+      if(!firebase.apps.length) firebase.initializeApp(cfg.firebase);
+      cemAuth=firebase.auth();
+    } catch(e) {
+      console.warn('Firebase init fallback:', e);
+    }
+  }
+  return cfg;
+})();
 function ensureAdmin(){}
-async function getIdToken(){await firebaseReady;const session=localStorage.getItem('cem_admin_session');if(session)return session;const u=cemAuth&&cemAuth.currentUser;return u?u.getIdToken():null;}
+async function getIdToken(){await firebaseReady;const session=localStorage.getItem('cem_admin_session')||localStorage.getItem('cem_session');if(session)return session;const u=cemAuth&&cemAuth.currentUser;return u?u.getIdToken():null;}
 async function api(method,url,body){await firebaseReady;const headers={'Content-Type':'application/json'};const token=await getIdToken();if(token)headers.Authorization='Bearer '+token;const r=await fetch(url,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||data.message||'Request failed.');return data;}
 function msg(id,text,ok=false){const el=document.getElementById(id);if(!el)return;el.textContent=String(text||'');el.className=ok?'msg-ok':'msg-err';}
 function authError(e){const map={'auth/email-already-in-use':'An account with this email already exists.','auth/invalid-email':'Please enter a valid email address.','auth/weak-password':'Password is too weak.','auth/invalid-credential':'Invalid email or password.','auth/user-not-found':'Invalid email or password.','auth/wrong-password':'Invalid email or password.'};return map[e.code]||e.message||'Authentication failed.';}
@@ -431,25 +498,8 @@ window.requestAdminOtp = async function(){
   catch(e){ msg('loginMsg',e.message); }
 };
 window.verifyAdminOtp = async function(){
-  try{
-    const otp=document.getElementById('adminOtp').value.trim();
-    if(!/^\d{6}$/.test(otp)){msg('otpMsg','Enter the 6-digit OTP sent to the Admin Gmail.');return;}
-    const email=document.getElementById('loginEmail').value.trim();
-    const r=await api('POST','/api/admin/verify-otp',{email,otp});
-    if(!r.sessionToken || !r.user) throw new Error('Admin verification succeeded but no admin session was returned.');
-    localStorage.setItem('cem_admin_session',r.sessionToken);
-    currentUser=r.user;
-    updateUI();
-    document.getElementById('auth')?.classList.add('hidden');
-    document.querySelectorAll('main>section').forEach(s=>{ if(s.id!=='admin') s.classList.add('hidden'); });
-    document.getElementById('admin')?.classList.remove('hidden');
-    msg('otpMsg','Admin login successful.',true);
-    renderAdmin();
-    loadSettingsIntoForm();
-    loadSubscriptionAdmin();
-    mountModuleManager('adminModules','adm');
-    loadAdminTests();
-  }catch(e){ msg('otpMsg',e.message); }
+  try{ const otp=document.getElementById('adminOtp').value.trim(); if(!/^\d{6}$/.test(otp)){msg('otpMsg','Enter the 6-digit OTP sent to the Admin Gmail.');return;} const email=document.getElementById('loginEmail').value.trim(); const r=await api('POST','/api/admin/verify-otp',{email,otp}); localStorage.setItem('cem_admin_session',r.sessionToken); currentUser=r.user; msg('otpMsg','Admin login successful.',true); updateUI(); showSection('admin'); }
+  catch(e){ msg('otpMsg',e.message); }
 };
 window.resetAdminOtp = function(){ document.getElementById('adminOtpPane').classList.add('hidden'); document.getElementById('adminOtpEmailPane').classList.remove('hidden'); document.getElementById('adminOtp').value=''; document.getElementById('otpMsg').textContent=''; };
 
@@ -1125,9 +1175,7 @@ function showModal(html){
   const fsEl = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
   const target = fsEl || document.body;
   if(root.parentElement !== target) target.appendChild(root);
-  root.innerHTML = '<div class="modal-overlay" onclick="if(event.target===this) closeModal()"><div class="modal-box"></div></div>';
-  const box = root.querySelector('.modal-box');
-  if(box) box.innerHTML = String(html || '');
+  root.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this) closeModal()"><div class="modal-box">${html}</div></div>`;
 }
 function closeModal(){ document.getElementById('modalRoot').innerHTML = ''; }
 window.closeModal = closeModal;
@@ -1591,18 +1639,8 @@ refreshUser().then(()=>{ showSection(currentUser && currentUser.role==='admin' ?
       var r=await fetch('/api/admin/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,otp:otp})});
       var data=await r.json().catch(function(){return{}});
       if(!r.ok) throw new Error(data.error||data.message||'OTP verification failed.');
-      if(!data.sessionToken) throw new Error('Admin verification succeeded but no session token was returned.');
       localStorage.setItem('cem_admin_session',data.sessionToken);
-      if(data.user) window.currentUser=data.user;
-      document.getElementById('auth')?.classList.add('hidden');
-      document.querySelectorAll('main>section').forEach(function(s){if(s.id!=='admin')s.classList.add('hidden');});
-      document.getElementById('admin')?.classList.remove('hidden');
-      msg('otpMsg','Admin login successful.',true);
-      if(window.renderAdmin) renderAdmin();
-      if(window.loadSettingsIntoForm) loadSettingsIntoForm();
-      if(window.loadSubscriptionAdmin) loadSubscriptionAdmin();
-      if(window.mountModuleManager) mountModuleManager('adminModules','adm');
-      if(window.loadAdminTests) loadAdminTests();
+      window.location.reload();
     }catch(e){msg('otpMsg',e.message);}
   };
 })();
