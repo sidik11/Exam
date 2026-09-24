@@ -4,7 +4,7 @@ This version uses:
 
 - Firebase Authentication for student/teacher/admin authentication.
 - Firebase Realtime Database for users, admins, modules, exams, questions, attempts, results, subscriptions, purchases and settings.
-- Gmail API for subscription/payment emails.
+- Gmail API for Admin OTP and subscription/payment emails.
 - Razorpay Test Mode for online Premium payments.
 - Node.js backend for authorization and all protected database operations.
 - No Firebase Storage is used.
@@ -29,15 +29,15 @@ Copy-Item .env.example .env
 
 Fill `.env` with your Firebase, Gmail and Razorpay values.
 
-If you want the server to create the first admin account automatically, set:
+Admin login uses a fixed Gmail address:
 
-```env
-ADMIN_EMAIL=your-admin-email@example.com
-ADMIN_PASSWORD=your-strong-password
-ADMIN_NAME=Administrator
+```text
+mjdeveloperodisha@gmail.com
 ```
 
-The server creates that Firebase Auth user and gives it the admin role in RTDB.
+The Admin panel asks for this email and sends a 6-digit OTP through the configured Gmail API. The OTP expires after 10 minutes and is limited to five verification attempts. No Admin password is entered in the Admin panel.
+
+The backend still ensures the Firebase Auth/RTDB admin profile exists so the authenticated Admin session can use protected Admin APIs.
 
 ## Start the main server
 
