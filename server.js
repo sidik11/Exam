@@ -267,11 +267,11 @@ async function route(req, res) {
 
   if (url.pathname==='/api/account/me' && method==='GET') { const {user}=await currentUser(req); return send(res,200,{user:publicUser(user)}); }
   if (url.pathname==='/api/account/me' && method==='PUT') {
-    const {uid,user}=await currentUser(req); const b=await body(req);
+    const {uid,user,decoded}=await currentUser(req); const b=await body(req);
     const name=b.name!==undefined?String(b.name).trim():user.name, mobile=b.mobile!==undefined?String(b.mobile).trim():user.mobile, subject=b.subject!==undefined?String(b.subject).trim():user.subject;
     if(!name) throw new Error("Name can't be empty.");
     if(mobile && !MOBILE_RE.test(mobile)) throw new Error('Please enter a valid mobile number.');
-    const email=cleanEmail(user.email);
+    const email=cleanEmail(decoded.email || user.email);
     const updated={...user,name,mobile,email,updatedAt:nowIso()}; if(user.role==='teacher') updated.subject=subject||'';
     await set('users/'+uid,updated); return send(res,200,{message:'Account updated.',user:publicUser(updated)});
   }
