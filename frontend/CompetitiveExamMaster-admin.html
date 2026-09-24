@@ -1,0 +1,2434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Admin Panel – Competitive Exam Master</title>
+<style>
+:root{--bg:#f3f5f9;--fg:#172033;--primary:#2563eb;--card:#ffffff;--border:#e5e7eb}
+:root[data-theme="dark"]{--card:#1e293b;--border:#334155}
+*{box-sizing:border-box}html,body{min-height:100%;width:100%}body{margin:0;min-height:100vh;font-family:Arial,sans-serif;background:var(--bg);color:var(--fg)}
+header{background:#111827;color:#fff;padding:18px 20px;position:sticky;top:0;z-index:5}
+.brand-row{display:flex;align-items:center;gap:10px}
+.brand-row img{height:34px;width:34px;object-fit:contain;border-radius:6px;background:#fff}
+.brand{font-size:22px;font-weight:800}.sub{opacity:.75;font-size:12px;margin-top:3px}
+nav{display:flex;gap:8px;overflow:auto;margin-top:14px}button{border:0;border-radius:10px;padding:11px 14px;cursor:pointer;font-weight:700}
+nav button{background:#253044;color:#fff;white-space:nowrap}.active{background:var(--primary)!important}
+main{max-width:none;width:100%;margin:0;padding:20px clamp(12px,2.5vw,40px)}.hero{background:linear-gradient(135deg,#111827,#7f1d1d);color:#fff;padding:25px;border-radius:18px;margin-bottom:18px}
+.hero h1{margin:0 0 8px;font-size:30px}.hero p{margin:0;opacity:.85}
+.notice{background:#fff7e6;border:1px solid #f0c36d;color:#7a5b00;padding:12px 16px;border-radius:12px;margin-bottom:18px;font-size:13px;line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.card{background:var(--card);border-radius:15px;padding:18px;box-shadow:0 3px 12px #0001}.card h3{margin:8px 0}.muted{color:#64748b;font-size:13px}
+.card button,.primary{background:var(--primary);color:#fff}.secondary{background:#e5e7eb;color:#111827}
+.search{width:100%;padding:14px;border:1px solid #d1d5db;border-radius:12px;margin-bottom:15px;font-size:16px}
+.hidden{display:none!important}.row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.reader{background:var(--card);border-radius:15px;padding:22px;line-height:1.7}.reader h2{margin-top:0}
+.card button.option{display:block;width:100%;text-align:left;margin:9px 0;background:#fff;color:#172033;border:1px solid #d1d5db;padding:11px;border-radius:8px}.card button.option.correct{background:#bbf7d0}.card button.option.wrong{background:#fecaca}.card button.option.selected{background:#16a34a;border-color:#16a34a;color:#fff}
+.save-next-btn{background:#16a34a;color:#fff;border:0;padding:9px 12px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
+.submit-btn{background:var(--primary);color:#fff;border:0;padding:9px 12px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
+footer{text-align:center;padding:25px;color:#64748b;font-size:12px}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:99999;padding:16px}
+.modal-box{background:var(--card);color:var(--fg);border-radius:14px;padding:22px;max-width:560px;width:100%;max-height:85vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+
+/* ---- Testbook-style result page ---- */
+.result-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding-bottom:16px;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.result-header h3{margin:0;font-size:19px}
+.result-header .rh-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.rh-btn{background:#fff;border:1px solid #d1d5db;color:#172033;padding:9px 16px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer}
+.rh-btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.section-title{font-size:17px;font-weight:800;margin:26px 0 14px;color:#172033}
+.perf-summary{display:flex;flex-wrap:wrap;gap:28px;row-gap:20px;padding:6px 4px 4px}
+.perf-stat{display:flex;align-items:center;gap:12px;min-width:150px}
+.perf-icon{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;color:#fff}
+.perf-icon.rank{background:#e11d67}
+.perf-icon.score{background:#6d28d9}
+.perf-icon.attempted{background:#94a3b8}
+.perf-icon.accuracy{background:#16a34a}
+.perf-icon.percentile{background:#2563eb}
+.perf-text b{display:block;font-size:20px;line-height:1.2;color:#172033}
+.perf-text span{font-size:13px;color:#64748b}
+.perf-note{display:flex;align-items:center;gap:14px;margin-top:24px;flex-wrap:wrap}
+.perf-note .perf-icon{background:#16a34a;font-size:18px}
+.perf-note-text{font-size:15px;color:#172033}
+.perf-note-text b{color:#dc2626}
+.sec-table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px}
+table.sec-table{width:100%;border-collapse:collapse;font-size:14px}
+table.sec-table th{text-align:left;color:#64748b;font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.03em;padding:12px 16px;background:#f8fafc;border-bottom:1px solid var(--border)}
+table.sec-table td{padding:14px 16px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+table.sec-table tr:last-child td{border-bottom:0}
+table.sec-table td.sec-name{font-weight:700}
+.summary-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:14px 0}
+.summary-cards .stat{background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px;text-align:center}
+.summary-cards .stat b{display:block;font-size:20px;margin-bottom:2px}
+.summary-cards .stat span{font-size:12px;color:#64748b}
+.solution-block{background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin:8px 0}
+.solution-block .sol-q{font-weight:700;margin-bottom:6px}
+.tb-option-row.sol-correct{background:#e8f8ee;border-color:#17833b}
+.tb-option-row.sol-incorrect{background:#fdecec;border-color:#dc2626}
+.tb-option-row.sol-static{cursor:default}
+.tb-option-row.sol-static:hover{background:inherit}
+.solution-explain{margin-top:8px;padding-top:8px;border-top:1px dashed #cbd5e1;font-size:13.5px;color:#334155}
+.auth-grid,.dashboard-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.auth-card,.panel-card{background:var(--card);padding:20px;border-radius:14px;box-shadow:0 5px 18px rgba(0,0,0,.08)}
+.auth-card h3,.panel-card h3{margin-top:0}
+.form-row{display:grid;gap:8px;margin:10px 0}
+.form-row input,.form-row select,.form-row textarea{padding:11px;border:1px solid #ccc;border-radius:8px;font:inherit;background:var(--card);color:var(--fg)}
+.form-row input[type=color]{padding:2px;height:44px}
+.theme-switch{display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-weight:600;user-select:none}
+.theme-switch input{display:none}
+.switch-track{width:44px;height:24px;flex:0 0 44px;background:#cbd5e1;border-radius:999px;position:relative;transition:background .2s}
+.switch-thumb{position:absolute;top:2px;left:2px;width:20px;height:20px;background:#fff;border-radius:50%;transition:left .2s;box-shadow:0 1px 3px #0003}
+.theme-switch input:checked+.switch-track{background:var(--primary)}
+.theme-switch input:checked+.switch-track .switch-thumb{left:22px}
+.theme-colors{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}
+.theme-colors .form-row{margin:0;min-width:120px}
+.form-row input:-webkit-autofill,.form-row input:-webkit-autofill:hover,.form-row input:-webkit-autofill:focus{-webkit-text-fill-color:#172033;box-shadow:0 0 0 1000px #fff inset;-webkit-box-shadow:0 0 0 1000px #fff inset;transition:background-color 9999s ease-in-out 0s}
+.primary-btn,.danger-btn,.success-btn,.warn-btn{border:0;padding:9px 12px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
+.primary-btn{background:var(--primary);color:#fff}.success-btn{background:#17833b;color:#fff}.danger-btn{background:#b42318;color:#fff}.warn-btn{background:#9a6700;color:#fff}
+.status-pending{color:#9a6700;font-weight:700}.status-approved{color:#17833b;font-weight:700}.status-rejected{color:#b42318;font-weight:700}.status-blocked{color:#b42318;font-weight:700}
+.user-pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#eee;margin:4px 0;font-size:.9rem}
+.subject-pill{display:inline-block;padding:5px 10px;border-radius:999px;background:#e5e7eb;margin:3px;font-size:.8rem;cursor:pointer;border:2px solid transparent}
+.subject-pill.active{background:#111827;color:#fff}
+.quiz-layout{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.quiz-main{flex:2;min-width:260px}
+.quiz-palette{flex:1;min-width:220px;max-width:320px;background:#f8fafc;border-radius:12px;padding:14px;border:1px solid #e5e7eb}
+.palette-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:6px;margin-top:8px}
+.palette-btn{width:38px;height:38px;border-radius:8px;border:0;cursor:pointer;font-weight:700;font-size:13px;color:#fff;background:#9ca3af}
+.palette-btn.current{outline:3px solid #111827;outline-offset:1px}
+.palette-btn.pal-answered{background:#17833b}
+.palette-btn.pal-not-answered{background:#b42318}
+.palette-btn.pal-marked{background:#7c3aed}
+.palette-btn.pal-answered-marked{background:#7c3aed;box-shadow:inset 0 0 0 3px #17833b}
+.palette-btn.pal-not-visited{background:#9ca3af}
+.review-btn{background:#7c3aed;color:#fff;border:0;padding:9px 12px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
+.legend-item{display:inline-flex;align-items:center;gap:5px;font-size:12px;margin-right:10px;margin-bottom:4px}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+.dot-answered{background:#17833b}.dot-not-answered{background:#b42318}.dot-marked{background:#7c3aed}.dot-not-visited{background:#9ca3af}
+/* ---------- testbook-style exam interface ---------- */
+.tb-exam{background:var(--card);border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 3px 12px #0001}
+.tb-topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#0f1b3d;color:#fff;padding:12px 16px;flex-wrap:wrap}
+.tb-topbar .tb-title{font-weight:700;font-size:14px}
+.tb-topbar .tb-timer{display:flex;align-items:center;gap:8px;font-weight:700}
+.tb-timer-box{background:#000;color:#fff;border-radius:5px;padding:5px 9px;font-variant-numeric:tabular-nums;letter-spacing:1px}
+.tb-sections{display:flex;gap:4px;overflow-x:auto;background:#eef1f8;padding:8px 10px;border-bottom:1px solid #e5e7eb}
+.tb-section-tab{border:0;background:transparent;color:#334155;padding:9px 14px;border-radius:8px;font-weight:700;font-size:13px;white-space:nowrap;cursor:pointer}
+.tb-section-tab.active{background:#0f1b3d;color:#fff}
+.tb-body{display:flex;gap:0;align-items:flex-start;flex-wrap:wrap}
+.tb-main{flex:2;min-width:280px;padding:18px 20px}
+.tb-meta-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.tb-qno{font-weight:700;font-size:15px}
+.tb-meta-right{display:flex;align-items:center;gap:14px;font-size:13px;color:#334155;flex-wrap:wrap}
+.tb-marks{display:flex;align-items:center;gap:5px}
+.tb-mark-pill{border-radius:5px;padding:2px 8px;color:#fff;font-weight:700;font-size:12px}
+.tb-mark-pos{background:#17833b}.tb-mark-neg{background:#dc2626}
+.tb-divider{height:2px;background:#dc2626;margin:6px 0 16px}
+.tb-question{font-size:16px;margin:0 0 16px;line-height:1.6}
+.tb-options{display:flex;flex-direction:column;gap:2px}
+.tb-option-row{display:flex;align-items:flex-start;gap:12px;padding:12px 6px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+.tb-option-row:hover{background:#f8fafc}
+.tb-option-row.selected{background:#eef2ff;border-color:#c7d2fe}
+.tb-radio{width:18px;height:18px;border-radius:50%;border:2px solid #94a3b8;flex:0 0 18px;margin-top:2px;display:flex;align-items:center;justify-content:center}
+.tb-option-row.selected .tb-radio{border-color:#2563eb}
+.tb-radio i{width:10px;height:10px;border-radius:50%;background:#2563eb;display:none}
+.tb-option-row.selected .tb-radio i{display:block}
+.tb-option-text{font-size:15px;color:#1f2937}
+.tb-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:22px;padding-top:16px;border-top:1px solid #e5e7eb}
+.tb-actions-left,.tb-actions-right{display:flex;gap:10px;flex-wrap:wrap}
+button.tb-btn-light{background:#d1d5db!important;color:#1f2937!important;border:0;padding:10px 16px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer}
+button.tb-btn-teal{background:#14b8a6;color:#fff;border:0;padding:10px 20px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer}
+button.tb-btn-teal.submit{background:#0d9488}
+button.tb-btn-green{background:#86efac!important;color:#14532d!important;border:0;padding:10px 20px;border-radius:6px;font-weight:700;font-size:13px;cursor:pointer}
+button.tb-btn-green:hover{background:#6ee7a0!important}
+.tb-sidebar{flex:1;min-width:260px;max-width:320px;background:#f8fafc;border-left:1px solid #e5e7eb;padding:16px;align-self:stretch}
+.tb-user{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.tb-user .avatar{width:34px;height:34px;border-radius:50%;background:#0ea5e9;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700}
+.tb-legend{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;margin-bottom:16px}
+.tb-legend-item{display:flex;align-items:center;gap:7px;font-size:12px;color:#334155}
+.tb-legend-badge{width:20px;height:20px;border-radius:50%;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:0 0 20px}
+.tb-badge-answered{background:#17833b}.tb-badge-marked{background:#7c3aed}.tb-badge-notvisited{background:#fff;color:#334155;border:1px solid #94a3b8}
+.tb-badge-notanswered{background:#dc2626}.tb-badge-markedanswered{background:#7c3aed;box-shadow:inset 0 0 0 2px #17833b}
+.tb-section-label{background:#dbeafe;color:#1e3a8a;font-weight:700;font-size:13px;padding:9px 12px;border-radius:6px;margin-bottom:12px}
+.tb-qgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+button.tb-qnum{width:100%;aspect-ratio:1;border-radius:6px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.tb-qnum.current{border:2px solid #0f1b3d;box-shadow:0 0 0 2px #0f1b3d33}
+.tb-qnum.st-answered{background:#17833b;color:#fff;border-color:#17833b}
+.tb-qnum.st-not-answered{background:#dc2626;color:#fff;border-color:#dc2626}
+.tb-qnum.st-marked{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.tb-qnum.st-answered-marked{background:#7c3aed;color:#fff;border-color:#7c3aed;box-shadow:inset 0 0 0 3px #17833b}
+.ut-card{background:var(--card);border-radius:15px;padding:22px;box-shadow:0 3px 12px #0001;max-width:1000px;width:100%;margin:15px auto}
+.ut-card h2{margin:0 0 4px}
+.ut-meta{color:#64748b;font-size:13px;margin-bottom:16px}
+.ut-rules{background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:16px 18px;margin-bottom:16px}
+.ut-rules li{margin:6px 0;line-height:1.5;font-size:14px}
+.ut-lang-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.ut-lang-row select{padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px}
+.ut-agree{display:flex;align-items:flex-start;gap:10px;background:#fff7e6;border:1px solid #f0c36d;border-radius:12px;padding:14px 16px;margin-bottom:16px}
+.ut-agree input{margin-top:3px;width:18px;height:18px;flex:0 0 18px}
+.ut-agree label{font-size:14px;line-height:1.5}
+.ut-actions{display:flex;gap:10px;flex-wrap:wrap}
+.ut-actions button:disabled{opacity:.5;cursor:not-allowed}
+.fs-warning{display:none;align-items:center;gap:6px;background:#dc2626;color:#fff;font-weight:700;font-size:12px;padding:5px 10px;border-radius:6px}
+.fs-warning.show{display:flex}
+.nt-translate-block{border:1px dashed #cbd5e1;border-radius:10px;padding:10px;margin-top:6px;background:#f8fafc}
+.nt-translate-block label{font-size:12px;color:#475569;font-weight:700}
+@media(max-width:760px){.tb-body{flex-direction:column}.tb-sidebar{max-width:none;width:100%;border-left:0;border-top:1px solid #e5e7eb}}
+table{width:100%;border-collapse:collapse;margin-top:12px}th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}
+.nt-sec{border:1px solid #cbd5e1;border-radius:10px;margin:16px 0;background:#f8fafc}
+.nt-sec-head{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px;background:#0f1b3d;color:#fff;border-radius:10px 10px 0 0;font-size:13px}
+.nt-sec-head label{display:flex;align-items:center;gap:5px}
+.nt-sec-head input{width:64px;padding:4px 6px;border-radius:6px;border:0}
+.nt-sec-head .nt-sec-title{font-size:15px}
+.nt-sec-count{opacity:.8}
+.nt-sec-body{padding:6px 12px 12px}
+.qbuilder{border:1px dashed #ccc;border-radius:10px;padding:12px;margin:10px 0}
+.msg-ok{color:#17833b;font-weight:600}.msg-err{color:#b42318;font-weight:600}
+.logo-preview{height:60px;width:60px;object-fit:contain;background:var(--bg);border-radius:8px;border:1px solid #ddd}
+.icon-picker{border:1px solid #d1d5db;border-radius:10px;padding:4px 10px 10px;max-height:210px;overflow:auto;background:var(--card)}
+.icon-grid{display:flex;flex-wrap:wrap;gap:4px}
+button.icon-opt{width:40px;height:40px;padding:0;font-size:22px;line-height:1;background:#f3f4f6;border:2px solid transparent;border-radius:8px}
+button.icon-opt:hover{background:#e5e7eb}
+button.icon-opt:focus-visible{outline:2px solid #111827;outline-offset:1px}
+button.icon-opt.sel{background:#dbeafe;border-color:#2563eb}
+@media(max-width:600px){table{font-size:.86rem}.table-wrap{overflow-x:auto}}
+/* ---- Admin Panel design ---- */
+:root{--primary:#dc2626}
+body{background:#eef0f4}
+header{background:linear-gradient(90deg,#0b1220,#3b0a0a);border-bottom:3px solid #dc2626}
+nav button{background:#1f2937}nav a.navlink{background:#374151;color:#fff;text-decoration:none;border-radius:10px;padding:11px 14px;font-weight:700;white-space:nowrap;font-size:13px}
+.admin-badge{display:inline-block;background:#dc2626;color:#fff;font-size:11px;padding:2px 8px;border-radius:999px;margin-left:8px;vertical-align:middle}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<header>
+<div class="brand-row">
+  <img id="brandLogo" class="hidden" alt="logo">
+  <div>
+    <div class="brand" id="brandName">📚 Competitive Exam Master</div>
+    <div class="sub">Admin Panel<span class="admin-badge">ADMIN</span></div>
+  </div>
+</div>
+<nav class="nav">
+  <button id="adminNav" class="hidden" onclick="showSection('admin')">🛡️ Dashboard</button>
+  <button id="authNav" onclick="showSection('auth')">Admin Login</button>
+  <button id="logoutNav" class="hidden" onclick="logout()">Logout</button>
+  <a class="navlink" href="CompetitiveExamMaster-student.html">🎓 Teacher &amp; Student site →</a>
+</nav>
+</header>
+
+<main>
+
+<section id="auth" class="section hidden">
+  <h2>🛡️ Admin Login</h2>
+  <div class="auth-card" style="max-width:480px;margin:0 auto">
+
+    <div id="authPaneLogin">
+      <div class="form-row"><label>Email</label><input id="loginEmail" type="email" placeholder="you@example.com" autocomplete="username"></div>
+      <div class="form-row"><label>Password</label><input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password"></div>
+      <label style="display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:14px"><input type="checkbox" id="rememberLogin" style="width:18px;height:18px"> Remember my email &amp; password on this device</label>
+      <button class="primary-btn" style="width:100%" onclick="loginUser()">Login</button>
+      <p id="loginMsg"></p>
+
+      <div id="forgotBox" class="hidden" style="margin-top:10px;border-top:1px solid #eee;padding-top:10px">
+        <div class="form-row"><label>Email</label><input id="forgotEmail" type="email" placeholder="Your account email"></div>
+        <button class="secondary" onclick="requestPasswordReset()">Send Reset Link</button>
+        <p id="forgotMsg"></p>
+
+        <div id="resetBox" class="hidden" style="margin-top:10px">
+          <p class="muted">There's no email service here either — the reset link is shown below directly instead of being emailed.</p>
+          <div class="form-row"><label>Reset Token</label><input id="resetToken" placeholder="Paste the token from your reset link"></div>
+          <div class="form-row"><label>New Password</label><input id="resetNewPassword" type="password" placeholder="New password"></div>
+          <div class="form-row"><label>Confirm New Password</label><input id="resetConfirmPassword" type="password" placeholder="Re-enter new password"></div>
+          <button class="primary-btn" onclick="performPasswordReset()">Reset Password</button>
+          <p id="resetMsg"></p>
+        </div>
+      </div>
+    </div>
+
+    <div id="authPaneRegister" class="hidden">
+      <div class="row" style="gap:8px;margin-bottom:14px">
+        <button id="regTabStudent" class="primary-btn" style="flex:1" onclick="showRegisterType('student')">Student</button>
+        <button id="regTabTeacher" class="secondary" style="flex:1" onclick="showRegisterType('teacher')">Teacher</button>
+      </div>
+
+      <div id="regPaneStudent">
+        <p class="muted">Students can register themselves and use the platform immediately.</p>
+        <div class="form-row"><label>Full name</label><input id="studentName" placeholder="Full name"></div>
+        <div class="form-row"><label>Mobile Number</label><input id="studentMobile" type="tel" placeholder="e.g. 9876543210"></div>
+        <div class="form-row"><label>Email</label><input id="studentEmail" type="email" placeholder="Email"></div>
+        <div class="form-row"><label>Password</label><input id="studentPassword" type="password" placeholder="Password"></div>
+        <div class="form-row"><label>Confirm Password</label><input id="studentConfirmPassword" type="password" placeholder="Re-enter password"></div>
+        <button class="primary-btn" style="width:100%" onclick="registerStudent()">Register as Student</button>
+        <p id="studentMsg"></p>
+      </div>
+
+      <div id="regPaneTeacher" class="hidden">
+        <p class="muted">Teachers can register themselves. <strong>Admin approval is required before teacher login is activated.</strong></p>
+        <div class="form-row"><label>Full name</label><input id="teacherName" placeholder="Full name"></div>
+        <div class="form-row"><label>Mobile Number</label><input id="teacherMobile" type="tel" placeholder="e.g. 9876543210"></div>
+        <div class="form-row"><label>Email</label><input id="teacherEmail" type="email" placeholder="Email"></div>
+        <div class="form-row"><label>Subject / Expertise</label><input id="teacherSubject" placeholder="e.g. Mathematics"></div>
+        <div class="form-row"><label>Password</label><input id="teacherPassword" type="password" placeholder="Password"></div>
+        <div class="form-row"><label>Confirm Password</label><input id="teacherConfirmPassword" type="password" placeholder="Re-enter password"></div>
+        <button class="primary-btn" style="width:100%" onclick="registerTeacher()">Register as Teacher</button>
+        <p id="teacherMsg"></p>
+      </div>
+
+      <p class="muted" style="margin-top:14px;text-align:center">Already have an account? <a href="javascript:void(0)" onclick="showAuthTab('login')">Login</a></p>
+    </div>
+  </div>
+</section>
+
+<section id="admin" class="section hidden">
+  <h2>Admin Section</h2>
+  <p>Manage users, approvals, exam modules, institution branding and data backups.</p>
+  <div class="dashboard-grid">
+    <div class="panel-card"><h3>Total Students</h3><div id="adminStudentsCount">0</div></div>
+    <div class="panel-card"><h3>Total Teachers</h3><div id="adminTeachersCount">0</div></div>
+    <div class="panel-card"><h3>Pending Teacher Approvals</h3><div id="adminPendingCount">0</div></div>
+  </div>
+  <div class="panel-card" id="adminModules" style="margin-top:18px"></div>
+  <div class="panel-card" style="margin-top:18px"><h3>📝 Test Series — Attempt Settings</h3><p class="muted">Choose whether students can attempt each test only once or reattempt it.</p><div id="adminTests"></div></div>
+  <div class="panel-card" style="margin-top:18px">
+    <h3>Teacher Registrations</h3>
+    <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Subject</th><th>Status</th><th>Module access</th><th>Action</th></tr></thead><tbody id="teacherTable"></tbody></table></div>
+  </div>
+  <div class="panel-card" style="margin-top:18px">
+    <h3>Student Accounts</h3>
+    <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Status</th><th>Action</th></tr></thead><tbody id="studentTable"></tbody></table></div>
+  </div>
+
+  <div class="panel-card" style="margin-top:18px">
+    <h3>⭐ Premium Subscriptions</h3>
+    <p class="muted">One Premium payment lets a student open every paid test series. Students pay to the UPI ID below and submit the transaction ID; you verify and approve.</p>
+    <h4>Payment details shown to students</h4>
+    <div class="row">
+      <div class="form-row" style="flex:1"><label>UPI ID</label><input id="admUpi" placeholder="name@bank"></div>
+      <div class="form-row" style="flex:1"><label>Payee name</label><input id="admPayee"></div>
+    </div>
+    <div class="form-row"><label>Note for students (optional)</label><input id="admPayNote" placeholder="e.g. Add your registered email in the payment remark"></div>
+    <div class="form-row"><label>Payment server URL — automatic activation (optional)</label><input id="admGateway" placeholder="https://pay.your-site.com"><span class="muted">When set, students pay through Razorpay (UPI/cards/net banking) and Premium activates instantly — no approval needed. Leave empty to use manual UPI + approval. Plans and prices then come from the payment server's plans.json.</span></div>
+    <button onclick="savePaymentDetails()">Save payment details</button> <span id="admPayMsg" class="muted"></span>
+    <h4 style="margin-top:20px">Plans</h4>
+    <div class="table-wrap"><table><thead><tr><th>Plan</th><th>Days</th><th>Price</th><th>Action</th></tr></thead><tbody id="planTable"></tbody></table></div>
+    <div class="row" style="align-items:end;margin-top:8px">
+      <div class="form-row" style="flex:2"><label>Plan name</label><input id="admPlanName" placeholder="e.g. Half-yearly"></div>
+      <div class="form-row" style="flex:1"><label>Days</label><input id="admPlanDays" type="number" min="1" value="180"></div>
+      <div class="form-row" style="flex:1"><label>Price (₹)</label><input id="admPlanPrice" type="number" min="0" value="499"></div>
+      <div class="form-row"><button onclick="addPlanAdmin()">Add plan</button></div>
+    </div>
+    <h4 style="margin-top:20px">Payment requests</h4>
+    <div class="table-wrap"><table><thead><tr><th>Student</th><th>Plan</th><th>Amount</th><th>Transaction ID</th><th>Submitted</th><th>Status</th><th>Action</th></tr></thead><tbody id="subTable"></tbody></table></div>
+  </div>
+
+  <div class="panel-card" style="margin-top:18px">
+    <h3>🏫 Institution Settings</h3>
+    <div class="row" style="align-items:center">
+      <img id="settingsLogoPreview" class="logo-preview hidden" alt="logo preview">
+      <div class="form-row" style="flex:1"><label>Institution Logo</label><input type="file" id="settingsLogoFile" accept="image/*" onchange="previewLogo()"></div>
+    </div>
+    <div class="form-row"><label>Institution Name</label><input id="settingsName"></div>
+    <div class="form-row">
+      <label>Theme</label>
+      <label class="theme-switch"><input type="checkbox" id="settingsDarkMode" onchange="onThemeSwitch()"><span class="switch-track"><span class="switch-thumb"></span></span><span id="settingsThemeModeLabel">Light mode</span></label>
+      <div class="theme-colors">
+        <div class="form-row"><label>Background</label><input type="color" id="settingsBgColor" oninput="previewTheme()"></div>
+        <div class="form-row"><label>Foreground (text)</label><input type="color" id="settingsFgColor" oninput="previewTheme()"></div>
+        <div class="form-row"><label>Theme color (buttons, highlights)</label><input type="color" id="settingsPrimaryColor" oninput="previewTheme()"></div>
+      </div>
+      <p class="muted" style="margin:6px 0 0">Applies for anyone using this browser. <a href="#" onclick="resetThemeDefaults();return false">Reset to default</a></p>
+    </div>
+    <div class="form-row"><label>Address</label><input id="settingsAddress"></div>
+    <div class="row">
+      <div class="form-row" style="flex:1"><label>Contact Email</label><input id="settingsEmail" type="email"></div>
+      <div class="form-row" style="flex:1"><label>Contact Phone</label><input id="settingsPhone"></div>
+    </div>
+    <button class="primary-btn" onclick="saveSettings()">Save Institution Settings</button>
+    <p id="settingsMsg"></p>
+  </div>
+
+  <div class="panel-card" style="margin-top:18px">
+    <h3>💾 Backup &amp; Restore</h3>
+    <p class="muted">Download everything in this browser's storage (users, exam modules, test series, settings) as a JSON file, or restore from one. Restoring overwrites current data — a safety copy of what's currently in place is kept automatically in this browser.</p>
+    <div class="row">
+      <button class="secondary" onclick="downloadBackup()">⬇️ Download Backup</button>
+      <input type="file" id="restoreFile" accept="application/json">
+      <button class="danger-btn" onclick="restoreBackup()">⬆️ Restore From File</button>
+    </div>
+    <p id="backupMsg"></p>
+  </div>
+</section>
+
+</main>
+
+<footer id="siteFooter">Admin Panel • Competitive Exam Master • Data stored only in this browser</footer>
+
+<script>
+/* =====================================================================
+   LOCAL "SERVER" — everything below replaces the Node/Express backend.
+   Data lives in this browser's localStorage only. Passwords are obscured
+   with a simple salted hash (NOT cryptographically secure — there's no
+   real security model here since anyone with access to this browser's
+   storage can see everything anyway). Treat this as a single-device demo,
+   not a real deployment for real student data.
+   ===================================================================== */
+const DB_KEY = 'cemaster_standalone_db_v1';
+const SESSION_KEY = 'cemaster_session_admin_v1';   // separate login session from the Teacher & Student site
+// Exam modules now live in the database (db.modules) so the Admin — and any Teacher the
+// Admin allows — can add or delete them. These are only the starting set on a fresh install.
+const DEFAULT_MODULES = [
+  { name:"SSC",          icon:"🏛️", description:"CGL • CHSL • MTS • GD" },
+  { name:"Banking",      icon:"🏦", description:"IBPS • SBI • RBI" },
+  { name:"Railway",      icon:"🚆", description:"RRB NTPC • Group D" },
+  { name:"CTET / OTET",  icon:"🎓", description:"TET preparation" },
+  { name:"Odisha Exams", icon:"🌐", description:"OSSC • OSSSC • OPSC • Police • Other exams" },
+  { name:"Defence",      icon:"🪖", description:"General preparation" },
+];
+function defaultModules(){
+  const now = new Date().toISOString();
+  return DEFAULT_MODULES.map((m,i)=>({ id:'m-default-'+(i+1), name:m.name, icon:m.icon, description:m.description, createdBy:'system', createdAt:now }));
+}
+const DEFAULT_SUBJECT = "General";
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MOBILE_RE = /^[0-9+\-\s]{7,15}$/;
+
+function uid(){ return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); }
+
+// Simple, dependency-free string hash (32-bit, doubled for a bit more spread).
+// Not cryptographic — good enough only to avoid storing plain-text passwords
+// in this browser's own storage.
+function simpleHash(str){
+  let h1 = 0xdeadbeef ^ str.length, h2 = 0x41c6ce57 ^ str.length;
+  for(let i=0;i<str.length;i++){
+    const ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1>>>16), 2246822507) ^ Math.imul(h2 ^ (h2>>>13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2>>>16), 2246822507) ^ Math.imul(h1 ^ (h1>>>13), 3266489909);
+  return (4294967296*(2097151&h2)+(h1>>>0)).toString(16);
+}
+function hashPassword(pw){
+  const salt = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  return salt + ':' + simpleHash(salt + pw);
+}
+function verifyPassword(pw, stored){
+  if(!stored) return false;
+  const parts = stored.split(':');
+  if(parts.length !== 2) return false;
+  return simpleHash(parts[0] + pw) === parts[1];
+}
+
+function defaultSettings(){
+  return { institutionName: "Competitive Exam Master", logoDataUrl:"", address:"", contactEmail:"", contactPhone:"", themeMode:"light", backgroundColor:"#f3f5f9", foregroundColor:"#172033", primaryColor:"#2563eb" };
+}
+function defaultPlans(){
+  return [
+    { id:'plan-1m', name:'Monthly', days:30, price:99 },
+    { id:'plan-3m', name:'Quarterly', days:90, price:249 },
+    { id:'plan-12m', name:'Yearly', days:365, price:799 },
+  ];
+}
+function emptyDb(){ return { users: [], tests: [], purchases: [], subscriptions: [], plans: defaultPlans(), payment: { upiId:'', payeeName:'', note:'' }, submissions: [], modules: defaultModules(), settings: defaultSettings() }; }
+
+function readDbSync(){
+  let raw;
+  try{ raw = localStorage.getItem(DB_KEY); }catch(e){ raw = null; }
+  let db;
+  if(!raw){ db = emptyDb(); try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); }catch(e){} }
+  else { try{ db = JSON.parse(raw); }catch(e){ db = emptyDb(); } }
+  if(!db.settings) db.settings = defaultSettings();
+  if(!db.settings.backgroundColor) db.settings.backgroundColor = defaultSettings().backgroundColor;
+  if(db.settings.themeMode!=='dark') db.settings.themeMode = 'light';
+  if(!db.settings.foregroundColor) db.settings.foregroundColor = defaultSettings().foregroundColor;
+  if(!db.settings.primaryColor) db.settings.primaryColor = defaultSettings().primaryColor;
+  if(!Array.isArray(db.users)) db.users = [];
+  if(!Array.isArray(db.tests)) db.tests = [];
+  if(!Array.isArray(db.purchases)) db.purchases = [];
+  if(!Array.isArray(db.subscriptions)) db.subscriptions = [];
+  if(!Array.isArray(db.plans)) db.plans = defaultPlans();
+  if(!db.payment || typeof db.payment!=='object') db.payment = { upiId:'', payeeName:'', note:'' };
+  // Older data (or an old backup) has no module list: start from the default set, and make sure
+  // every module a test series already belongs to exists, so nothing is left orphaned.
+  let modulesChanged = false;
+  if(!Array.isArray(db.modules)){ db.modules = defaultModules(); modulesChanged = true; }
+  db.tests.forEach(t=>{
+    if(t.category && !db.modules.some(m=>m.name===t.category)){
+      db.modules.push({ id:'m-'+uid(), name:t.category, icon:'📘', description:'', createdBy:'system', createdAt:new Date().toISOString() });
+      modulesChanged = true;
+    }
+  });
+  if(modulesChanged){ try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); }catch(e){} }
+  return db;
+}
+function writeDbSync(db){ try{ localStorage.setItem(DB_KEY, JSON.stringify(db)); }catch(e){ console.error('Could not save — browser storage may be full or disabled.', e); } }
+
+function ensureAdmin(){
+  const db = readDbSync();
+  if(!db.users.some(u=>u.role==='admin')){
+    db.users.push({ id:'admin', name:'Administrator', email:'admin@cemaster.com', passwordHash: hashPassword('admin123'), role:'admin', status:'approved', blocked:false, createdAt:new Date().toISOString() });
+    writeDbSync(db);
+  }
+}
+function publicUser(u){ if(!u) return null; const { passwordHash, resetTokenHash, resetTokenExpiry, ...rest } = u; return rest; }
+
+function getSessionUserId(){ try{ return localStorage.getItem(SESSION_KEY); }catch(e){ return null; } }
+function setSessionUserId(id){ try{ if(id) localStorage.setItem(SESSION_KEY, id); else localStorage.removeItem(SESSION_KEY); }catch(e){} }
+function getCurrentUserRaw(){
+  const id = getSessionUserId();
+  if(!id) return null;
+  return readDbSync().users.find(u=>u.id===id) || null;
+}
+function requireLogin(){
+  const user = getCurrentUserRaw();
+  if(!user) throw new Error('Please log in.');
+  if(user.blocked){ setSessionUserId(null); throw new Error('Your account has been blocked. Contact the administrator.'); }
+  return user;
+}
+function requireRole(role){
+  const user = requireLogin();
+  if(user.role !== role) throw new Error('Not authorized.');
+  if(user.role==='teacher' && user.status!=='approved') throw new Error('Teacher account is pending Admin approval.');
+  return user;
+}
+
+function summarizeTest(t){
+  return { id:t.id, title:t.title, exam:t.exam, category:t.category, subjects:t.subjects||[DEFAULT_SUBJECT], languages:(t.languages&&t.languages.length)?t.languages:['English'], type:t.type, attemptPolicy:(t.attemptPolicy==='once'?'once':'reattempt'), price:t.price, duration:t.duration, questionCount:t.questionCount, createdBy:t.createdBy, createdAt:t.createdAt, published:t.published };
+}
+function attemptBlockMessage(db, test, user){
+  if(test.attemptPolicy!=='once' || user.role!=='student') return null;
+  if((db.submissions||[]).some(s=>s.testId===test.id && s.userId===user.id)) return 'You have already attempted this test. Only one attempt is allowed for this test series.';
+  return null;
+}
+function activeSubscription(db, userId){
+  const now = Date.now();
+  return (db.subscriptions||[])
+    .filter(s=>s.studentId===userId && s.status==='approved' && new Date(s.expiresAt).getTime()>now)
+    .sort((a,b)=>new Date(b.expiresAt)-new Date(a.expiresAt))[0] || null;
+}
+function paidAccessBlockMessage(db, test, user){
+  if(test.type !== 'paid') return null;
+  if(!user || user.role !== 'student') return null;
+  if(activeSubscription(db, user.id)) return null;                       // Premium: all paid test series
+  const legacy = (db.purchases||[]).find(p=>p.testId===test.id && p.studentId===user.id && p.status==='approved');
+  if(legacy) return null;                                                // older per-test approval still honoured
+  return 'This is a Premium test series. Subscribe to Premium to access all paid test series.';
+}
+
+/* ---- route handlers (mirror of the server version's Express routes) ---- */
+async function h_registerStudent(body){
+  const name = String(body.name||'').trim();
+  const email = String(body.email||'').trim().toLowerCase();
+  const mobile = String(body.mobile||'').trim();
+  const password = String(body.password||'');
+  if(!name || !email || !mobile || !password) throw new Error('Please fill all fields, including mobile number.');
+  if(!MOBILE_RE.test(mobile)) throw new Error('Please enter a valid mobile number.');
+  const db = readDbSync();
+  if(db.users.some(u=>u.email===email)) throw new Error('An account with this email already exists.');
+  db.users.push({ id:uid(), name, email, mobile, passwordHash:hashPassword(password), role:'student', status:'approved', blocked:false, createdAt:new Date().toISOString() });
+  writeDbSync(db);
+  return { message: 'Student registration successful. You can now login.' };
+}
+async function h_registerTeacher(body){
+  const name = String(body.name||'').trim();
+  const email = String(body.email||'').trim().toLowerCase();
+  const mobile = String(body.mobile||'').trim();
+  const subject = String(body.subject||'').trim();
+  const password = String(body.password||'');
+  if(!name || !email || !mobile || !subject || !password) throw new Error('Please fill all fields, including mobile number.');
+  if(!MOBILE_RE.test(mobile)) throw new Error('Please enter a valid mobile number.');
+  const db = readDbSync();
+  if(db.users.some(u=>u.email===email)) throw new Error('An account with this email already exists.');
+  db.users.push({ id:uid(), name, email, mobile, subject, passwordHash:hashPassword(password), role:'teacher', status:'pending', blocked:false, createdAt:new Date().toISOString() });
+  writeDbSync(db);
+  return { message: 'Registration submitted. Wait for Admin approval before logging in.' };
+}
+async function h_login(body){
+  const email = String(body.email||'').trim().toLowerCase();
+  const password = String(body.password||'');
+  const db = readDbSync();
+  const user = db.users.find(u=>u.email===email);
+  if(!user || !verifyPassword(password, user.passwordHash)) throw new Error('Invalid email or password.');
+  if(user.role!=='admin') throw new Error('This login is for Admin only. Teachers & students: use the Teacher & Student site.');
+  setSessionUserId(user.id);
+  return { message: 'Login successful.', user: publicUser(user) };
+}
+async function h_logout(){ setSessionUserId(null); return { message: 'Logged out.' }; }
+async function h_me(){
+  const user = getCurrentUserRaw();
+  if(user && user.blocked){ setSessionUserId(null); return { user: null }; }
+  return { user: publicUser(user) };
+}
+async function h_forgotPassword(body){
+  const email = String(body.email||'').trim().toLowerCase();
+  const db = readDbSync();
+  const user = db.users.find(u=>u.email===email);
+  if(!user) return { message: 'If that email is registered, reset instructions have been generated.' };
+  const token = uid()+uid();
+  user.resetTokenHash = simpleHash(token);
+  user.resetTokenExpiry = Date.now() + 30*60*1000;
+  writeDbSync(db);
+  const resetLink = location.origin + location.pathname + `?resetEmail=${encodeURIComponent(email)}&resetToken=${token}#auth`;
+  return { message: 'If that email is registered, reset instructions have been generated.', demoMode:true, resetLink, resetToken: token };
+}
+async function h_resetPassword(body){
+  const email = String(body.email||'').trim().toLowerCase();
+  const token = String(body.token||'');
+  const newPassword = String(body.newPassword||'');
+  if(!email || !token || !newPassword) throw new Error('Email, token and new password are all required.');
+  if(newPassword.length < 4) throw new Error('New password is too short.');
+  const db = readDbSync();
+  const user = db.users.find(u=>u.email===email);
+  if(!user || !user.resetTokenHash || !user.resetTokenExpiry) throw new Error('Invalid or expired reset request.');
+  if(Date.now() > user.resetTokenExpiry) throw new Error('This reset link has expired. Please request a new one.');
+  if(simpleHash(token) !== user.resetTokenHash) throw new Error('Invalid or expired reset request.');
+  user.passwordHash = hashPassword(newPassword);
+  delete user.resetTokenHash; delete user.resetTokenExpiry;
+  writeDbSync(db);
+  return { message: 'Password reset successful. You can now log in with your new password.' };
+}
+
+async function h_accountMe(){ return { user: publicUser(requireLogin()) }; }
+async function h_accountUpdate(body){
+  const current = requireLogin();
+  const name = body.name !== undefined ? String(body.name).trim() : undefined;
+  const subject = body.subject !== undefined ? String(body.subject).trim() : undefined;
+  const mobile = body.mobile !== undefined ? String(body.mobile).trim() : undefined;
+  if(name !== undefined && !name) throw new Error("Name can't be empty.");
+  if(mobile !== undefined && mobile && !MOBILE_RE.test(mobile)) throw new Error('Please enter a valid mobile number.');
+  const db = readDbSync();
+  const u = db.users.find(x=>x.id===current.id);
+  if(name !== undefined) u.name = name;
+  if(subject !== undefined && u.role==='teacher') u.subject = subject;
+  if(mobile !== undefined) u.mobile = mobile;
+  writeDbSync(db);
+  return { message: 'Account updated.', user: publicUser(u) };
+}
+async function h_changeEmail(body){
+  const current = requireLogin();
+  const newEmail = String(body.newEmail||'').trim().toLowerCase();
+  const currentPassword = String(body.currentPassword||'');
+  if(!newEmail || !currentPassword) throw new Error('New email and current password are both required.');
+  if(!EMAIL_RE.test(newEmail)) throw new Error('Please enter a valid email address.');
+  const db = readDbSync();
+  const u = db.users.find(x=>x.id===current.id);
+  if(!verifyPassword(currentPassword, u.passwordHash)) throw new Error('Current password is incorrect.');
+  if(db.users.some(x=>x.id!==u.id && x.email===newEmail)) throw new Error('That email is already in use by another account.');
+  u.email = newEmail;
+  writeDbSync(db);
+  return { message: 'Login email changed.', user: publicUser(u) };
+}
+async function h_changePassword(body){
+  const current = requireLogin();
+  const currentPassword = String(body.currentPassword||'');
+  const newPassword = String(body.newPassword||'');
+  if(!currentPassword || !newPassword) throw new Error('Current and new password are both required.');
+  if(newPassword.length < 4) throw new Error('New password is too short.');
+  const db = readDbSync();
+  const u = db.users.find(x=>x.id===current.id);
+  if(!verifyPassword(currentPassword, u.passwordHash)) throw new Error('Current password is incorrect.');
+  u.passwordHash = hashPassword(newPassword);
+  writeDbSync(db);
+  return { message: 'Password changed.' };
+}
+
+async function h_adminUsers(){
+  requireRole('admin');
+  const db = readDbSync();
+  const teachers = db.users.filter(u=>u.role==='teacher').map(publicUser);
+  const students = db.users.filter(u=>u.role==='student').map(publicUser);
+  return { teachers, students, counts: { students: students.length, approvedTeachers: teachers.filter(t=>t.status==='approved').length, pendingTeachers: teachers.filter(t=>t.status==='pending').length } };
+}
+async function h_approveTeacher(id, body){
+  requireRole('admin');
+  const approved = !!body.approved;
+  const db = readDbSync();
+  const teacher = db.users.find(u=>u.id===id && u.role==='teacher');
+  if(!teacher) throw new Error('Teacher not found.');
+  teacher.status = approved ? 'approved' : 'rejected';
+  writeDbSync(db);
+  return { message: `Teacher ${approved?'approved':'rejected'}.`, user: publicUser(teacher) };
+}
+async function h_blockUser(id, body){
+  requireRole('admin');
+  const blocked = !!body.blocked;
+  const db = readDbSync();
+  const user = db.users.find(u=>u.id===id);
+  if(!user) throw new Error('User not found.');
+  if(user.role==='admin') throw new Error("Admin accounts can't be blocked.");
+  user.blocked = blocked;
+  writeDbSync(db);
+  return { message: `User ${blocked?'blocked':'unblocked'}.`, user: publicUser(user) };
+}
+async function h_deleteUser(id){
+  requireRole('admin');
+  const db = readDbSync();
+  const user = db.users.find(u=>u.id===id);
+  if(!user) throw new Error('User not found.');
+  if(user.role==='admin') throw new Error("Admin accounts can't be deleted.");
+  db.users = db.users.filter(u=>u.id!==id);
+  writeDbSync(db);
+  return { message: 'User deleted.' };
+}
+async function h_adminBackup(){
+  requireRole('admin');
+  return JSON.parse(JSON.stringify(readDbSync()));
+}
+async function h_adminRestore(body){
+  requireRole('admin');
+  if(!body || !Array.isArray(body.users) || !Array.isArray(body.tests)) throw new Error("That file doesn't look like a valid backup (missing users/tests).");
+  try{ localStorage.setItem(DB_KEY + '.before-restore', localStorage.getItem(DB_KEY)); }catch(e){}
+  const restored = { users: body.users, tests: body.tests, purchases: Array.isArray(body.purchases)?body.purchases:[], subscriptions: Array.isArray(body.subscriptions)?body.subscriptions:[], plans: Array.isArray(body.plans)?body.plans:undefined, payment: body.payment||undefined, modules: Array.isArray(body.modules)?body.modules:undefined, settings: body.settings || readDbSync().settings };
+  if(!restored.users.some(u=>u.role==='admin')){
+    const currentAdmin = readDbSync().users.find(u=>u.role==='admin');
+    if(currentAdmin) restored.users.push(currentAdmin);
+  }
+  writeDbSync(restored);
+  return { message: 'Restore complete. A copy of the previous data was saved in this browser as a safety backup.' };
+}
+
+async function h_getSettings(){ return { settings: readDbSync().settings }; }
+async function h_updateSettings(body){
+  requireRole('admin');
+  const db = readDbSync();
+  const { institutionName, logoDataUrl, address, contactEmail, contactPhone, backgroundColor, foregroundColor, primaryColor, themeMode } = body;
+  if(themeMode !== undefined) db.settings.themeMode = (themeMode === 'dark') ? 'dark' : 'light';
+  const hexFields = { backgroundColor: ['Background', backgroundColor], foregroundColor: ['Foreground', foregroundColor], primaryColor: ['Theme', primaryColor] };
+  for(const key of Object.keys(hexFields)){
+    const [label, val0] = hexFields[key];
+    if(val0 === undefined) continue;
+    const val = String(val0).trim();
+    if(!/^#[0-9A-Fa-f]{6}$/.test(val)) throw new Error(label+' color must be a hex color like #2563eb.');
+    db.settings[key] = val;
+  }
+  if(institutionName !== undefined) db.settings.institutionName = String(institutionName).trim() || db.settings.institutionName;
+  if(logoDataUrl !== undefined){
+    const val = String(logoDataUrl);
+    if(val === '' || val.startsWith('data:image/')){
+      if(val.length > 2800000) throw new Error('Logo image is too large. Please use a smaller file (under ~2MB).');
+      db.settings.logoDataUrl = val;
+    } else throw new Error('Logo must be an image file.');
+  }
+  if(address !== undefined) db.settings.address = String(address).trim();
+  if(contactEmail !== undefined) db.settings.contactEmail = String(contactEmail).trim();
+  if(contactPhone !== undefined) db.settings.contactPhone = String(contactPhone).trim();
+  writeDbSync(db);
+  return { message: 'Institution settings updated.', settings: db.settings };
+}
+
+/* ---- exam modules (SSC, Banking, ...) ---- */
+function canManageModules(user){
+  if(!user) return false;
+  if(user.role==='admin') return true;
+  return user.role==='teacher' && user.status==='approved' && !!user.canManageModules;
+}
+function requireModuleManager(){
+  const user = requireLogin();
+  if(!canManageModules(user)) throw new Error('You do not have permission to manage exam modules. Ask the Admin to give you access.');
+  return user;
+}
+async function h_listModules(){
+  const db = readDbSync();
+  return { modules: db.modules.map(m=>({ ...m, testCount: db.tests.filter(t=>t.category===m.name).length })) };
+}
+async function h_addModule(body){
+  const user = requireModuleManager();
+  const name = String(body.name||'').replace(/\s+/g,' ').trim();
+  if(!name) throw new Error('Module name is required.');
+  if(name.length > 40) throw new Error('Module name is too long (40 characters max).');
+  const icon = Array.from(String(body.icon||'').trim()).slice(0,2).join('') || '📘';
+  const description = String(body.description||'').trim().slice(0,80);
+  const db = readDbSync();
+  if(db.modules.some(m=>m.name.toLowerCase()===name.toLowerCase())) throw new Error('A module named "'+name+'" already exists.');
+  const mod = { id:'m-'+uid(), name, icon, description, createdBy:user.email||user.name, createdAt:new Date().toISOString() };
+  db.modules.push(mod);
+  writeDbSync(db);
+  return { message: 'Module "'+name+'" added.', module: mod };
+}
+async function h_deleteModule(id){
+  const user = requireModuleManager();
+  const db = readDbSync();
+  const mod = db.modules.find(m=>m.id===id);
+  if(!mod) throw new Error('Module not found.');
+  const affected = db.tests.filter(t=>t.category===mod.name);
+  // A teacher can only remove an empty module, so they can't wipe out other teachers' test series.
+  if(affected.length && user.role!=='admin'){
+    throw new Error('"'+mod.name+'" still has '+affected.length+' test series. Delete those test series first, or ask the Admin to remove the module.');
+  }
+  const goneIds = new Set(affected.map(t=>t.id));
+  db.tests = db.tests.filter(t=>!goneIds.has(t.id));
+  db.purchases = db.purchases.filter(p=>!goneIds.has(p.testId));
+  db.modules = db.modules.filter(m=>m.id!==id);
+  writeDbSync(db);
+  return { message: affected.length ? 'Module "'+mod.name+'" and its '+affected.length+' test series were deleted.' : 'Module "'+mod.name+'" deleted.' };
+}
+async function h_setModuleAccess(id, body){
+  requireRole('admin');
+  const db = readDbSync();
+  const teacher = db.users.find(u=>u.id===id && u.role==='teacher');
+  if(!teacher) throw new Error('Teacher not found.');
+  if(teacher.status!=='approved') throw new Error('Approve this teacher before giving module access.');
+  teacher.canManageModules = !!body.allowed;
+  writeDbSync(db);
+  return { message: teacher.canManageModules ? 'Module access granted.' : 'Module access removed.', user: publicUser(teacher) };
+}
+
+async function h_listTests(query){
+  requireLogin();
+  const db = readDbSync();
+  let tests = db.tests.filter(t=>t.published);
+  if(query.category) tests = tests.filter(t=>t.category === query.category);
+  const me = getCurrentUserRaw();
+  const attemptedIds = (me && me.role==='student') ? [...new Set((db.submissions||[]).filter(x=>x.userId===me.id).map(x=>x.testId))] : [];
+  return { tests: tests.map(summarizeTest), attemptedIds, categories: db.modules.map(m=>m.name) };
+}
+async function h_myTests(){
+  const user = requireRole('teacher');
+  const db = readDbSync();
+  return { tests: db.tests.filter(t=>t.createdBy === (user.email||user.name)).map(summarizeTest) };
+}
+async function h_allTests(){
+  requireRole('admin');
+  const db = readDbSync();
+  const counts = {};
+  (db.submissions||[]).forEach(x=>{ counts[x.testId]=(counts[x.testId]||0)+1; });
+  return { tests: db.tests.map(t=>({ ...summarizeTest(t), attempts: counts[t.id]||0 })) };
+}
+async function h_setAttemptPolicy(id, body){
+  const user = requireLogin();
+  if(user.role!=='teacher' && user.role!=='admin') throw new Error('Not authorized.');
+  if(user.role==='teacher' && user.status!=='approved') throw new Error('Teacher account is pending Admin approval.');
+  const db = readDbSync();
+  const t = db.tests.find(x=>x.id===id);
+  if(!t) throw new Error('Test series not found.');
+  if(user.role==='teacher' && t.createdBy !== (user.email||user.name)) throw new Error('You can only change your own test series.');
+  t.attemptPolicy = body.attemptPolicy==='once' ? 'once' : 'reattempt';
+  writeDbSync(db);
+  return { message: t.attemptPolicy==='once' ? 'Students can attempt this test only once.' : 'Students can reattempt this test.', test: summarizeTest(t) };
+}
+async function h_deleteTest(id){
+  const user = requireLogin();
+  if(user.role!=='teacher' && user.role!=='admin') throw new Error('Not authorized.');
+  if(user.role==='teacher' && user.status!=='approved') throw new Error('Teacher account is pending Admin approval.');
+  const db = readDbSync();
+  const t = db.tests.find(x=>x.id===id);
+  if(!t) throw new Error('Test series not found.');
+  if(user.role==='teacher' && t.createdBy !== (user.email||user.name)) throw new Error('You can only delete your own test series.');
+  db.tests = db.tests.filter(x=>x.id!==id);
+  writeDbSync(db);
+  return { message: 'Test series deleted.' };
+}
+async function h_getTest(id){
+  const user = requireLogin();
+  const db = readDbSync();
+  const t = db.tests.find(x=>x.id===id && x.published);
+  if(!t) throw new Error('Test not found.');
+  const block = paidAccessBlockMessage(db, t, user);
+  if(block) throw new Error(block);
+  const attemptBlock = attemptBlockMessage(db, t, user);
+  if(attemptBlock) throw new Error(attemptBlock);
+  return { ...summarizeTest(t), questions: t.questions.map((q,i)=>({ index:i, question:q.question, options:q.options, subject:q.subject||DEFAULT_SUBJECT, marks:q.marks, negative:q.negative, translations:q.translations||{} })) };
+}
+async function h_createTest(body){
+  const user = requireRole('teacher');
+  const { title, exam, category, type, price, duration, questions } = body;
+  let { subjects, languages } = body;
+  if(!title || !String(title).trim()) throw new Error('Test title is required.');
+  if(!readDbSync().modules.some(m=>m.name===category)) throw new Error('Please choose a valid exam module (e.g. SSC, Banking).');
+  if(!Array.isArray(questions) || questions.length < 1) throw new Error('At least one question is required.');
+  if(typeof subjects === 'string') subjects = subjects.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!Array.isArray(subjects) || subjects.length===0) subjects=[DEFAULT_SUBJECT];
+  subjects = [...new Set(subjects.map(s=>String(s).trim()).filter(Boolean))];
+  if(typeof languages === 'string') languages = languages.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!Array.isArray(languages) || languages.length===0) languages = ['English'];
+  languages = [...new Set(languages.map(s=>String(s).trim()).filter(Boolean))];
+  if(languages.length===0) languages = ['English'];
+  const secondaryLangs = languages.slice(1);
+  const normType = String(type||'FREE').toUpperCase()==='PAID' ? 'paid' : 'free';
+  let normPrice = 0;
+  const cleanQuestions = [];
+  for(const [i,q] of questions.entries()){
+    const question = String(q.question||'').trim();
+    const options = Array.isArray(q.options) ? q.options.map(String) : [];
+    const answer = String(q.answer||'').trim().toUpperCase();
+    if(!question || options.length!==4 || options.some(o=>!o.trim())) throw new Error(`Question ${i+1} is missing text or options.`);
+    if(!['A','B','C','D'].includes(answer)) throw new Error(`Question ${i+1} has an invalid correct option.`);
+    const marks = parseFloat(q.marks);
+    const negative = parseFloat(q.negative);
+    const explanation = String(q.explanation||'').trim();
+    let subject = String(q.subject||'').trim() || DEFAULT_SUBJECT;
+    if(!subjects.includes(subject)) subjects.push(subject);
+    let translations = {};
+    if(q.translations && typeof q.translations === 'object'){
+      for(const lang of secondaryLangs){
+        const tr = q.translations[lang];
+        if(!tr) continue;
+        const trQuestion = String(tr.question||'').trim();
+        const trOptions = Array.isArray(tr.options) ? tr.options.map(o=>String(o||'').trim()) : [];
+        if(trQuestion || trOptions.some(o=>o)){
+          translations[lang] = { question: trQuestion, options: [0,1,2,3].map(k=>trOptions[k]||'') };
+        }
+      }
+    }
+    cleanQuestions.push({ question, options, answer, subject, marks: isNaN(marks)?1:marks, negative: isNaN(negative)?0:negative, explanation, translations });
+  }
+  const durationNum = parseInt(duration,10);
+  const db = readDbSync();
+  const test = { id:'T'+Date.now()+'-'+uid().slice(0,8), title:String(title).trim(), exam:(exam||'Competitive Exam').toString().trim(), category, subjects, languages, type:normType, price:normPrice, duration:isNaN(durationNum)?30:durationNum, questions:cleanQuestions, questionCount:cleanQuestions.length, createdBy:user.email||user.name, createdAt:new Date().toISOString(), published:true, attemptPolicy: body.attemptPolicy==='once' ? 'once' : 'reattempt' };
+  db.tests.push(test); writeDbSync(db);
+  return { message: 'Test Series added successfully and published.', test: summarizeTest(test) };
+}
+async function h_submitTest(id, body){
+  const user = requireLogin();
+  const db = readDbSync();
+  const t = db.tests.find(x=>x.id===id && x.published);
+  if(!t) throw new Error('Test not found.');
+  const block = paidAccessBlockMessage(db, t, user);
+  if(block) throw new Error(block);
+  const attemptBlock = attemptBlockMessage(db, t, user);
+  if(attemptBlock) throw new Error(attemptBlock);
+  const answers = body.answers || {};
+  const timeBySubject = (body.timeBySubject && typeof body.timeBySubject==='object') ? body.timeBySubject : {};
+  let score=0, correct=0, incorrect=0, unattempted=0;
+  const sectionMap = {};
+  const review = t.questions.map((q,i)=>{
+    const given = answers[i] !== undefined ? String(answers[i]).trim().toUpperCase() : null;
+    let outcome = 'unattempted';
+    const subj = q.subject || DEFAULT_SUBJECT;
+    if(!sectionMap[subj]) sectionMap[subj] = { section:subj, score:0, correct:0, incorrect:0, attempted:0, total:0, maxScore:0 };
+    const sec = sectionMap[subj];
+    sec.total++;
+    sec.maxScore += q.marks;
+    if(given){
+      sec.attempted++;
+      if(given===q.answer){ score+=q.marks; correct++; outcome='correct'; sec.score+=q.marks; sec.correct++; }
+      else { score-=q.negative; incorrect++; outcome='incorrect'; sec.score-=q.negative; sec.incorrect++; }
+    } else unattempted++;
+    return { index:i, question:q.question, options:q.options, correctAnswer:q.answer, givenAnswer:given, outcome, explanation: q.explanation||'' };
+  });
+  const maxScore = t.questions.reduce((s,q)=>s+q.marks,0);
+  const attempted = correct + incorrect;
+  const accuracy = attempted>0 ? Math.round((correct/attempted)*1000)/10 : 0;
+  score = Math.round(score*100)/100;
+
+  const sections = Object.values(sectionMap).map(s=>({
+    section: s.section,
+    score: Math.round(s.score*100)/100,
+    maxScore: Math.round(s.maxScore*100)/100,
+    attempted: s.attempted,
+    total: s.total,
+    accuracy: s.attempted>0 ? Math.round((s.correct/s.attempted)*1000)/10 : 0,
+    timeSeconds: Math.round(timeBySubject[s.section]||0),
+  }));
+
+  if(!Array.isArray(db.submissions)) db.submissions = [];
+  db.submissions.push({ id: uid(), testId: t.id, userId: user.id, score, submittedAt: new Date().toISOString() });
+  writeDbSync(db);
+
+  const allScores = db.submissions.filter(s=>s.testId===t.id).map(s=>s.score);
+  const totalAttempts = allScores.length;
+  const rank = allScores.filter(s=>s>score).length + 1;
+  const scoredBelow = allScores.filter(s=>s<score).length;
+  const percentile = totalAttempts>1 ? Math.round((scoredBelow/(totalAttempts-1))*1000)/10 : 100;
+
+  return { testId:t.id, title:t.title, score, maxScore, correct, incorrect, unattempted, attempted, total:t.questions.length, accuracy, rank, totalAttempts, percentile, sections, review };
+}
+
+/* ---- Premium subscription (one payment unlocks every paid test series) ---- */
+async function h_plans(){ requireLogin(); const db=readDbSync(); return { plans: db.plans, payment: db.payment }; }
+async function h_mySubscription(){
+  const user = requireRole('student'); const db = readDbSync();
+  const act = activeSubscription(db, user.id);
+  const requests = db.subscriptions.filter(s=>s.studentId===user.id).sort((a,b)=>new Date(b.requestedAt)-new Date(a.requestedAt));
+  return { active: !!act, expiresAt: act?act.expiresAt:null, planName: act?act.planName:null, requests };
+}
+async function h_requestSubscription(body){
+  const user = requireRole('student'); const db = readDbSync();
+  const plan = db.plans.find(p=>p.id===body.planId);
+  if(!plan) throw new Error('Please choose a plan.');
+  const txnId = String(body.txnId||'').trim();
+  if(txnId.length < 6) throw new Error('Enter the transaction / UTR ID from your payment.');
+  if(db.subscriptions.some(s=>s.studentId===user.id && s.status==='pending')) throw new Error('You already have a payment waiting for verification.');
+  if(db.subscriptions.some(s=>s.txnId.toLowerCase()===txnId.toLowerCase())) throw new Error('This transaction ID has already been submitted.');
+  const sub = { id:uid(), studentId:user.id, studentName:user.name, studentEmail:user.email, planId:plan.id, planName:plan.name, days:plan.days, amount:plan.price, txnId, method:'UPI', status:'pending', requestedAt:new Date().toISOString(), decidedAt:null, startsAt:null, expiresAt:null };
+  db.subscriptions.push(sub); writeDbSync(db);
+  return { message: 'Payment submitted. Premium starts as soon as the Admin verifies it.', subscription: sub };
+}
+async function h_activateGateway(body){          // records a payment the gateway server has verified
+  const user = requireRole('student'); const db = readDbSync();
+  const e = body.entitlement || {};
+  if(!e.paymentId || !e.days) throw new Error('Invalid payment.');
+  if(e.studentId !== user.id) throw new Error('This payment belongs to a different account.');
+  const dup = db.subscriptions.find(s=>s.txnId===e.paymentId);
+  if(dup) return { message:'Already active.', subscription: dup };
+  const act = activeSubscription(db, user.id);
+  const start = act ? new Date(act.expiresAt) : new Date(e.paidAt||Date.now());
+  const sub = { id:uid(), studentId:user.id, studentName:user.name, studentEmail:user.email, planId:e.planId, planName:e.planName, days:e.days, amount:e.amount, txnId:e.paymentId, method:'Razorpay (auto)', status:'approved', requestedAt:e.paidAt||new Date().toISOString(), decidedAt:new Date().toISOString(), startsAt:start.toISOString(), expiresAt:new Date(start.getTime()+e.days*86400000).toISOString() };
+  db.subscriptions.push(sub); writeDbSync(db);
+  return { message:'Premium activated.', subscription: sub };
+}
+async function h_allSubscriptions(){
+  requireRole('admin');
+  return { subscriptions: [...readDbSync().subscriptions].sort((a,b)=>new Date(b.requestedAt)-new Date(a.requestedAt)) };
+}
+async function h_decideSubscription(id, body){
+  requireRole('admin'); const db = readDbSync();
+  const sub = db.subscriptions.find(s=>s.id===id);
+  if(!sub) throw new Error('Request not found.');
+  if(sub.status!=='pending') throw new Error('This request was already '+sub.status+'.');
+  if(body.approved){
+    const act = activeSubscription(db, sub.studentId);
+    const start = act ? new Date(act.expiresAt) : new Date();     // renewals stack on top of remaining time
+    sub.status = 'approved'; sub.startsAt = start.toISOString();
+    sub.expiresAt = new Date(start.getTime() + sub.days*86400000).toISOString();
+  } else sub.status = 'rejected';
+  sub.decidedAt = new Date().toISOString();
+  writeDbSync(db);
+  return { message: 'Payment '+sub.status+'.', subscription: sub };
+}
+async function h_addPlan(body){
+  requireRole('admin'); const db = readDbSync();
+  const name = String(body.name||'').trim(); const days = parseInt(body.days,10); const price = parseFloat(body.price);
+  if(!name) throw new Error('Plan name is required.');
+  if(isNaN(days)||days<1) throw new Error('Enter the plan length in days.');
+  if(isNaN(price)||price<0) throw new Error('Enter a valid price.');
+  db.plans.push({ id:'plan-'+uid().slice(0,8), name, days, price }); writeDbSync(db);
+  return { message:'Plan added.', plans: db.plans };
+}
+async function h_deletePlan(id){
+  requireRole('admin'); const db = readDbSync();
+  db.plans = db.plans.filter(p=>p.id!==id); writeDbSync(db);
+  return { message:'Plan removed.', plans: db.plans };
+}
+async function h_updatePayment(body){
+  requireRole('admin'); const db = readDbSync();
+  db.payment = { upiId:String(body.upiId||'').trim(), payeeName:String(body.payeeName||'').trim(), note:String(body.note||'').trim(), gatewayUrl:String(body.gatewayUrl||'').trim().replace(/\/+$/,'') };
+  writeDbSync(db);
+  return { message:'Payment details saved.', payment: db.payment };
+}
+async function h_requestPurchase(body){
+  const user = requireRole('student');
+  const { testId } = body;
+  const db = readDbSync();
+  const test = db.tests.find(t=>t.id===testId && t.published);
+  if(!test) throw new Error('Test not found.');
+  if(test.type !== 'paid') throw new Error('That test is free — no access request needed.');
+  const existing = db.purchases.find(p=>p.testId===testId && p.studentId===user.id);
+  if(existing) return { message: `You already have a ${existing.status} request for this test.`, purchase: existing };
+  const purchase = { id:uid(), testId, testTitle:test.title, price:test.price, studentId:user.id, studentName:user.name, studentEmail:user.email, status:'pending', requestedAt:new Date().toISOString(), decidedAt:null };
+  db.purchases.push(purchase); writeDbSync(db);
+  return { message: 'Access request submitted. Waiting for Admin approval.', purchase };
+}
+async function h_myPurchases(){
+  const user = requireRole('student');
+  return { purchases: readDbSync().purchases.filter(p=>p.studentId===user.id) };
+}
+async function h_allPurchases(query){
+  requireRole('admin');
+  let list = readDbSync().purchases;
+  if(query.status) list = list.filter(p=>p.status===query.status);
+  return { purchases: [...list].sort((a,b)=> new Date(b.requestedAt) - new Date(a.requestedAt)) };
+}
+async function h_decidePurchase(id, body){
+  requireRole('admin');
+  const approved = !!body.approved;
+  const db = readDbSync();
+  const purchase = db.purchases.find(p=>p.id===id);
+  if(!purchase) throw new Error('Request not found.');
+  purchase.status = approved ? 'approved' : 'rejected';
+  purchase.decidedAt = new Date().toISOString();
+  writeDbSync(db);
+  return { message: `Request ${purchase.status}.`, purchase };
+}
+
+/* ---- dispatcher: keeps the exact same api(method, url, body) call shape
+   the UI code below uses, so almost none of the UI code needed to change ---- */
+async function api(method, url, body){
+  body = body || {};
+  const clean = url.replace(/^\/api\//, '');
+  const [pathPart, queryPart] = clean.split('?');
+  const parts = pathPart.split('/').filter(Boolean);
+  const query = Object.fromEntries(new URLSearchParams(queryPart||''));
+
+  if(parts[0]==='auth'){
+    if(parts[1]==='register' && parts[2]==='student' && method==='POST') return h_registerStudent(body);
+    if(parts[1]==='register' && parts[2]==='teacher' && method==='POST') return h_registerTeacher(body);
+    if(parts[1]==='login' && method==='POST') return h_login(body);
+    if(parts[1]==='logout' && method==='POST') return h_logout();
+    if(parts[1]==='me' && method==='GET') return h_me();
+    if(parts[1]==='forgot-password' && method==='POST') return h_forgotPassword(body);
+    if(parts[1]==='reset-password' && method==='POST') return h_resetPassword(body);
+  }
+  if(parts[0]==='account'){
+    if(parts[1]==='me' && method==='GET') return h_accountMe();
+    if(parts[1]==='me' && method==='PUT') return h_accountUpdate(body);
+    if(parts[1]==='change-password' && method==='POST') return h_changePassword(body);
+    if(parts[1]==='change-email' && method==='POST') return h_changeEmail(body);
+  }
+  if(parts[0]==='admin'){
+    if(parts[1]==='users' && parts.length===2 && method==='GET') return h_adminUsers();
+    if(parts[1]==='teachers' && parts[3]==='approve' && method==='POST') return h_approveTeacher(parts[2], body);
+    if(parts[1]==='teachers' && parts[3]==='module-access' && method==='POST') return h_setModuleAccess(parts[2], body);
+    if(parts[1]==='users' && parts[3]==='block' && method==='POST') return h_blockUser(parts[2], body);
+    if(parts[1]==='users' && parts.length===3 && method==='DELETE') return h_deleteUser(parts[2]);
+    if(parts[1]==='backup' && method==='GET') return h_adminBackup();
+    if(parts[1]==='restore' && method==='POST') return h_adminRestore(body);
+  }
+  if(parts[0]==='modules'){
+    if(parts.length===1 && method==='GET') return h_listModules();
+    if(parts.length===1 && method==='POST') return h_addModule(body);
+    if(parts.length===2 && method==='DELETE') return h_deleteModule(parts[1]);
+  }
+  if(parts[0]==='settings'){
+    if(parts.length===1 && method==='GET') return h_getSettings();
+    if(parts.length===1 && method==='PUT') return h_updateSettings(body);
+  }
+  if(parts[0]==='tests'){
+    if(parts.length===1 && method==='GET') return h_listTests(query);
+    if(parts[1]==='mine' && method==='GET') return h_myTests();
+    if(parts[1]==='all' && method==='GET') return h_allTests();
+    if(parts[2]==='attempts' && method==='POST') return h_setAttemptPolicy(parts[1], body);
+    if(parts.length===2 && method==='GET') return h_getTest(parts[1]);
+    if(parts.length===1 && method==='POST') return h_createTest(body);
+    if(parts.length===2 && method==='DELETE') return h_deleteTest(parts[1]);
+    if(parts[2]==='submit' && method==='POST') return h_submitTest(parts[1], body);
+  }
+  if(parts[0]==='plans'){
+    if(parts.length===1 && method==='GET') return h_plans();
+    if(parts.length===1 && method==='POST') return h_addPlan(body);
+    if(parts.length===2 && method==='DELETE') return h_deletePlan(parts[1]);
+  }
+  if(parts[0]==='payment-settings' && method==='PUT') return h_updatePayment(body);
+  if(parts[0]==='subscription'){
+    if(parts[1]==='mine' && method==='GET') return h_mySubscription();
+    if(parts[1]==='request' && method==='POST') return h_requestSubscription(body);
+    if(parts[1]==='gateway-activate' && method==='POST') return h_activateGateway(body);
+    if(parts.length===1 && method==='GET') return h_allSubscriptions();
+    if(parts[2]==='decide' && method==='POST') return h_decideSubscription(parts[1], body);
+  }
+  if(parts[0]==='purchases'){
+    if(parts[1]==='request' && method==='POST') return h_requestPurchase(body);
+    if(parts[1]==='mine' && method==='GET') return h_myPurchases();
+    if(parts.length===1 && method==='GET') return h_allPurchases(query);
+    if(parts[2]==='decide' && method==='POST') return h_decidePurchase(parts[1], body);
+  }
+  throw new Error('Unknown route: ' + method + ' ' + url);
+}
+
+/* =====================================================================
+   UI — same as the server-backed version, calling the local api() above.
+   ===================================================================== */
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function msg(id,text,ok=false){ const e=document.getElementById(id); if(e){e.textContent=text;e.className=ok?'msg-ok':'msg-err';} }
+
+/* ---------- navigation ---------- */
+let currentUser = null;
+let activeCategory = null;
+
+function showSection(id){
+  document.querySelectorAll('main>section').forEach(s=>s.classList.add('hidden'));
+  const el=document.getElementById(id); if(el) el.classList.remove('hidden');
+  if(id==='admin') { renderAdmin(); loadSettingsIntoForm(); loadSubscriptionAdmin(); mountModuleManager('adminModules','adm'); loadAdminTests(); }
+  if(id==='tests') loadTests();
+  if(id==='teacher') { loadMyTests(); loadTeacherModules(); }
+  if(id==='account') loadAccount();
+}
+function showTests(category){
+  if(!currentUser){
+    showSection('auth');
+    msg('loginMsg', 'Please log in or register first to view Test Series.', false);
+    return;
+  }
+  activeCategory = category || null;
+  document.getElementById('categoryFilter').value = activeCategory || '';
+  showSection('tests');
+}
+function filterCards(v){v=v.toLowerCase();document.querySelectorAll('.searchable').forEach(c=>c.style.display=c.innerText.toLowerCase().includes(v)?'block':'none')}
+
+/* ---------- auth page tabs (Login <-> Register, Student <-> Teacher) ---------- */
+window.showAuthTab = function(tab){
+  const isLogin = tab === 'login';
+  document.getElementById('authPaneLogin').classList.toggle('hidden', !isLogin);
+  document.getElementById('authPaneRegister').classList.toggle('hidden', isLogin);
+  document.getElementById('authTabLogin').className = isLogin ? 'primary-btn' : 'secondary';
+  document.getElementById('authTabRegister').className = !isLogin ? 'primary-btn' : 'secondary';
+};
+window.showRegisterType = function(type){
+  const isStudent = type === 'student';
+  document.getElementById('regPaneStudent').classList.toggle('hidden', !isStudent);
+  document.getElementById('regPaneTeacher').classList.toggle('hidden', isStudent);
+  document.getElementById('regTabStudent').className = isStudent ? 'primary-btn' : 'secondary';
+  document.getElementById('regTabTeacher').className = !isStudent ? 'primary-btn' : 'secondary';
+};
+
+/* ---------- institution branding ---------- */
+const THEME_PRESETS = { light:{bg:'#f3f5f9', fg:'#172033', primary:'#2563eb'}, dark:{bg:'#0f172a', fg:'#e2e8f0', primary:'#3b82f6'} };
+function applyTheme(mode, bg, fg, primary){
+  const p = THEME_PRESETS[mode==='dark'?'dark':'light'];
+  document.documentElement.setAttribute('data-theme', mode==='dark'?'dark':'light');
+  document.documentElement.style.setProperty('--bg', bg || p.bg);
+  document.documentElement.style.setProperty('--fg', fg || p.fg);
+  document.documentElement.style.setProperty('--primary', primary || p.primary);
+}
+window.previewTheme = function(){
+  const mode = document.getElementById('settingsDarkMode').checked ? 'dark' : 'light';
+  applyTheme(mode, document.getElementById('settingsBgColor').value, document.getElementById('settingsFgColor').value, document.getElementById('settingsPrimaryColor').value);
+};
+window.onThemeSwitch = function(){
+  const mode = document.getElementById('settingsDarkMode').checked ? 'dark' : 'light';
+  document.getElementById('settingsThemeModeLabel').textContent = mode==='dark' ? 'Dark mode' : 'Light mode';
+  const p = THEME_PRESETS[mode];
+  document.getElementById('settingsBgColor').value = p.bg;
+  document.getElementById('settingsFgColor').value = p.fg;
+  document.getElementById('settingsPrimaryColor').value = p.primary;
+  previewTheme();
+};
+window.resetThemeDefaults = function(){
+  document.getElementById('settingsDarkMode').checked = false;
+  onThemeSwitch();
+};
+async function loadBranding(){
+  try{
+    const { settings } = await api('GET','/api/settings');
+    if(settings.institutionName){
+      document.getElementById('brandName').textContent = '📚 ' + settings.institutionName;
+      document.title = settings.institutionName;
+      document.getElementById('heroTitle').textContent = settings.institutionName + ' — Prepare Smarter.';
+      document.getElementById('siteFooter').textContent = settings.institutionName + ' • Standalone version • Data stored only in this browser';
+    }
+    const logo = document.getElementById('brandLogo');
+    if(settings.logoDataUrl){ logo.src = settings.logoDataUrl; logo.classList.remove('hidden'); }
+    else logo.classList.add('hidden');
+    applyTheme(settings.themeMode, settings.backgroundColor, settings.foregroundColor, settings.primaryColor);
+  }catch(e){ /* non-fatal */ }
+}
+
+/* ---------- auth ---------- */
+async function refreshUser(){
+  const { user } = await api('GET','/api/auth/me');
+  currentUser = user;
+  updateUI();
+  return user;
+}
+
+window.registerStudent = async function(){
+  const password = document.getElementById('studentPassword').value;
+  const confirmPassword = document.getElementById('studentConfirmPassword').value;
+  if(password !== confirmPassword){ msg('studentMsg', 'Passwords do not match.'); return; }
+  try{
+    const body = { name: document.getElementById('studentName').value.trim(), mobile: document.getElementById('studentMobile').value.trim(), email: document.getElementById('studentEmail').value.trim(), password };
+    const r = await api('POST','/api/auth/register/student', body);
+    msg('studentMsg', r.message, true);
+    document.getElementById('studentPassword').value='';
+    document.getElementById('studentConfirmPassword').value='';
+  }catch(e){ msg('studentMsg', e.message); }
+};
+
+window.registerTeacher = async function(){
+  const password = document.getElementById('teacherPassword').value;
+  const confirmPassword = document.getElementById('teacherConfirmPassword').value;
+  if(password !== confirmPassword){ msg('teacherMsg', 'Passwords do not match.'); return; }
+  try{
+    const body = { name: document.getElementById('teacherName').value.trim(), mobile: document.getElementById('teacherMobile').value.trim(), email: document.getElementById('teacherEmail').value.trim(), subject: document.getElementById('teacherSubject').value.trim(), password };
+    const r = await api('POST','/api/auth/register/teacher', body);
+    msg('teacherMsg', r.message, true);
+    ['teacherName','teacherMobile','teacherEmail','teacherSubject','teacherPassword','teacherConfirmPassword'].forEach(id=>document.getElementById(id).value='');
+  }catch(e){ msg('teacherMsg', e.message); }
+};
+
+window.loginUser = async function(){
+  try{
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const r = await api('POST','/api/auth/login', { email, password });
+    currentUser = r.user;
+    try{
+      if(document.getElementById('rememberLogin').checked){
+        localStorage.setItem('cem_saved_login_admin', JSON.stringify({e:email,p:password}));
+      } else localStorage.removeItem('cem_saved_login_admin');
+    }catch(_){}
+    msg('loginMsg','Login successful.',true);
+    updateUI();
+    if(currentUser.role==='admin') showSection('admin');
+    else if(currentUser.role==='teacher') showSection('teacher');
+    else showSection('home');
+  }catch(e){ msg('loginMsg', e.message); }
+};
+
+(function(){
+  function init(){
+    const em=document.getElementById('loginEmail'), pw=document.getElementById('loginPassword'), rm=document.getElementById('rememberLogin');
+    if(!em||!pw) return;
+    try{
+      const d=JSON.parse(localStorage.getItem('cem_saved_login_admin')||'null');
+      if(d){ em.value=d.e||''; pw.value=d.p||''; if(rm) rm.checked=true; }
+    }catch(_){}
+    [em,pw].forEach(el=>el.addEventListener('keydown',ev=>{
+      if(ev.key==='Enter'){ ev.preventDefault(); window.loginUser(); }
+    }));
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+
+window.logout = async function(){
+  await api('POST','/api/auth/logout');
+  currentUser = null;
+  updateUI();
+  { const m=document.getElementById('loginMsg'); if(m) m.textContent=''; const pw=document.getElementById('loginPassword'); if(pw && !document.getElementById('rememberLogin')?.checked) pw.value=''; }
+  showSection('auth');
+};
+
+function updateUI(){
+  ['adminNav','teacherNav','logoutNav','accountNav'].forEach(id=>document.getElementById(id)?.classList.add('hidden'));
+  document.getElementById('authNav')?.classList.remove('hidden');
+  if(currentUser){
+    document.getElementById('logoutNav')?.classList.remove('hidden');
+    document.getElementById('accountNav')?.classList.remove('hidden');
+    document.getElementById('authNav')?.classList.add('hidden');
+    if(currentUser.role==='admin') document.getElementById('adminNav')?.classList.remove('hidden');
+    if(currentUser.role==='teacher') document.getElementById('teacherNav')?.classList.remove('hidden');
+    const w=document.getElementById('teacherWelcome');
+    if(w && currentUser.role==='teacher') w.textContent='Welcome, '+currentUser.name+' — '+(currentUser.subject||'')+'.';
+  }
+}
+
+/* ---------- forgot / reset password ---------- */
+window.toggleForgot = function(){
+  document.getElementById('forgotBox').classList.toggle('hidden');
+};
+window.requestPasswordReset = async function(){
+  try{
+    const email = document.getElementById('forgotEmail').value.trim();
+    const r = await api('POST','/api/auth/forgot-password', { email });
+    if(r.demoMode && r.resetLink){
+      msg('forgotMsg', 'Reset link generated (shown here instead of emailed):', true);
+      document.getElementById('forgotMsg').innerHTML += `<br><a href="${r.resetLink}" style="word-break:break-all">${esc(r.resetLink)}</a>`;
+      document.getElementById('resetToken').value = r.resetToken;
+      document.getElementById('resetBox').classList.remove('hidden');
+    } else {
+      msg('forgotMsg', r.message, true);
+    }
+  }catch(e){ msg('forgotMsg', e.message); }
+};
+window.performPasswordReset = async function(){
+  const newPassword = document.getElementById('resetNewPassword').value;
+  const confirmPassword = document.getElementById('resetConfirmPassword').value;
+  if(newPassword !== confirmPassword){ msg('resetMsg', 'Passwords do not match.'); return; }
+  try{
+    const email = document.getElementById('forgotEmail').value.trim();
+    const token = document.getElementById('resetToken').value.trim();
+    const r = await api('POST','/api/auth/reset-password', { email, token, newPassword });
+    msg('resetMsg', r.message, true);
+  }catch(e){ msg('resetMsg', e.message); }
+};
+// Support arriving via a reset link: /?resetEmail=...&resetToken=...#auth
+(function prefillResetFromUrl(){
+  const params = new URLSearchParams(location.search);
+  const rEmail = params.get('resetEmail'), rToken = params.get('resetToken');
+  if(rEmail && rToken){
+    window.addEventListener('DOMContentLoaded', () => {
+      showSection('auth');
+      document.getElementById('forgotBox').classList.remove('hidden');
+      document.getElementById('resetBox').classList.remove('hidden');
+      document.getElementById('forgotEmail').value = rEmail;
+      document.getElementById('resetToken').value = rToken;
+    });
+  }
+})();
+
+/* ---------- my account ---------- */
+async function loadAccount(){
+  try{
+    const { user } = await api('GET','/api/account/me');
+    document.getElementById('acctEmail').textContent = user.email;
+    document.getElementById('acctRole').textContent = user.role;
+    document.getElementById('acctName').value = user.name || '';
+    document.getElementById('acctMobile').value = user.mobile || '';
+    const subjRow = document.getElementById('acctSubjectRow');
+    if(user.role==='teacher'){ subjRow.classList.remove('hidden'); document.getElementById('acctSubject').value = user.subject || ''; }
+    else subjRow.classList.add('hidden');
+  }catch(e){ msg('acctMsg', e.message); }
+}
+window.saveAccount = async function(){
+  try{
+    const body = { name: document.getElementById('acctName').value.trim(), mobile: document.getElementById('acctMobile').value.trim() };
+    if(currentUser && currentUser.role==='teacher') body.subject = document.getElementById('acctSubject').value.trim();
+    const r = await api('PUT','/api/account/me', body);
+    currentUser = r.user;
+    updateUI();
+    msg('acctMsg', r.message, true);
+  }catch(e){ msg('acctMsg', e.message); }
+};
+window.changeEmail = async function(){
+  try{
+    const newEmail = document.getElementById('emailNew').value.trim();
+    const currentPassword = document.getElementById('emailPwCurrent').value;
+    const r = await api('POST','/api/account/change-email', { newEmail, currentPassword });
+    msg('emailMsg', r.message, true);
+    document.getElementById('acctEmail').textContent = r.user.email;
+    document.getElementById('emailNew').value=''; document.getElementById('emailPwCurrent').value='';
+  }catch(e){ msg('emailMsg', e.message); }
+};
+window.changePassword = async function(){
+  const newPassword = document.getElementById('pwNew').value;
+  const confirmPassword = document.getElementById('pwConfirm').value;
+  if(newPassword !== confirmPassword){ msg('pwMsg', 'Passwords do not match.'); return; }
+  try{
+    const currentPassword = document.getElementById('pwCurrent').value;
+    const r = await api('POST','/api/account/change-password', { currentPassword, newPassword });
+    msg('pwMsg', r.message, true);
+    document.getElementById('pwCurrent').value=''; document.getElementById('pwNew').value=''; document.getElementById('pwConfirm').value='';
+  }catch(e){ msg('pwMsg', e.message); }
+};
+
+/* ---------- admin: users ---------- */
+window.approveTeacher = async function(id, approved){
+  try{ await api('POST', '/api/admin/teachers/'+encodeURIComponent(id)+'/approve', { approved }); renderAdmin(); }
+  catch(e){ alert(e.message); }
+};
+window.blockUser = async function(id, blocked){
+  try{ await api('POST', '/api/admin/users/'+encodeURIComponent(id)+'/block', { blocked }); renderAdmin(); }
+  catch(e){ alert(e.message); }
+};
+window.deleteUser = async function(id, name){
+  if(!confirm(`Delete the account "${name}"? This can't be undone.`)) return;
+  try{ await api('DELETE', '/api/admin/users/'+encodeURIComponent(id)); renderAdmin(); }
+  catch(e){ alert(e.message); }
+};
+
+function moduleAccessCell(x){
+  if(x.status!=='approved') return '<span class="muted">—</span>';
+  return x.canManageModules
+    ? `<span class="status-approved">Allowed</span> <button class="warn-btn" onclick="setModuleAccess('${x.id}',false)">Revoke</button>`
+    : `<span class="muted">Not allowed</span> <button class="success-btn" onclick="setModuleAccess('${x.id}',true)">Allow</button>`;
+}
+window.setModuleAccess = async function(id, allowed){
+  try{ await api('POST', '/api/admin/teachers/'+encodeURIComponent(id)+'/module-access', { allowed }); renderAdmin(); }
+  catch(e){ alert(e.message); }
+};
+
+async function renderAdmin(){
+  try{
+    const { teachers, students, counts } = await api('GET','/api/admin/users');
+    document.getElementById('adminStudentsCount').textContent = counts.students;
+    document.getElementById('adminTeachersCount').textContent = counts.approvedTeachers;
+    document.getElementById('adminPendingCount').textContent = counts.pendingTeachers;
+
+    document.getElementById('teacherTable').innerHTML = teachers.map(x=>{
+      const statusLabel = x.blocked ? 'blocked' : x.status;
+      const approveBtns = x.status==='pending' ? `<button class="success-btn" onclick="approveTeacher('${x.id}',true)">Approve</button> <button class="danger-btn" onclick="approveTeacher('${x.id}',false)">Reject</button> ` : '';
+      const blockBtn = x.blocked ? `<button class="success-btn" onclick="blockUser('${x.id}',false)">Unblock</button>` : `<button class="warn-btn" onclick="blockUser('${x.id}',true)">Block</button>`;
+      return `<tr><td>${esc(x.name)}</td><td>${esc(x.email)}</td><td>${esc(x.mobile||'')}</td><td>${esc(x.subject||'')}</td><td class="status-${statusLabel}">${statusLabel}</td><td>${moduleAccessCell(x)}</td><td>${approveBtns}${blockBtn} <button class="danger-btn" onclick="deleteUser('${x.id}','${esc(x.name)}')">Delete</button></td></tr>`;
+    }).join('') || '<tr><td colspan="7">No teacher registrations.</td></tr>';
+
+    document.getElementById('studentTable').innerHTML = students.map(x=>{
+      const statusLabel = x.blocked ? 'blocked' : 'approved';
+      const blockBtn = x.blocked ? `<button class="success-btn" onclick="blockUser('${x.id}',false)">Unblock</button>` : `<button class="warn-btn" onclick="blockUser('${x.id}',true)">Block</button>`;
+      return `<tr><td>${esc(x.name)}</td><td>${esc(x.email)}</td><td>${esc(x.mobile||'')}</td><td class="status-${statusLabel}">${statusLabel}</td><td>${blockBtn} <button class="danger-btn" onclick="deleteUser('${x.id}','${esc(x.name)}')">Delete</button></td></tr>`;
+    }).join('') || '<tr><td colspan="5">No students registered.</td></tr>';
+  }catch(e){
+    document.getElementById('teacherTable').innerHTML = `<tr><td colspan="7">${esc(e.message)}</td></tr>`;
+  }
+}
+
+/* ---------- admin: paid test access requests ---------- */
+async function loadPurchaseRequests(){
+  const tbody = document.getElementById('purchaseTable');
+  try{
+    const { purchases } = await api('GET','/api/purchases');
+    tbody.innerHTML = purchases.map(p => `
+      <tr>
+        <td>${esc(p.studentName)}<br><span class="muted">${esc(p.studentEmail)}</span></td>
+        <td>${esc(p.testTitle)}</td>
+        <td>₹${p.price}</td>
+        <td>${new Date(p.requestedAt).toLocaleString()}</td>
+        <td class="status-${p.status==='approved'?'approved':(p.status==='rejected'?'rejected':'pending')}">${p.status}</td>
+        <td>${p.status==='pending' ? `<button class="success-btn" onclick="decidePurchase('${p.id}',true)">Approve</button> <button class="danger-btn" onclick="decidePurchase('${p.id}',false)">Reject</button>` : '—'}</td>
+      </tr>
+    `).join('') || '<tr><td colspan="6">No access requests yet.</td></tr>';
+  }catch(e){
+    tbody.innerHTML = `<tr><td colspan="6">${esc(e.message)}</td></tr>`;
+  }
+}
+window.decidePurchase = async function(id, approved){
+  try{ await api('POST', '/api/purchases/'+encodeURIComponent(id)+'/decide', { approved }); loadPurchaseRequests(); }
+  catch(e){ alert(e.message); }
+};
+
+/* ---------- admin: institution settings ---------- */
+async function loadSettingsIntoForm(){
+  try{
+    const { settings } = await api('GET','/api/settings');
+    document.getElementById('settingsName').value = settings.institutionName || '';
+    document.getElementById('settingsDarkMode').checked = settings.themeMode === 'dark';
+    document.getElementById('settingsThemeModeLabel').textContent = settings.themeMode === 'dark' ? 'Dark mode' : 'Light mode';
+    document.getElementById('settingsBgColor').value = settings.backgroundColor || '#f3f5f9';
+    document.getElementById('settingsFgColor').value = settings.foregroundColor || '#172033';
+    document.getElementById('settingsPrimaryColor').value = settings.primaryColor || '#2563eb';
+    document.getElementById('settingsAddress').value = settings.address || '';
+    document.getElementById('settingsEmail').value = settings.contactEmail || '';
+    document.getElementById('settingsPhone').value = settings.contactPhone || '';
+    const preview = document.getElementById('settingsLogoPreview');
+    if(settings.logoDataUrl){ preview.src = settings.logoDataUrl; preview.classList.remove('hidden'); }
+    else preview.classList.add('hidden');
+    window._pendingLogoDataUrl = undefined;
+  }catch(e){ msg('settingsMsg', e.message); }
+}
+window.previewLogo = function(){
+  const file = document.getElementById('settingsLogoFile').files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    window._pendingLogoDataUrl = e.target.result;
+    const preview = document.getElementById('settingsLogoPreview');
+    preview.src = e.target.result;
+    preview.classList.remove('hidden');
+  };
+  reader.readAsDataURL(file);
+};
+window.saveSettings = async function(){
+  try{
+    const body = {
+      institutionName: document.getElementById('settingsName').value.trim(),
+      themeMode: document.getElementById('settingsDarkMode').checked ? 'dark' : 'light',
+      backgroundColor: document.getElementById('settingsBgColor').value,
+      foregroundColor: document.getElementById('settingsFgColor').value,
+      primaryColor: document.getElementById('settingsPrimaryColor').value,
+      address: document.getElementById('settingsAddress').value.trim(),
+      contactEmail: document.getElementById('settingsEmail').value.trim(),
+      contactPhone: document.getElementById('settingsPhone').value.trim(),
+    };
+    if(window._pendingLogoDataUrl) body.logoDataUrl = window._pendingLogoDataUrl;
+    const r = await api('PUT','/api/settings', body);
+    msg('settingsMsg', r.message, true);
+    loadBranding();
+  }catch(e){ msg('settingsMsg', e.message); }
+};
+
+/* ---------- admin: backup & restore ---------- */
+window.downloadBackup = async function(){
+  try{
+    const dbObj = await api('GET','/api/admin/backup');
+    const blob = new Blob([JSON.stringify(dbObj, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'cemaster-backup.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    msg('backupMsg', 'Backup downloaded.', true);
+  }catch(e){ msg('backupMsg', e.message); }
+};
+window.restoreBackup = async function(){
+  const file = document.getElementById('restoreFile').files[0];
+  if(!file){ msg('backupMsg', 'Choose a backup JSON file first.'); return; }
+  if(!confirm('This will overwrite all current users, exam modules, test series and settings with the contents of this file. Continue?')) return;
+  try{
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const r = await api('POST','/api/admin/restore', parsed);
+    msg('backupMsg', r.message, true);
+    renderAdmin(); loadSettingsIntoForm(); loadBranding();
+  }catch(e){ msg('backupMsg', 'Restore failed: ' + e.message); }
+};
+
+/* ---------- exam modules: shown on Home, in the module filter and in the teacher's publish form ---------- */
+let MODULES = [];
+
+async function refreshModuleViews(){
+  try{ MODULES = (await api('GET','/api/modules')).modules; }catch(e){ MODULES = []; }
+  if(activeCategory && !MODULES.some(m=>m.name===activeCategory)) activeCategory = null;
+  renderHomeModules();
+  renderCategoryOptions();
+  renderModuleLists();
+}
+function renderHomeModules(){
+  const grid = document.getElementById('examGrid');
+  if(!grid) return;
+  grid.innerHTML = MODULES.map(m => `
+    <div class="card searchable"><div>${esc(m.icon||'📘')}</div><h3>${esc(m.name)}</h3><p class="muted">${esc(m.description||'')}</p><button data-name="${esc(m.name)}" onclick="showTests(this.dataset.name)">View Test Series</button></div>
+  `).join('') || '<p class="muted">No exam modules yet.</p>';
+}
+function renderCategoryOptions(){
+  const filter = document.getElementById('categoryFilter');
+  if(filter){
+    filter.innerHTML = '<option value="">All Modules</option>' + MODULES.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('');
+    filter.value = activeCategory || '';
+  }
+  const sel = document.getElementById('ntCategory');
+  if(sel){
+    const prev = sel.value;
+    sel.innerHTML = MODULES.length
+      ? MODULES.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('')
+      : '<option value="">No exam modules yet — add one above</option>';
+    if(MODULES.some(m=>m.name===prev)) sel.value = prev;
+  }
+}
+const DEFAULT_ICON = '📘';
+const ICON_GROUPS = [
+  ['Study & exams',        ['📘','📚','📖','📝','🎓','🏫','✏️','🖊️','📒','📓','🧠','💡','🎯','🏆','🥇','📊','📈','🔖','🧾','✅']],
+  ['Government & law',     ['🏛️','⚖️','🗳️','🌐','🗺️','🏢','🏤','📜','🛂','🚔','👮','🚨','📰','🔒']],
+  ['Banking & business',   ['🏦','💰','💵','💳','🪙','🧮','💼','📉','🏧','🤝']],
+  ['Railway & transport',  ['🚆','🚂','🚇','🚌','✈️','🚢','🚗','🚀','🛣️','🚦']],
+  ['Defence',              ['🪖','🛡️','⚔️','🎖️','🚁','⚓','🔰','🧭']],
+  ['Subjects & languages', ['🗣️','🔤','🔡','🅰️','🌍','✍️','📐','📏','➕','🔢','🎨','🎭','🎵','🕉️']],
+  ['Science & technology', ['🔬','🧪','⚗️','🧬','🌱','🌿','⚡','💻','🖥️','📡','🔭','🛰️','🤖','⚙️']],
+  ['Health & farming',     ['🩺','💊','🏥','🌾','🚜','🐄']],
+  ['Sports & general',     ['⚽','🏏','🏀','🏹','🥋','🔥','⭐','🌟','🌈','📌']],
+];
+function iconPickerHTML(p){
+  return ICON_GROUPS.map(([label, icons])=>
+    `<div class="muted" style="margin:8px 0 4px">${label}</div><div class="icon-grid">` +
+    icons.map(i=>`<button type="button" class="icon-opt" data-i="${i}" aria-label="Icon ${i}" onclick="pickIcon('${p}',this.dataset.i)">${i}</button>`).join('') +
+    `</div>`
+  ).join('');
+}
+window.pickIcon = function(p, icon){
+  const input = document.getElementById(p+'ModIcon'); if(input) input.value = icon;
+  const prev = document.getElementById(p+'IconPreview'); if(prev) prev.textContent = icon;
+  document.querySelectorAll('#'+p+'IconPicker .icon-opt').forEach(b=>b.classList.toggle('sel', b.dataset.i===icon));
+};
+function moduleManagerHTML(p){
+  return `
+    <h3>🗂️ Exam Modules</h3>
+    <p class="muted">Modules group test series (SSC, Banking…). They appear on the Home page, in the module filter and in the Add Test Series form.</p>
+    <div class="row" style="align-items:flex-end">
+      <div class="form-row" style="flex:2;min-width:160px"><label>Module name</label><input id="${p}ModName" style="width:100%;min-width:0" maxlength="40" placeholder="e.g. Teaching Exams"></div>
+      <div class="form-row" style="flex:3;min-width:180px"><label>Short description</label><input id="${p}ModDesc" style="width:100%;min-width:0" maxlength="80" placeholder="e.g. B.Ed • TET • DElEd"></div>
+      <button class="primary-btn" style="margin-bottom:10px" onclick="addModule('${p}')">Add Module</button>
+    </div>
+    <div class="form-row" style="margin-top:0">
+      <label>Icon: <span id="${p}IconPreview" style="font-size:22px;vertical-align:middle">📘</span> <span class="muted">— tap one to choose</span></label>
+      <input type="hidden" id="${p}ModIcon" value="📘">
+      <div class="icon-picker" id="${p}IconPicker">${iconPickerHTML(p)}</div>
+    </div>
+    <p id="${p}ModMsg"></p>
+    <div class="table-wrap"><table><thead><tr><th>Module</th><th>Description</th><th>Test series</th><th>Added by</th><th>Action</th></tr></thead><tbody id="${p}ModList"></tbody></table></div>`;
+}
+function mountModuleManager(containerId, p){
+  const box = document.getElementById(containerId);
+  if(!box) return;
+  if(!document.getElementById(p+'ModList')){ box.innerHTML = moduleManagerHTML(p); pickIcon(p, DEFAULT_ICON); }
+  refreshModuleViews();
+}
+function renderModuleLists(){
+  [['adm', true], ['tch', false]].forEach(([p, isAdmin])=>{
+    const tbody = document.getElementById(p+'ModList');
+    if(!tbody) return;
+    tbody.innerHTML = MODULES.map(m=>{
+      const n = m.testCount || 0;
+      const action = (!isAdmin && n>0)
+        ? `<span class="muted">Has ${n} test series</span>`
+        : `<button class="danger-btn" data-id="${esc(m.id)}" data-name="${esc(m.name)}" data-count="${n}" onclick="deleteModule(this,'${p}')">Delete</button>`;
+      return `<tr><td>${esc(m.icon||'📘')} <b>${esc(m.name)}</b></td><td>${esc(m.description||'')}</td><td>${n}</td><td>${m.createdBy==='system' ? 'Default' : esc(m.createdBy||'')}</td><td>${action}</td></tr>`;
+    }).join('') || '<tr><td colspan="5">No exam modules yet. Add one above.</td></tr>';
+  });
+}
+window.addModule = async function(p){
+  const val = id => document.getElementById(p+id).value;
+  try{
+    const r = await api('POST','/api/modules', { name: val('ModName'), icon: val('ModIcon'), description: val('ModDesc') });
+    msg(p+'ModMsg', r.message, true);
+    ['ModName','ModDesc'].forEach(id=>document.getElementById(p+id).value='');
+    pickIcon(p, DEFAULT_ICON);
+    await refreshModuleViews();
+  }catch(e){ msg(p+'ModMsg', e.message); }
+};
+window.deleteModule = async function(btn, p){
+  const id = btn.dataset.id, name = btn.dataset.name, count = Number(btn.dataset.count) || 0;
+  const question = count
+    ? `Delete the module "${name}" together with its ${count} test series and their access requests? This can't be undone.`
+    : `Delete the module "${name}"?`;
+  if(!confirm(question)) return;
+  try{
+    const r = await api('DELETE','/api/modules/'+encodeURIComponent(id));
+    msg(p+'ModMsg', r.message, true);
+    await refreshModuleViews();
+    if(p==='tch') loadMyTests();
+  }catch(e){ msg(p+'ModMsg', e.message); }
+};
+// Teacher dashboard: full module manager only if the Admin has granted access
+async function loadTeacherModules(){
+  const box = document.getElementById('teacherModules');
+  if(!box) return;
+  if(!currentUser || currentUser.role!=='teacher'){ box.innerHTML = ''; return; }
+  try{ await refreshUser(); }catch(e){}  // pick up any access the Admin has just granted or removed
+  if(!currentUser || currentUser.role!=='teacher'){ box.innerHTML = ''; return; }
+  if(currentUser.canManageModules){
+    mountModuleManager('teacherModules','tch');
+  } else {
+    box.innerHTML = '<h3>🗂️ Exam Modules</h3><p class="muted">Only the Admin can add or delete exam modules. Ask the Admin to give you module access if you need it.</p>';
+    refreshModuleViews();
+  }
+}
+
+/* ---------- test series: browse + attempt ---------- */
+let activeTest = null;
+let activeAnswers = {};
+let activeMarked = {};
+let activeVisited = {};
+let activeQi = 0;
+let activeLanguage = null;
+let pendingTest = null;
+let activeTimeBySubject = {};
+let questionEnterTime = Date.now();
+function trackTimeSpent(){
+  if(!activeTest) return;
+  const q = activeTest.questions[activeQi];
+  if(!q) return;
+  const subj = q.subject || 'General';
+  const elapsed = Math.max(0, (Date.now() - questionEnterTime) / 1000);
+  activeTimeBySubject[subj] = (activeTimeBySubject[subj] || 0) + elapsed;
+  questionEnterTime = Date.now();
+}
+
+async function loadTests(){
+  const grid = document.getElementById('testsGrid');
+  document.getElementById('testsTitle').textContent = activeCategory ? 'Test Series — ' + activeCategory : 'Test Series — All Modules';
+  try{
+    const url = '/api/tests' + (activeCategory ? '?category=' + encodeURIComponent(activeCategory) : '');
+    const { tests, attemptedIds } = await api('GET', url);
+
+    let purchaseMap = {};
+    if(currentUser && currentUser.role === 'student'){
+      try{
+        const { purchases } = await api('GET','/api/purchases/mine');
+        purchases.forEach(p => purchaseMap[p.testId] = p.status);
+      }catch(e){ /* non-fatal */ }
+    }
+
+    const attemptedSet = new Set(attemptedIds||[]);
+    document.getElementById('testsHint').textContent = tests.length + ' test series available';
+    grid.innerHTML = tests.map(t => {
+      const startBtn = t => (t.attemptPolicy==='once' && attemptedSet.has(t.id)) ? `<button class="secondary" disabled>✅ Already Attempted</button>` : `<button onclick="startTest('${t.id}')">Start Test</button>`;
+      let action;
+      if(t.type === 'paid' && currentUser && currentUser.role === 'student'){
+        const status = purchaseMap[t.id];
+        if(status === 'approved') action = startBtn(t);
+        else if(status === 'pending') action = `<button class="secondary" disabled>Pending Admin Approval</button>`;
+        else if(status === 'rejected') action = `<p class="muted">Access request was rejected.</p><button class="secondary" onclick="requestAccess('${t.id}')">Request Again</button>`;
+        else action = `<button class="secondary" onclick="requestAccess('${t.id}')">Request Access (₹${t.price})</button>`;
+      } else {
+        action = startBtn(t);
+      }
+      return `
+      <div class="card">
+        <h3>${t.type==='paid' ? '⭐' : '🆓'} ${esc(t.title)}</h3>
+        <p class="muted">${esc(t.category)} • ${esc(t.exam)} • ${t.questionCount} questions • ${t.duration} min${t.type==='paid' ? ' • ₹'+t.price : ''}${t.languages && t.languages.length>1 ? ' • 🌐 '+t.languages.map(esc).join('/') : ''}</p>
+        ${t.subjects && t.subjects.length>1 ? `<p class="muted">Subjects: ${t.subjects.map(esc).join(', ')}</p>` : ''}
+        <p class="muted">${t.attemptPolicy==='once' ? '🔒 One attempt only' : '🔁 Reattempt allowed'}</p>
+        ${action}
+      </div>
+    `;}).join('') || `<p class="muted">No ${esc(activeCategory||'')} test series published yet.</p>`;
+  }catch(e){
+    if(!currentUser){ showSection('auth'); msg('loginMsg', 'Please log in or register first to view Test Series.', false); return; }
+    grid.innerHTML = `<p class="muted">${esc(e.message)}</p>`;
+  }
+}
+
+window.changeAttemptPolicy = async function(id, value, reload){
+  try{ const r = await api('POST','/api/tests/'+encodeURIComponent(id)+'/attempts', { attemptPolicy: value }); alert(r.message); }
+  catch(e){ alert(e.message); }
+  if(reload) reload();
+};
+
+const fmtDate = d => new Date(d).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
+async function loadSubscriptionAdmin(){
+  try{
+    const { plans, payment } = await api('GET','/api/plans');
+    document.getElementById('admUpi').value = payment.upiId||'';
+    document.getElementById('admPayee').value = payment.payeeName||'';
+    document.getElementById('admPayNote').value = payment.note||'';
+    document.getElementById('admGateway').value = payment.gatewayUrl||'';
+    document.getElementById('planTable').innerHTML = plans.map(p=>`<tr><td>${esc(p.name)}</td><td>${p.days}</td><td>₹${p.price}</td><td><button class="secondary" onclick="deletePlanAdmin('${esc(p.id)}')">🗑 Remove</button></td></tr>`).join('') || '<tr><td colspan="4">No plans yet.</td></tr>';
+    const { subscriptions } = await api('GET','/api/subscription');
+    document.getElementById('subTable').innerHTML = subscriptions.map(s=>`<tr>
+      <td>${esc(s.studentName)}<br><span class="muted">${esc(s.studentEmail)}</span></td><td>${esc(s.planName)} (${s.days}d)</td><td>₹${s.amount}</td><td>${esc(s.txnId)}</td><td>${fmtDate(s.requestedAt)}</td>
+      <td>${s.status==='approved'?'✅ Until '+fmtDate(s.expiresAt):s.status==='pending'?'⏳ Pending':'❌ Rejected'}</td>
+      <td>${s.status==='pending'?`<button class="success-btn" onclick="decideSub('${s.id}',true)">Approve</button> <button class="danger-btn" onclick="decideSub('${s.id}',false)">Reject</button>`:''}</td></tr>`).join('') || '<tr><td colspan="7">No payment requests yet.</td></tr>';
+  }catch(e){ document.getElementById('subTable').innerHTML = `<tr><td colspan="7">${esc(e.message)}</td></tr>`; }
+}
+window.savePaymentDetails = async function(){
+  try{ await api('PUT','/api/payment-settings',{ upiId:document.getElementById('admUpi').value, payeeName:document.getElementById('admPayee').value, note:document.getElementById('admPayNote').value, gatewayUrl:document.getElementById('admGateway').value }); document.getElementById('admPayMsg').textContent='Saved ✓'; }
+  catch(e){ alert(e.message); }
+};
+window.addPlanAdmin = async function(){
+  try{ await api('POST','/api/plans',{ name:document.getElementById('admPlanName').value, days:document.getElementById('admPlanDays').value, price:document.getElementById('admPlanPrice').value }); document.getElementById('admPlanName').value=''; loadSubscriptionAdmin(); }
+  catch(e){ alert(e.message); }
+};
+window.deletePlanAdmin = async function(id){ if(!confirm('Remove this plan? Existing subscribers keep their access.')) return; try{ await api('DELETE','/api/plans/'+encodeURIComponent(id)); loadSubscriptionAdmin(); }catch(e){ alert(e.message); } };
+window.decideSub = async function(id, approved){ try{ await api('POST','/api/subscription/'+encodeURIComponent(id)+'/decide',{ approved }); loadSubscriptionAdmin(); }catch(e){ alert(e.message); } };
+
+async function loadAdminTests(){
+  const box = document.getElementById('adminTests'); if(!box) return;
+  try{
+    const { tests } = await api('GET','/api/tests/all');
+    box.innerHTML = tests.length ? `<div class="table-wrap"><table><thead><tr><th>Title</th><th>Module</th><th>Created by</th><th>Attempts taken</th><th>Attempts allowed</th></tr></thead><tbody>
+      ${tests.map(t=>`<tr><td>${esc(t.title)}</td><td>${esc(t.category||'')}</td><td>${esc(t.createdBy||'')}</td><td>${t.attempts}</td><td><select onchange="changeAttemptPolicy('${esc(t.id)}', this.value, loadAdminTests)"><option value="reattempt" ${t.attemptPolicy!=='once'?'selected':''}>🔁 Reattempt allowed</option><option value="once" ${t.attemptPolicy==='once'?'selected':''}>🔒 One attempt only</option></select></td></tr>`).join('')}
+    </tbody></table></div>` : '<p class="muted">No test series yet.</p>';
+  }catch(e){ box.innerHTML = `<p class="muted">${esc(e.message)}</p>`; }
+}
+
+window.requestAccess = async function(id){
+  try{
+    const r = await api('POST','/api/purchases/request', { testId: id });
+    alert(r.message);
+    loadTests();
+  }catch(e){ alert(e.message); }
+};
+
+let tbTimerInterval = null;
+
+/* ---------- exam undertaking (instructions + language choice) before the test starts ---------- */
+window.startTest = async function(id){
+  try{
+    pendingTest = await api('GET', '/api/tests/'+encodeURIComponent(id));
+  }catch(e){
+    alert(e.message);
+    if(!currentUser) showSection('auth'); else loadTests();
+    return;
+  }
+  openUndertaking(pendingTest);
+};
+
+function openUndertaking(test){
+  document.getElementById('result').classList.add('hidden');
+  document.getElementById('quiz').classList.add('hidden');
+  document.getElementById('utTitle').textContent = test.title;
+  document.getElementById('utMeta').textContent = `${test.exam} • ${test.questionCount} question${test.questionCount===1?'':'s'} • ${test.duration} minutes`;
+  const langs = (Array.isArray(test.languages) && test.languages.length) ? test.languages : ['English'];
+  const langRow = document.getElementById('utLangRow');
+  const langSel = document.getElementById('utLanguage');
+  langSel.innerHTML = langs.map(l=>`<option value="${esc(l)}">${esc(l)}</option>`).join('');
+  langRow.classList.toggle('hidden', langs.length<=1);
+  const agree = document.getElementById('utAgree');
+  agree.checked = false;
+  document.getElementById('utBeginBtn').disabled = true;
+  const box = document.getElementById('undertaking');
+  box.classList.remove('hidden');
+  box.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+window.onUtAgreeChange = function(cb){
+  document.getElementById('utBeginBtn').disabled = !cb.checked;
+};
+window.cancelUndertaking = function(){
+  document.getElementById('undertaking').classList.add('hidden');
+  pendingTest = null;
+};
+
+window.beginExam = async function(){
+  if(!pendingTest) return;
+  activeTest = pendingTest;
+  pendingTest = null;
+  activeLanguage = document.getElementById('utLanguage').value || null;
+  activeAnswers = {};
+  activeMarked = {};
+  activeVisited = {};
+  activeQi = 0;
+  activeTimeBySubject = {};
+  questionEnterTime = Date.now();
+  document.getElementById('undertaking').classList.add('hidden');
+  document.getElementById('quiz').classList.remove('hidden');
+  document.getElementById('tbTestTitle').textContent = activeTest.title;
+  const uname = (currentUser && (currentUser.name || currentUser.email)) || 'Student';
+  document.getElementById('tbUsername').textContent = uname;
+  document.getElementById('tbAvatar').textContent = uname.trim().charAt(0).toUpperCase();
+  startTbTimer(activeTest.duration);
+  renderSubjectPills();
+  loadQ();
+  enterExamFullscreen();
+};
+
+/* ---------- full-screen handling while the exam is in progress ---------- */
+function enterExamFullscreen(){
+  const el = document.getElementById('quiz');
+  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+  if(req){ try{ req.call(el).catch(()=>{}); }catch(e){ /* some browsers require a direct user gesture; ignore if blocked */ } }
+}
+function exitExamFullscreen(){
+  const isFs = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+  const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+  if(isFs && exit){ try{ exit.call(document); }catch(e){} }
+}
+function isFullscreenActive(){
+  return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+}
+['fullscreenchange','webkitfullscreenchange','msfullscreenchange'].forEach(ev=>{
+  document.addEventListener(ev, ()=>{
+    const warn = document.getElementById('fsWarning');
+    if(!warn) return;
+    const examOpen = activeTest && !document.getElementById('quiz').classList.contains('hidden');
+    warn.classList.toggle('show', examOpen && !isFullscreenActive());
+  });
+});
+
+function startTbTimer(minutes){
+  clearInterval(tbTimerInterval);
+  let secs = Math.max(0, Math.round(minutes*60));
+  const render = () => {
+    const h = String(Math.floor(secs/3600)).padStart(2,'0');
+    const m = String(Math.floor((secs%3600)/60)).padStart(2,'0');
+    const s = String(secs%60).padStart(2,'0');
+    const el = document.getElementById('qTimerLabel');
+    if(el) el.textContent = h+' : '+m+' : '+s;
+  };
+  render();
+  tbTimerInterval = setInterval(()=>{
+    secs--;
+    render();
+    if(secs <= 0){ clearInterval(tbTimerInterval); submitTest(); }
+  }, 1000);
+}
+
+function renderSubjectPills(){
+  const box = document.getElementById('subjectPills');
+  const subjects = [...new Set(activeTest.questions.map(q=>q.subject))];
+  box.innerHTML = subjects.map(s => `<button class="tb-section-tab" data-s="${esc(s)}" onclick="jumpToSubject(this.dataset.s)">${esc(s)}</button>`).join('');
+  highlightActivePill();
+}
+function highlightActivePill(){
+  const current = activeTest.questions[activeQi].subject;
+  document.querySelectorAll('.tb-section-tab').forEach(p => p.classList.toggle('active', p.textContent===current));
+  const nameEl = document.getElementById('tbSectionName');
+  if(nameEl) nameEl.textContent = current || 'General';
+}
+window.jumpToSubject = function(subject){
+  const idx = activeTest.questions.findIndex(q => q.subject === subject);
+  if(idx >= 0){ trackTimeSpent(); activeQi = idx; loadQ(); }
+};
+
+function localizedQuestion(q){
+  if(activeLanguage && q.translations && q.translations[activeLanguage]){
+    const tr = q.translations[activeLanguage];
+    return {
+      question: (tr.question && tr.question.trim()) ? tr.question : q.question,
+      options: q.options.map((opt,i)=> (Array.isArray(tr.options) && tr.options[i] && tr.options[i].trim()) ? tr.options[i] : opt),
+    };
+  }
+  return { question: q.question, options: q.options };
+}
+function loadQ(){
+  activeVisited[activeQi] = true;
+  const q = activeTest.questions[activeQi];
+  const view = localizedQuestion(q);
+  document.getElementById('qTitle').textContent = 'Question No. '+(activeQi+1);
+  document.getElementById('question').textContent = view.question;
+  document.getElementById('options').innerHTML = view.options.map((opt,i)=>{
+    const letter = String.fromCharCode(65+i);
+    const selected = activeAnswers[activeQi]===letter ? 'selected' : '';
+    return `<div class="tb-option-row ${selected}" onclick="selectAnswer('${letter}')"><span class="tb-radio"><i></i></span><span class="tb-option-text">${letter}. ${esc(opt)}</span></div>`;
+  }).join('');
+  highlightActivePill();
+  renderPalette();
+}
+window.selectAnswer = function(letter){
+  activeAnswers[activeQi] = letter;
+  loadQ();
+};
+window.nextQuestion = function(){
+  if(navClickBlocked()) return; // ignore the 2nd click of a double-click
+  trackTimeSpent();
+  // Save & Next: keep the answer and clear any "marked for review" flag on this question
+  delete activeMarked[activeQi];
+  activeQi = (activeQi + 1) % activeTest.questions.length;
+  loadQ();
+};
+window.prevQuestion = function(){
+  if(activeQi > 0){ trackTimeSpent(); activeQi--; loadQ(); }
+};
+window.clearResponse = function(){
+  delete activeAnswers[activeQi];
+  delete activeMarked[activeQi]; // cleared question goes back to "Not Answered"
+  loadQ();
+};
+let _lastNavClick = 0;
+function navClickBlocked(){
+  const now = Date.now();
+  if(now - _lastNavClick < 300) return true;
+  _lastNavClick = now;
+  return false;
+}
+window.markForReviewAndNext = function(){
+  if(navClickBlocked()) return; // ignore the 2nd click of a double-click
+  trackTimeSpent();
+  activeMarked[activeQi] = true;
+  activeQi = (activeQi + 1) % activeTest.questions.length;
+  loadQ();
+};
+
+/* ---------- question palette (right-side "answered / not answered / marked" view) ---------- */
+function questionStatus(i){
+  const answered = activeAnswers[i] !== undefined;
+  const marked = !!activeMarked[i];
+  const visited = !!activeVisited[i];
+  if(marked && answered) return 'answered-marked';
+  if(marked) return 'marked';
+  if(answered) return 'answered';
+  if(visited) return 'not-answered';
+  return 'not-visited';
+}
+function renderPalette(){
+  const grid = document.getElementById('paletteGrid');
+  if(!grid || !activeTest) return;
+  const counts = { answered:0, marked:0, 'not-visited':0, 'answered-marked':0, 'not-answered':0 };
+  grid.innerHTML = activeTest.questions.map((q,i)=>{
+    const status = questionStatus(i);
+    counts[status] = (counts[status]||0) + 1;
+    const cls = 'tb-qnum st-' + status + (i===activeQi ? ' current' : '');
+    return `<button class="${cls}" title="Question ${i+1}${q.subject && q.subject!=='General' ? ' ('+esc(q.subject)+')' : ''}" onclick="jumpToQuestionIndex(${i})">${i+1}</button>`;
+  }).join('');
+  const set = (id,v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+  set('cntAnswered', counts.answered);
+  set('cntMarked', counts.marked);
+  set('cntNotVisited', counts['not-visited']);
+  set('cntMarkedAnswered', counts['answered-marked']);
+  set('cntNotAnswered', counts['not-answered']);
+}
+window.jumpToQuestionIndex = function(i){
+  trackTimeSpent();
+  activeQi = i;
+  loadQ();
+};
+/* ---------- generic modal ---------- */
+function showModal(html){
+  const root = document.getElementById('modalRoot');
+  // Always re-attach the modal root to whichever element is actually
+  // fullscreen right now (or <body> if nothing is), so the popup is
+  // guaranteed to render inside the browser's fullscreen "top layer"
+  // instead of being hidden behind it.
+  const fsEl = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+  const target = fsEl || document.body;
+  if(root.parentElement !== target) target.appendChild(root);
+  root.innerHTML = `<div class="modal-overlay" onclick="if(event.target===this) closeModal()"><div class="modal-box">${html}</div></div>`;
+}
+function closeModal(){ document.getElementById('modalRoot').innerHTML = ''; }
+window.closeModal = closeModal;
+
+function fmtTime(totalSeconds){
+  const s = Math.max(0, Math.round(totalSeconds||0));
+  const m = Math.floor(s/60), r = s%60;
+  return m+'m '+String(r).padStart(2,'0')+'s';
+}
+
+/* ---------- pre-submit summary: answered / not answered / marked / not visited, by section ---------- */
+window.confirmSubmitTest = function(){
+  if(!activeTest) return;
+  const bySection = {};
+  activeTest.questions.forEach((q,i)=>{
+    const subj = q.subject || 'General';
+    if(!bySection[subj]) bySection[subj] = { answered:0, notAnswered:0, marked:0, notVisited:0, total:0 };
+    const st = questionStatus(i);
+    const c = bySection[subj];
+    c.total++;
+    if(st==='answered' || st==='answered-marked') c.answered++;
+    if(st==='marked' || st==='answered-marked') c.marked++;
+    if(st==='not-answered') c.notAnswered++;
+    if(st==='not-visited') c.notVisited++;
+  });
+  const rows = Object.entries(bySection).map(([name,c])=>
+    `<tr><td>${esc(name)}</td><td>${c.total}</td><td>${c.answered}</td><td>${c.notAnswered}</td><td>${c.marked}</td><td>${c.notVisited}</td></tr>`
+  ).join('');
+  showModal(`
+    <h3 style="margin-top:0">Submit Test?</h3>
+    <p class="muted">Review your progress before submitting. Once submitted, your answers are final.</p>
+    <div class="table-wrap"><table><thead><tr><th>Section</th><th>Total</th><th>Answered</th><th>Not Answered</th><th>Marked</th><th>Not Visited</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="row" style="margin-top:16px;gap:10px">
+      <button class="tb-btn-teal submit" onclick="closeModal();submitTest()">Yes, Submit Test</button>
+      <button class="tb-btn-light" onclick="closeModal()">Continue Test</button>
+    </div>
+  `);
+};
+
+let lastResult = null;
+let svIndex = 0;
+window.submitTest = async function(){
+  try{
+    trackTimeSpent();
+    clearInterval(tbTimerInterval);
+    exitExamFullscreen();
+    const r = await api('POST', '/api/tests/'+encodeURIComponent(activeTest.id)+'/submit', { answers: activeAnswers, timeBySubject: activeTimeBySubject });
+    lastResult = r;
+    document.getElementById('quiz').classList.add('hidden');
+    document.getElementById('fsWarning').classList.remove('show');
+    const box = document.getElementById('result');
+    box.classList.remove('hidden');
+    box.innerHTML = `
+      <div class="result-header">
+        <h3>${esc(r.title)}</h3>
+        <div class="rh-actions">
+          <button class="rh-btn" onclick="loadTests();document.getElementById('result').classList.add('hidden')">Go to Tests</button>
+          <button class="rh-btn primary" onclick="openSolutionViewer(0)">Solutions</button>
+        </div>
+      </div>
+
+      <div class="section-title">Overall Performance Summary</div>
+      <div class="perf-summary">
+        <div class="perf-stat"><div class="perf-icon rank">🏅</div><div class="perf-text"><b>${r.rank} / ${r.totalAttempts}</b><span>Rank</span></div></div>
+        <div class="perf-stat"><div class="perf-icon score">🏆</div><div class="perf-text"><b>${r.score} / ${r.maxScore}</b><span>Score</span></div></div>
+        <div class="perf-stat"><div class="perf-icon attempted">📘</div><div class="perf-text"><b>${r.attempted} / ${r.total}</b><span>Attempted</span></div></div>
+        <div class="perf-stat"><div class="perf-icon accuracy">🎯</div><div class="perf-text"><b>${r.accuracy}%</b><span>Accuracy</span></div></div>
+        <div class="perf-stat"><div class="perf-icon percentile">👥</div><div class="perf-text"><b>${r.percentile}%</b><span>Percentile</span></div></div>
+      </div>
+      <div class="perf-note">
+        <div class="perf-icon" style="background:#f1f5f9;color:#172033">✅</div>
+        <div class="perf-note-text"><b>${r.correct}</b> correct &nbsp; • &nbsp; <b style="color:#dc2626">${r.incorrect}</b> incorrect &nbsp; • &nbsp; <b style="color:#64748b">${r.unattempted}</b> unattempted</div>
+      </div>
+
+      <div class="section-title">Sectional Summary</div>
+      <div class="sec-table-wrap"><table class="sec-table"><thead><tr><th>Section Name</th><th>Score</th><th>Attempted</th><th>Accuracy</th><th>Time</th></tr></thead><tbody>
+      ${r.sections.map(s=>`<tr><td class="sec-name">${esc(s.section)}</td><td>${s.score} / ${s.maxScore}</td><td>${s.attempted} / ${s.total}</td><td>${s.accuracy}%</td><td>${fmtTime(s.timeSeconds)}</td></tr>`).join('')}
+      </tbody></table></div>
+
+      <div class="section-title">Solutions</div>
+      <p class="muted">See each question with the correct answer and a full explanation, one at a time.</p>
+      <button class="rh-btn primary" onclick="openSolutionViewer(0)">Open Solutions →</button>
+    `;
+  }catch(e){ alert(e.message); }
+};
+
+/* ---------- per-question solution viewer ---------- */
+window.openSolutionViewer = function(idx){
+  if(!lastResult) return;
+  svIndex = idx || 0;
+  document.getElementById('result').classList.add('hidden');
+  document.getElementById('solutionViewer').classList.remove('hidden');
+  renderSolutionViewer();
+};
+window.closeSolutionViewer = function(){
+  document.getElementById('solutionViewer').classList.add('hidden');
+  document.getElementById('result').classList.remove('hidden');
+};
+window.svNext = function(){ if(lastResult && svIndex < lastResult.review.length-1){ svIndex++; renderSolutionViewer(); } };
+window.svPrev = function(){ if(svIndex > 0){ svIndex--; renderSolutionViewer(); } };
+window.svJump = function(i){ svIndex = i; renderSolutionViewer(); };
+
+function renderSolutionViewer(){
+  const r = lastResult;
+  if(!r) return;
+  const q = r.review[svIndex];
+  document.getElementById('svTestTitle').textContent = r.title + ' — Question ' + (svIndex+1) + ' of ' + r.review.length;
+  const letters = ['A','B','C','D'];
+  const optionsHtml = q.options.map((opt,k)=>{
+    const letter = letters[k];
+    let cls = 'sol-static';
+    let mark = '';
+    if(letter === q.correctAnswer){ cls += ' sol-correct'; mark = ' ✓'; }
+    else if(letter === q.givenAnswer && q.outcome==='incorrect'){ cls += ' sol-incorrect'; mark = ' ✗'; }
+    return `<div class="tb-option-row ${cls}"><span class="tb-radio"><i></i></span><span class="tb-option-text">${letter}. ${esc(opt)}${mark}</span></div>`;
+  }).join('');
+  const statusLabel = q.outcome==='correct' ? 'Correct' : (q.outcome==='incorrect' ? 'Incorrect' : 'Skipped');
+  const statusClass = q.outcome==='correct' ? 'status-approved' : (q.outcome==='incorrect' ? 'status-rejected' : 'status-pending');
+  document.getElementById('svMain').innerHTML = `
+    <div class="tb-meta-row">
+      <span class="tb-qno">Question No. ${svIndex+1}</span>
+      <span class="${statusClass}">${statusLabel}</span>
+    </div>
+    <div class="tb-divider"></div>
+    <p class="tb-question">${esc(q.question)}</p>
+    <div class="tb-options">${optionsHtml}</div>
+    <div class="row" style="gap:16px;margin-top:12px;flex-wrap:wrap;font-size:14px">
+      <span>Your Answer: <b>${q.givenAnswer||'—'}</b></span>
+      <span>Correct Answer: <b>${q.correctAnswer}</b></span>
+    </div>
+    ${q.explanation ? `<div class="solution-explain" style="margin-top:18px"><b>Solution</b><div style="margin-top:6px">${esc(q.explanation)}</div></div>` : `<p class="muted" style="margin-top:18px">No explanation was provided for this question.</p>`}
+    <div class="tb-actions" style="margin-top:22px">
+      <div class="tb-actions-left">
+        <button class="tb-btn-light" onclick="svPrev()" ${svIndex===0?'disabled':''}>← Previous</button>
+      </div>
+      <div class="tb-actions-right">
+        <button class="tb-btn-green" onclick="svNext()" ${svIndex===r.review.length-1?'disabled':''}>Next →</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('svSidebar').innerHTML = `
+    <div class="tb-legend">
+      <span class="tb-legend-item"><span class="tb-legend-badge tb-badge-answered">${r.correct}</span>Correct</span>
+      <span class="tb-legend-item"><span class="tb-legend-badge tb-badge-notanswered">${r.incorrect}</span>Incorrect</span>
+      <span class="tb-legend-item"><span class="tb-legend-badge" style="background:#94a3b8">${r.unattempted}</span>Unattempted</span>
+    </div>
+    <div class="tb-section-label">All Questions</div>
+    <div class="tb-qgrid">
+      ${r.review.map((qq,i)=>{
+        const st = qq.outcome==='correct' ? 'st-answered' : (qq.outcome==='incorrect' ? 'st-not-answered' : '');
+        const cur = i===svIndex ? 'current' : '';
+        return `<button class="tb-qnum ${st} ${cur}" onclick="svJump(${i})">${i+1}</button>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+/* ---------- teacher: build + publish a test ---------- */
+function currentSubjectsList(){
+  return [...document.querySelectorAll('#ntQuestions .nt-sec')].map(x=>x.dataset.name);
+}
+function getExamLanguages(){
+  const raw = (document.getElementById('ntLanguages')||{}).value || 'English';
+  const langs = raw.split(',').map(s=>s.trim()).filter(Boolean);
+  return langs.length ? [...new Set(langs)] : ['English'];
+}
+function renderTranslateBlock(wrap, secondaryLangs){
+  let block = wrap.querySelector('.nt-translate-block');
+  if(secondaryLangs.length===0){ if(block) block.remove(); return; }
+  wrap.translationsData = wrap.translationsData || {};
+  if(!block){
+    block = document.createElement('div');
+    block.className = 'form-row nt-translate-block';
+    wrap.appendChild(block);
+  }
+  block.innerHTML = `
+    <label>Translation for another language (optional)</label>
+    <select class="q-tr-lang">${secondaryLangs.map(l=>`<option value="${esc(l)}">${esc(l)}</option>`).join('')}</select>
+    <input placeholder="Question text (translated)" class="q-tr-text" style="margin-top:6px">
+    <input placeholder="Option A (translated)" class="q-tr-a" style="margin-top:6px">
+    <input placeholder="Option B (translated)" class="q-tr-b" style="margin-top:6px">
+    <input placeholder="Option C (translated)" class="q-tr-c" style="margin-top:6px">
+    <input placeholder="Option D (translated)" class="q-tr-d" style="margin-top:6px">
+  `;
+  const langSel = block.querySelector('.q-tr-lang');
+  const fields = { text: block.querySelector('.q-tr-text'), a: block.querySelector('.q-tr-a'), b: block.querySelector('.q-tr-b'), c: block.querySelector('.q-tr-c'), d: block.querySelector('.q-tr-d') };
+  const saveCurrent = () => {
+    const prev = langSel.dataset.prev;
+    if(!prev) return;
+    wrap.translationsData[prev] = { question: fields.text.value.trim(), options: [fields.a.value.trim(), fields.b.value.trim(), fields.c.value.trim(), fields.d.value.trim()] };
+  };
+  const loadLang = (lang) => {
+    const saved = wrap.translationsData[lang] || { question:'', options:['','','',''] };
+    fields.text.value = saved.question || '';
+    fields.a.value = saved.options[0] || '';
+    fields.b.value = saved.options[1] || '';
+    fields.c.value = saved.options[2] || '';
+    fields.d.value = saved.options[3] || '';
+    langSel.dataset.prev = lang;
+  };
+  langSel.addEventListener('change', ()=>{ saveCurrent(); loadLang(langSel.value); });
+  Object.values(fields).forEach(inp => inp.addEventListener('input', saveCurrent));
+  loadLang(secondaryLangs[0]);
+}
+function collectTranslations(wrap){
+  const block = wrap.querySelector('.nt-translate-block');
+  if(block){
+    const langSel = block.querySelector('.q-tr-lang');
+    if(langSel && langSel.dataset.prev){
+      wrap.translationsData = wrap.translationsData || {};
+      wrap.translationsData[langSel.dataset.prev] = {
+        question: block.querySelector('.q-tr-text').value.trim(),
+        options: ['.q-tr-a','.q-tr-b','.q-tr-c','.q-tr-d'].map(sel=>block.querySelector(sel).value.trim()),
+      };
+    }
+  }
+  return wrap.translationsData || {};
+}
+const SECTION_PRESETS = ['Mathematics','General Studies','G.K','Current Affairs','English','Reasoning','Computer','Odia','Science'];
+function cleanSectionName(n){ return String(n||'').replace(/,/g,' ').replace(/\s+/g,' ').trim(); }
+function findSection(name){
+  const n = String(name||'').toLowerCase();
+  return [...document.querySelectorAll('#ntQuestions .nt-sec')].find(x=>x.dataset.name.toLowerCase()===n);
+}
+function renderPresetChips(){
+  const box = document.getElementById('ntPresetChips'); if(!box) return;
+  box.innerHTML = SECTION_PRESETS.filter(x=>!findSection(x)).map(x=>`<button type="button" class="secondary" style="padding:5px 10px;font-size:12px" onclick="addSection('${x}')">+ ${x}</button>`).join('');
+}
+function syncSections(){
+  if(!document.getElementById('ntSubjects')) return; // teacher builder isn't part of the Admin Panel
+  const secs = [...document.querySelectorAll('#ntQuestions .nt-sec')];
+  document.getElementById('ntSubjects').value = secs.map(x=>x.dataset.name).join(', ');
+  const secondaryLangs = getExamLanguages().slice(1);
+  secs.forEach(sec=>{
+    const rows = sec.querySelectorAll('.qbuilder');
+    sec.querySelector('.nt-sec-count').textContent = '· ' + rows.length + (rows.length===1?' question':' questions');
+    rows.forEach((r,i)=>{
+      r.querySelector('.q-no').textContent = 'Question ' + (i+1);
+      collectTranslations(r);
+      renderTranslateBlock(r, secondaryLangs);
+    });
+  });
+  document.getElementById('ntSecEmpty').classList.toggle('hidden', secs.length>0);
+  renderPresetChips();
+}
+window.addSectionFromInput = function(){
+  const inp = document.getElementById('ntNewSection');
+  if(addSection(inp.value)) inp.value = '';
+};
+window.addSection = function(name){
+  name = cleanSectionName(name);
+  if(!name) return null;
+  let sec = findSection(name);
+  if(sec) return sec;
+  sec = document.createElement('div');
+  sec.className = 'nt-sec';
+  sec.dataset.name = name;
+  sec.innerHTML = `
+    <div class="nt-sec-head">
+      <b class="nt-sec-title">${esc(name)}</b><span class="nt-sec-count"></span>
+      <label style="margin-left:auto">Marks <input type="number" step="any" class="sec-marks" value="1" onchange="applySectionDefaults(this)"></label>
+      <label>Negative <input type="number" step="any" class="sec-neg" value="0" onchange="applySectionDefaults(this)"></label>
+      <button type="button" class="secondary" style="padding:6px 10px;font-size:12px" onclick="removeSection(this)">Remove Section</button>
+    </div>
+    <div class="nt-sec-body">
+      <div class="nt-sec-qs"></div>
+      <button type="button" class="secondary" onclick="addQuestionRow(undefined, this.closest('.nt-sec').dataset.name)">➕ Add Question to ${esc(name)}</button>
+    </div>`;
+  document.getElementById('ntQuestions').appendChild(sec);
+  syncSections();
+  return sec;
+};
+window.applySectionDefaults = function(input){
+  const sec = input.closest('.nt-sec');
+  const m = sec.querySelector('.sec-marks').value, n = sec.querySelector('.sec-neg').value;
+  sec.querySelectorAll('.q-marks').forEach(i=>i.value = m);
+  sec.querySelectorAll('.q-neg').forEach(i=>i.value = n);
+};
+window.removeSection = function(btn){
+  const sec = btn.closest('.nt-sec');
+  const n = sec.querySelectorAll('.qbuilder').length;
+  if(n && !confirm('Remove the section "'+sec.dataset.name+'" and its '+n+' question(s)?')) return;
+  sec.remove();
+  syncSections();
+};
+window.removeQuestionRow = function(btn){
+  btn.closest('.qbuilder').remove();
+  syncSections();
+};
+
+let qRowCount = 0;
+function addQuestionRow(prefill, sectionName){
+  const p = prefill || {};
+  const wanted = cleanSectionName(sectionName || p.subject);
+  const sec = wanted ? (findSection(wanted) || addSection(wanted)) : (document.querySelector('#ntQuestions .nt-sec') || addSection('General'));
+  qRowCount++;
+  const id = 'q'+qRowCount;
+  const wrap = document.createElement('div');
+  wrap.className = 'qbuilder';
+  wrap.id = id;
+  const ans = (p.answer||'A').toUpperCase();
+  const defMarks = sec.querySelector('.sec-marks').value, defNeg = sec.querySelector('.sec-neg').value;
+  wrap.innerHTML = `
+    <div class="row"><b class="q-no">Question</b><button type="button" class="secondary" onclick="removeQuestionRow(this)">Remove</button></div>
+    <div class="form-row"><input placeholder="Question text" class="q-text" value="${esc(p.question||'')}"></div>
+    <div class="form-row"><input placeholder="Option A" class="q-a" value="${esc(p.a||'')}"></div>
+    <div class="form-row"><input placeholder="Option B" class="q-b" value="${esc(p.b||'')}"></div>
+    <div class="form-row"><input placeholder="Option C" class="q-c" value="${esc(p.c||'')}"></div>
+    <div class="form-row"><input placeholder="Option D" class="q-d" value="${esc(p.d||'')}"></div>
+    <div class="row">
+      <div class="form-row" style="flex:1"><label>Correct Option</label>
+        <select class="q-ans">
+          <option ${ans==='A'?'selected':''}>A</option><option ${ans==='B'?'selected':''}>B</option>
+          <option ${ans==='C'?'selected':''}>C</option><option ${ans==='D'?'selected':''}>D</option>
+        </select>
+      </div>
+      <div class="form-row" style="flex:1"><label>Marks</label><input type="number" step="any" class="q-marks" value="${p.marks!==undefined?p.marks:defMarks}"></div>
+      <div class="form-row" style="flex:1"><label>Negative Marks</label><input type="number" step="any" class="q-neg" value="${p.negative!==undefined?p.negative:defNeg}"></div>
+    </div>
+    <div class="form-row"><label>Explanation / Solution (shown to students after they submit — optional)</label><textarea class="q-exp" rows="2" placeholder="Explain why the correct option is right...">${esc(p.explanation||'')}</textarea></div>
+  `;
+  wrap.translationsData = p.translations || {};
+  sec.querySelector('.nt-sec-qs').appendChild(wrap);
+  renderTranslateBlock(wrap, getExamLanguages().slice(1));
+  syncSections();
+}
+syncSections();
+
+/* ---------- teacher: import questions from an Excel/CSV file ---------- */
+window.importExcel = function(){
+  const input = document.getElementById('excelFile');
+  const file = input.files && input.files[0];
+  if(!file){ document.getElementById('excelMsg').textContent = 'Choose a file first.'; return; }
+  if(typeof XLSX === 'undefined'){
+    document.getElementById('excelMsg').textContent = 'Excel import library failed to load (check internet connection).';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, blankrows: false });
+      document.querySelectorAll('.qbuilder').forEach(row => { if (!row.querySelector('.q-text').value.trim()) row.remove(); });
+      syncSections();
+      let imported = 0;
+      rows.forEach((row, i) => {
+        if (i === 0) return;
+        const [question, a, b, c, d, answer, marks, negative, subject, explanation] = row;
+        if (!question || !a || !b || !c || !d) return;
+        const subj = subject ? String(subject).trim() : '';
+        addQuestionRow({
+          question: String(question).trim(), a: String(a).trim(), b: String(b).trim(), c: String(c).trim(), d: String(d).trim(),
+          answer: String(answer||'A').trim().toUpperCase(),
+          marks: marks !== undefined && marks !== '' ? Number(marks) : 1,
+          negative: negative !== undefined && negative !== '' ? Number(negative) : 0,
+          explanation: explanation !== undefined ? String(explanation).trim() : '',
+          subject: subj || undefined,
+        });
+        imported++;
+      });
+      document.getElementById('excelMsg').textContent = imported ? `Imported ${imported} question(s) — review them below, then publish.` : 'No valid rows found. Check the column order matches the template.';
+      input.value = '';
+    }catch(err){
+      document.getElementById('excelMsg').textContent = 'Could not read that file: ' + err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+};
+
+window.submitNewTest = async function(){
+  const title = document.getElementById('ntTitle').value.trim();
+  const exam = document.getElementById('ntExam').value.trim();
+  const category = document.getElementById('ntCategory').value;
+  const languages = getExamLanguages();
+  const type = document.getElementById('ntType').value;
+  const price = document.getElementById('ntPrice').value;
+  const duration = document.getElementById('ntDuration').value;
+  const questions = [];
+  const subjects = [];
+  document.querySelectorAll('#ntQuestions .nt-sec').forEach(sec => {
+    const rows = sec.querySelectorAll('.qbuilder');
+    if(rows.length) subjects.push(sec.dataset.name);
+    rows.forEach(row => questions.push({
+      question: row.querySelector('.q-text').value.trim(),
+      options: [row.querySelector('.q-a'), row.querySelector('.q-b'), row.querySelector('.q-c'), row.querySelector('.q-d')].map(i=>i.value.trim()),
+      answer: row.querySelector('.q-ans').value,
+      marks: row.querySelector('.q-marks').value,
+      negative: row.querySelector('.q-neg').value,
+      explanation: row.querySelector('.q-exp').value.trim(),
+      subject: sec.dataset.name,
+      translations: collectTranslations(row),
+    }));
+  });
+  try{
+    const r = await api('POST','/api/tests', { title, exam, category, subjects, languages, type, price, duration, questions });
+    msg('ntMsg', r.message, true);
+    refreshModuleViews();
+    document.getElementById('ntTitle').value='';
+    document.getElementById('ntLanguages').value='English';
+    document.getElementById('ntQuestions').innerHTML='';
+    qRowCount = 0;
+    syncSections();
+    loadMyTests();
+  }catch(e){ msg('ntMsg', e.message); }
+};
+
+window.deleteTest = async function(id, title){
+  if(!confirm('Delete the test series "'+title+'"? This cannot be undone.')) return;
+  try{
+    await api('DELETE', '/api/tests/'+encodeURIComponent(id));
+    loadMyTests();
+    refreshModuleViews();
+  }catch(e){ alert(e.message); }
+};
+
+async function loadMyTests(){
+  const box = document.getElementById('myTests');
+  if(!currentUser || currentUser.role!=='teacher'){ box.innerHTML=''; return; }
+  try{
+    const { tests } = await api('GET','/api/tests/mine');
+    box.innerHTML = tests.length ? `<div class="table-wrap"><table><thead><tr><th>Title</th><th>Module</th><th>Exam</th><th>Sections</th><th>Type</th><th>Questions</th><th>Duration</th><th>Action</th></tr></thead><tbody>
+      ${tests.map(t=>`<tr><td>${esc(t.title)}</td><td>${esc(t.category||'')}</td><td>${esc(t.exam)}</td><td>${(t.subjects||[]).map(esc).join(', ')}</td><td>${t.type}</td><td>${t.questionCount}</td><td>${t.duration} min</td><td><button type="button" class="secondary" data-id="${esc(t.id)}" data-title="${esc(t.title)}" onclick="deleteTest(this.dataset.id, this.dataset.title)">🗑 Delete</button></td></tr>`).join('')}
+    </tbody></table></div>` : '<p class="muted">You have not published any test series yet.</p>';
+  }catch(e){ box.innerHTML = `<p class="muted">${esc(e.message)}</p>`; }
+}
+
+/* ---------- boot ---------- */
+ensureAdmin();
+loadBranding();
+refreshModuleViews();
+refreshUser().then(()=>{ showSection(currentUser && currentUser.role==='admin' ? 'admin' : 'auth'); });
+</script>
+</body>
+</html>

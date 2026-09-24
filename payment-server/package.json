@@ -1,0 +1,12 @@
+{
+  "name": "competitive-exam-master-payment-server",
+  "version": "1.0.0",
+  "description": "Payment server for Competitive Exam Master",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

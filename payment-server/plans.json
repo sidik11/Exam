@@ -1,0 +1,5 @@
+[
+  { "id": "plan-1m",  "name": "Monthly",   "days": 30,  "price": 99 },
+  { "id": "plan-3m",  "name": "Quarterly", "days": 90,  "price": 249 },
+  { "id": "plan-12m", "name": "Yearly",    "days": 365, "price": 799 }
+]
