@@ -530,6 +530,8 @@ const firebaseReady=(async()=>{const cfgRes=await fetch('/api/config');if(!cfgRe
 function ensureAdmin(){}
 async function getIdToken(){await firebaseReady;const u=cemAuth&&cemAuth.currentUser;return u?u.getIdToken():null;}
 async function api(method,url,body){await firebaseReady;const headers={'Content-Type':'application/json'};const token=await getIdToken();if(token)headers.Authorization='Bearer '+token;const r=await fetch(url,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||data.message||'Request failed.');return data;}
+function esc(value){const s=String(value??'');return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function msg(id,text,ok=false){const el=document.getElementById(id);if(!el)return;el.textContent=String(text||'');el.className=ok?'success':'error';}
 function authError(e){const map={'auth/email-already-in-use':'An account with this email already exists.','auth/invalid-email':'Please enter a valid email address.','auth/weak-password':'Password is too weak.','auth/invalid-credential':'Invalid email or password.','auth/user-not-found':'Invalid email or password.','auth/wrong-password':'Invalid email or password.'};return map[e.code]||e.message||'Authentication failed.';}
 async function registerFirebaseAccount(kind,data){await firebaseReady;const cred=await cemAuth.createUserWithEmailAndPassword(data.email,data.password);try{await cred.user.updateProfile({displayName:data.name});const r=await api('POST','/api/auth/register/'+kind,data);try{await cred.user.sendEmailVerification();}catch(_){}await cemAuth.signOut();return r;}catch(e){try{await cred.user.delete();}catch(_){}throw e;}}
 async function firebaseLogin(email,password){await firebaseReady;await cemAuth.signInWithEmailAndPassword(email,password);try{return await api('POST','/api/auth/login',{email});}catch(e){await cemAuth.signOut();throw e;}}
@@ -630,26 +632,30 @@ async function refreshUser(){
 window.registerStudent = async function(){
   const password = document.getElementById('studentPassword').value;
   const confirmPassword = document.getElementById('studentConfirmPassword').value;
+  const email = document.getElementById('studentEmail').value.trim();
   if(password !== confirmPassword){ msg('studentMsg', 'Passwords do not match.'); return; }
+  if(!email){ msg('studentMsg', 'Please enter your email address.'); return; }
   try{
-    const body = { name: document.getElementById('studentName').value.trim(), mobile: document.getElementById('studentMobile').value.trim(), email: document.getElementById('studentEmail').value.trim(), password };
-    const r = await api('POST','/api/auth/register/student', body);
+    const body = { name: document.getElementById('studentName').value.trim(), mobile: document.getElementById('studentMobile').value.trim(), email, password };
+    const r = await registerFirebaseAccount('student', body);
     msg('studentMsg', r.message, true);
     document.getElementById('studentPassword').value='';
     document.getElementById('studentConfirmPassword').value='';
-  }catch(e){ msg('studentMsg', e.message); }
+  }catch(e){ msg('studentMsg', authError(e)); }
 };
 
 window.registerTeacher = async function(){
   const password = document.getElementById('teacherPassword').value;
   const confirmPassword = document.getElementById('teacherConfirmPassword').value;
+  const email = document.getElementById('teacherEmail').value.trim();
   if(password !== confirmPassword){ msg('teacherMsg', 'Passwords do not match.'); return; }
+  if(!email){ msg('teacherMsg', 'Please enter your email address.'); return; }
   try{
-    const body = { name: document.getElementById('teacherName').value.trim(), mobile: document.getElementById('teacherMobile').value.trim(), email: document.getElementById('teacherEmail').value.trim(), subject: document.getElementById('teacherSubject').value.trim(), password };
-    const r = await api('POST','/api/auth/register/teacher', body);
+    const body = { name: document.getElementById('teacherName').value.trim(), mobile: document.getElementById('teacherMobile').value.trim(), email, subject: document.getElementById('teacherSubject').value.trim(), password };
+    const r = await registerFirebaseAccount('teacher', body);
     msg('teacherMsg', r.message, true);
     ['teacherName','teacherMobile','teacherEmail','teacherSubject','teacherPassword','teacherConfirmPassword'].forEach(id=>document.getElementById(id).value='');
-  }catch(e){ msg('teacherMsg', e.message); }
+  }catch(e){ msg('teacherMsg', authError(e)); }
 };
 
 window.loginUser = async function(){
