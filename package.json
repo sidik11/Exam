@@ -1,5 +1,12 @@
 {
   "dependencies": {
-    "googleapis": "^182.0.0"
+    "googleapis": "^182.0.0",
+    "firebase-admin": "^13.5.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
