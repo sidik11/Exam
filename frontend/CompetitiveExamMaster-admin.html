@@ -431,8 +431,25 @@ window.requestAdminOtp = async function(){
   catch(e){ msg('loginMsg',e.message); }
 };
 window.verifyAdminOtp = async function(){
-  try{ const otp=document.getElementById('adminOtp').value.trim(); if(!/^\d{6}$/.test(otp)){msg('otpMsg','Enter the 6-digit OTP sent to the Admin Gmail.');return;} const email=document.getElementById('loginEmail').value.trim(); const r=await api('POST','/api/admin/verify-otp',{email,otp}); localStorage.setItem('cem_admin_session',r.sessionToken); currentUser=r.user; msg('otpMsg','Admin login successful.',true); updateUI(); showSection('admin'); }
-  catch(e){ msg('otpMsg',e.message); }
+  try{
+    const otp=document.getElementById('adminOtp').value.trim();
+    if(!/^\d{6}$/.test(otp)){msg('otpMsg','Enter the 6-digit OTP sent to the Admin Gmail.');return;}
+    const email=document.getElementById('loginEmail').value.trim();
+    const r=await api('POST','/api/admin/verify-otp',{email,otp});
+    if(!r.sessionToken || !r.user) throw new Error('Admin verification succeeded but no admin session was returned.');
+    localStorage.setItem('cem_admin_session',r.sessionToken);
+    currentUser=r.user;
+    updateUI();
+    document.getElementById('auth')?.classList.add('hidden');
+    document.querySelectorAll('main>section').forEach(s=>{ if(s.id!=='admin') s.classList.add('hidden'); });
+    document.getElementById('admin')?.classList.remove('hidden');
+    msg('otpMsg','Admin login successful.',true);
+    renderAdmin();
+    loadSettingsIntoForm();
+    loadSubscriptionAdmin();
+    mountModuleManager('adminModules','adm');
+    loadAdminTests();
+  }catch(e){ msg('otpMsg',e.message); }
 };
 window.resetAdminOtp = function(){ document.getElementById('adminOtpPane').classList.add('hidden'); document.getElementById('adminOtpEmailPane').classList.remove('hidden'); document.getElementById('adminOtp').value=''; document.getElementById('otpMsg').textContent=''; };
 
@@ -1572,8 +1589,18 @@ refreshUser().then(()=>{ showSection(currentUser && currentUser.role==='admin' ?
       var r=await fetch('/api/admin/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,otp:otp})});
       var data=await r.json().catch(function(){return{}});
       if(!r.ok) throw new Error(data.error||data.message||'OTP verification failed.');
+      if(!data.sessionToken) throw new Error('Admin verification succeeded but no session token was returned.');
       localStorage.setItem('cem_admin_session',data.sessionToken);
-      window.location.reload();
+      if(data.user) window.currentUser=data.user;
+      document.getElementById('auth')?.classList.add('hidden');
+      document.querySelectorAll('main>section').forEach(function(s){if(s.id!=='admin')s.classList.add('hidden');});
+      document.getElementById('admin')?.classList.remove('hidden');
+      msg('otpMsg','Admin login successful.',true);
+      if(window.renderAdmin) renderAdmin();
+      if(window.loadSettingsIntoForm) loadSettingsIntoForm();
+      if(window.loadSubscriptionAdmin) loadSubscriptionAdmin();
+      if(window.mountModuleManager) mountModuleManager('adminModules','adm');
+      if(window.loadAdminTests) loadAdminTests();
     }catch(e){msg('otpMsg',e.message);}
   };
 })();
