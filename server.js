@@ -52,9 +52,10 @@ const CFG = {
     keyId: process.env.RAZORPAY_KEY_ID || '',
     keySecret: process.env.RAZORPAY_KEY_SECRET || '',
     webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || '',
-    mock: process.env.MOCK_GATEWAY === '1' || !process.env.RAZORPAY_KEY_ID
+    mock: process.env.MOCK_GATEWAY === '1' || !String(process.env.RAZORPAY_KEY_ID || '').startsWith('rzp_test_') || !process.env.RAZORPAY_KEY_SECRET
   }
 };
+CFG.payment.enabled = !CFG.payment.mock;
 
 let db = null;
 let auth = null;
@@ -188,6 +189,40 @@ const uid = (prefix='') => prefix + Date.now().toString(36) + '-' + crypto.rando
 const cleanEmail = v => String(v || '').trim().toLowerCase();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MOBILE_RE = /^[0-9+\-\s]{7,15}$/;
+function hashPassword(value) {
+  const password=String(value||''), salt=crypto.randomBytes(16).toString('hex');
+  return 'scrypt$'+salt+'$'+crypto.scryptSync(password,salt,64).toString('hex');
+}
+function passwordMatches(value,user) {
+  const password=String(value||'');
+  if(user?.passwordHash){
+    const [scheme,salt,stored]=String(user.passwordHash).split('$');
+    if(scheme!=='scrypt'||!salt||!stored||!/^[a-f0-9]{128}$/i.test(stored))return false;
+    const expected=Buffer.from(stored,'hex'),actual=crypto.scryptSync(password,salt,expected.length);
+    return actual.length===expected.length&&crypto.timingSafeEqual(actual,expected);
+  }
+  if(typeof user?.password==='string'){
+    const expected=Buffer.from(user.password),actual=Buffer.from(password);
+    return actual.length===expected.length&&crypto.timingSafeEqual(actual,expected);
+  }
+  return false;
+}
+function ownsTest(user,test) {
+  return !!test && (test.createdById ? test.createdById===user.uid : cleanEmail(test.createdBy)===cleanEmail(user.email));
+}
+async function migrateLegacyTestOwnership(userId,oldEmail,newEmail) {
+  if(cleanEmail(oldEmail)===cleanEmail(newEmail))return;
+  const tests=await allMap('tests');
+  let changed=false;
+  for(const test of Object.values(tests)){
+    if(!test.createdById&&cleanEmail(test.createdBy)===cleanEmail(oldEmail)){
+      test.createdById=userId;
+      test.createdBy=newEmail;
+      changed=true;
+    }
+  }
+  if(changed)await set('tests',tests);
+}
 
 async function ensureSeeds() {
   if (!(await get('settings'))) await set('settings', DEFAULT_SETTINGS);
@@ -325,6 +360,11 @@ async function currentUser(req, roles) {
     throw Object.assign(new Error('Your login session has expired. Please log in again.'), { status:401 });
   }
   const user = await ensureProfile(decoded.uid, decoded);
+  if (userSession) {
+    decoded.email=user.email;
+    decoded.name=user.name;
+    decoded.role=user.role;
+  }
   if (user.blocked) throw Object.assign(new Error('Your account has been blocked. Contact the administrator.'), { status:403 });
   if (roles && !roles.includes(user.role)) throw Object.assign(new Error('Not authorized.'), { status:403 });
   if (user.role === 'teacher' && user.status !== 'approved' && (!roles || roles.includes('teacher'))) {
@@ -368,7 +408,7 @@ function summarizeTest(t) {
   return {
     id:t.id,title:t.title,exam:t.exam,category:t.category,subjects:t.subjects||['General'],
     languages:t.languages?.length?t.languages:['English'],type:t.type,attemptPolicy:t.attemptPolicy==='once'?'once':'reattempt',
-    price:t.price||0,duration:t.duration,questionCount:t.questionCount,createdBy:t.createdBy,createdAt:t.createdAt,published:t.published
+    price:t.price||0,duration:t.duration,questionCount:t.questionCount,createdAt:t.createdAt,published:t.published
   };
 }
 
@@ -440,39 +480,55 @@ function razorpayApi(method, apiPath, payload) {
 }
 
 async function activateOrder(order, paymentId, paidAt) {
-  const subs = await allMap('subscriptions');
-  const existing = Object.values(subs).find(s => s.txnId === paymentId || s.gatewayOrderId === order.orderId);
-  if (existing) return existing;
-  const plansObj = await allMap('plans');
-  const p = plansObj[order.planId] || Object.values(plansObj).find(x => x.id === order.planId);
-  if (!p) throw new Error('Plan no longer exists.');
-  const act = await activeSubscription(order.studentId);
-  const start = act ? new Date(act.expiresAt) : new Date(paidAt || Date.now());
-  const sub = {
-    id: uid('sub-'),
-    studentId: order.studentId,
-    studentName: order.studentName,
-    studentEmail: order.studentEmail,
-    planId: p.id,
-    planName: p.name,
-    days: p.days,
-    amount: p.price,
-    txnId: paymentId,
-    method: CFG.payment.mock ? 'Mock Payment' : 'Razorpay',
-    status: 'approved',
-    requestedAt: paidAt || nowIso(),
-    decidedAt: nowIso(),
-    startsAt: start.toISOString(),
-    expiresAt: new Date(start.getTime() + p.days * 86400000).toISOString(),
-    gatewayOrderId: order.orderId
+  if (!order || !order.orderId || !order.studentId || !paymentId) throw new Error('Invalid payment order.');
+  const days = Number(order.days), amount = Number(order.amount);
+  if (!Number.isInteger(days) || days < 1 || !Number.isFinite(amount) || amount <= 0) throw new Error('The saved plan details are invalid.');
+  const subId = uid('sub-'), requestedAt = paidAt || nowIso();
+  const makeSubscription = (subs) => {
+    const existing = Object.values(subs).find(s => s.gatewayOrderId === order.orderId || s.txnId === paymentId);
+    if (existing) {
+      if (existing.gatewayOrderId !== order.orderId || existing.studentId !== order.studentId) throw new Error('This payment is already linked to another order.');
+      return existing;
+    }
+    const active = Object.values(subs).filter(s => s.studentId === order.studentId && s.status === 'approved' && new Date(s.expiresAt).getTime() > Date.now()).sort((a,b) => new Date(b.expiresAt)-new Date(a.expiresAt))[0];
+    const start = active ? new Date(active.expiresAt) : new Date(requestedAt);
+    return {
+      id: subId, studentId: order.studentId, studentName: order.studentName, studentEmail: order.studentEmail,
+      planId: order.planId, planName: order.planName, days, amount, txnId: paymentId,
+      method: 'Razorpay Test Mode', status: 'approved', requestedAt, decidedAt: nowIso(),
+      startsAt: start.toISOString(), expiresAt: new Date(start.getTime() + days * 86400000).toISOString(),
+      gatewayOrderId: order.orderId
+    };
   };
-  subs[sub.id] = sub;
-  await set('subscriptions', subs);
+
+  let subscription;
+  if (db && !useMemDb) {
+    const result = await db.ref('subscriptions').transaction(current => {
+      const subs = current && typeof current === 'object' ? current : {};
+      const existing = Object.values(subs).find(s => s.gatewayOrderId === order.orderId || s.txnId === paymentId);
+      if (existing) return;
+      const sub = makeSubscription(subs);
+      subs[sub.id] = sub;
+      return subs;
+    }, undefined, false);
+    const saved = result.snapshot.val() || {};
+    subscription = Object.values(saved).find(s => s.gatewayOrderId === order.orderId || s.txnId === paymentId);
+    if (!subscription) throw new Error('Could not activate this subscription. Please retry or contact support.');
+    if (subscription.gatewayOrderId !== order.orderId || subscription.studentId !== order.studentId) throw new Error('This payment is already linked to another order.');
+  } else {
+    const subs = await allMap('subscriptions');
+    subscription = makeSubscription(subs);
+    if (!Object.values(subs).some(s => s.id === subscription.id)) await set('subscriptions/' + subscription.id, subscription);
+  }
+
   order.status = 'paid';
   order.paymentId = paymentId;
-  order.paidAt = paidAt || nowIso();
+  order.paidAt = requestedAt;
   await update('orders/' + order.orderId, order);
-  return sub;
+  if (subscription.id === subId) {
+    await sendEmail(order.studentEmail, 'Subscription payment successful', emailShell('Premium is active', '<p>Your <b>'+String(order.planName||'Premium')+'</b> subscription payment was successful.</p><p>Amount: <b>₹'+amount+'</b><br>Payment ID: <b>'+paymentId+'</b><br>Valid until: <b>'+new Date(subscription.expiresAt).toLocaleString()+'</b></p>'));
+  }
+  return subscription;
 }
 
 async function route(req, res) {
@@ -481,7 +537,7 @@ async function route(req, res) {
   if (method==='OPTIONS') return send(res,204,{});
 
   if (url.pathname==='/api/config' && method==='GET') {
-    return send(res,200,{ firebase:CFG.web, paymentGatewayUrl: process.env.PAYMENT_GATEWAY_URL || '' });
+    return send(res,200,{ firebase:CFG.web, paymentGatewayUrl: process.env.PAYMENT_GATEWAY_URL || '', paymentEnabled:CFG.payment.enabled, paymentMode:CFG.payment.enabled?'test':null });
   }
   if (url.pathname==='/api/health' && method==='GET') {
     return send(res,200,{ok:true, status:'online'});
@@ -496,17 +552,17 @@ async function route(req, res) {
     adminOtpState.expiresAt=Date.now()+ADMIN_OTP_TTL_MS;
     adminOtpState.attempts=0;
     adminOtpState.sentAt=Date.now();
-    console.log(`[Admin Verification] OTP code generated for ${CFG.admin.email}: ${otp}`);
     const sent=await sendEmail(
       CFG.admin.email,
       'Competitive Exam Master Admin OTP',
       emailShell('Admin login verification','<p>Your one-time Admin login OTP is:</p><div style="font-size:32px;font-weight:800;letter-spacing:8px;padding:14px 0">'+otp+'</div><p>This OTP expires in 10 minutes. If you did not request this, ignore this email.</p>')
     );
     if (!sent) {
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log(`[DEV/AI Studio] Admin Login OTP for ${CFG.admin.email}: ${otp}`);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      return send(res, 200, { message: `Gmail API not configured. Generated OTP for access: ${otp}` });
+      adminOtpState.hash='';
+      adminOtpState.expiresAt=0;
+      adminOtpState.attempts=0;
+      adminOtpState.sentAt=0;
+      throw Object.assign(new Error('Admin email delivery is unavailable. Configure Gmail API credentials before requesting an OTP.'),{status:503});
     }
     return send(res,200,{message:'OTP sent to the authorized Admin Gmail address.'});
   }
@@ -553,7 +609,9 @@ async function route(req, res) {
     if(users.some(u=>cleanEmail(u.email)===emailVal && u.uid!==uidVal)) throw new Error('This email is already registered.');
     const existing=await get('users/'+uidVal);
     if(existing && existing.registrationComplete) throw new Error('This account is already registered.');
-    const profile={uid:uidVal,name,email:emailVal,mobile,password:b.password||'',role:'student',status:'approved',blocked:false,registrationComplete:true,createdAt:existing?.createdAt||nowIso()};
+    if(!header.startsWith('Bearer ')&&String(b.password||'').length<6) throw new Error('Password must contain at least 6 characters.');
+    const credential=header.startsWith('Bearer ')?{}:{passwordHash:hashPassword(b.password)};
+    const profile={uid:uidVal,name,email:emailVal,mobile,...credential,role:'student',status:'approved',blocked:false,registrationComplete:true,createdAt:existing?.createdAt||nowIso()};
     await set('users/'+uidVal,profile);
     const sessionToken = createUserSession(uidVal, emailVal, 'student', name);
     return send(res,200,{message:'Student registration successful. You can now use the platform.',sessionToken,user:publicUser(profile)});
@@ -577,7 +635,9 @@ async function route(req, res) {
     if(users.some(u=>cleanEmail(u.email)===emailVal && u.uid!==uidVal)) throw new Error('This email is already registered.');
     const existing=await get('users/'+uidVal);
     if(existing && existing.registrationComplete) throw new Error('This account is already registered.');
-    const profile={uid:uidVal,name,email:emailVal,mobile,subject,password:b.password||'',role:'teacher',status:'pending',blocked:false,registrationComplete:true,createdAt:existing?.createdAt||nowIso()};
+    if(!header.startsWith('Bearer ')&&String(b.password||'').length<6) throw new Error('Password must contain at least 6 characters.');
+    const credential=header.startsWith('Bearer ')?{}:{passwordHash:hashPassword(b.password)};
+    const profile={uid:uidVal,name,email:emailVal,mobile,subject,...credential,role:'teacher',status:'pending',blocked:false,registrationComplete:true,createdAt:existing?.createdAt||nowIso()};
     await set('users/'+uidVal,profile);
     return send(res,200,{message:'Registration submitted. Wait for Admin approval before logging in.',user:publicUser(profile)});
   }
@@ -595,9 +655,10 @@ async function route(req, res) {
     const users=Object.values(await allMap('users'));
     const user=users.find(u=>cleanEmail(u.email)===email);
     if(!user) throw Object.assign(new Error('Invalid email or password.'),{status:401});
-    if(user.password && user.password!==password) throw Object.assign(new Error('Invalid email or password.'),{status:401});
+    if(!passwordMatches(password,user)) throw Object.assign(new Error('Invalid email or password.'),{status:401});
     if(user.blocked) throw Object.assign(new Error('Your account has been blocked. Contact the administrator.'),{status:403});
     if(user.role==='teacher' && user.status!=='approved') throw Object.assign(new Error('Teacher account is pending Admin approval.'),{status:403});
+    if(Object.prototype.hasOwnProperty.call(user,'password')){user.passwordHash=hashPassword(password);delete user.password;await set('users/'+user.uid,user);}
     const sessionToken = createUserSession(user.uid, user.email, user.role, user.name);
     return send(res,200,{message:'Login successful.',sessionToken,user:publicUser(user)});
   }
@@ -614,9 +675,34 @@ async function route(req, res) {
     const name=b.name!==undefined?String(b.name).trim():user.name, mobile=b.mobile!==undefined?String(b.mobile).trim():user.mobile, subject=b.subject!==undefined?String(b.subject).trim():user.subject;
     if(!name) throw new Error("Name can't be empty.");
     if(mobile && !MOBILE_RE.test(mobile)) throw new Error('Please enter a valid mobile number.');
-    const email=cleanEmail(decoded.email || user.email);
+    const priorEmail=cleanEmail(user.email), email=cleanEmail(decoded.email || user.email);
     const updated={...user,name,mobile,email,updatedAt:nowIso()}; if(user.role==='teacher') updated.subject=subject||'';
-    await set('users/'+uid,updated); return send(res,200,{message:'Account updated.',user:publicUser(updated)});
+    await set('users/'+uid,updated);
+    if(user.role==='teacher')await migrateLegacyTestOwnership(uid,priorEmail,email);
+    return send(res,200,{message:'Account updated.',user:publicUser(updated)});
+  }
+  if(url.pathname==='/api/account/email'&&method==='PUT'){
+    const {uid,user,decoded}=await currentUser(req),b=await body(req);
+    if(decoded.firebase) throw Object.assign(new Error('Change your email through your Firebase account settings.'),{status:400});
+    const email=cleanEmail(b.email),currentPassword=String(b.currentPassword||'');
+    if(!EMAIL_RE.test(email))throw new Error('Enter a valid new email address.');
+    if(!passwordMatches(currentPassword,user))throw Object.assign(new Error('Current password is incorrect.'),{status:401});
+    const users=Object.values(await allMap('users'));
+    if(users.some(u=>u.uid!==uid&&cleanEmail(u.email)===email))throw new Error('This email is already registered.');
+    const updated={...user,email,updatedAt:nowIso(),passwordHash:hashPassword(currentPassword)};delete updated.password;
+    await set('users/'+uid,updated);
+    if(user.role==='teacher')await migrateLegacyTestOwnership(uid,user.email,email);
+    return send(res,200,{message:'Login email changed successfully.',sessionToken:createUserSession(uid,email,user.role,user.name),user:publicUser(updated)});
+  }
+  if(url.pathname==='/api/account/password'&&method==='PUT'){
+    const {uid,user,decoded}=await currentUser(req),b=await body(req);
+    if(decoded.firebase)throw Object.assign(new Error('Change your password through your Firebase account settings.'),{status:400});
+    const currentPassword=String(b.currentPassword||''),newPassword=String(b.newPassword||'');
+    if(!passwordMatches(currentPassword,user))throw Object.assign(new Error('Current password is incorrect.'),{status:401});
+    if(newPassword.length<6)throw new Error('New password must contain at least 6 characters.');
+    const updated={...user,passwordHash:hashPassword(newPassword),updatedAt:nowIso()};delete updated.password;
+    await set('users/'+uid,updated);
+    return send(res,200,{message:'Password changed successfully.'});
   }
 
   if (url.pathname==='/api/admin/users' && method==='GET') {
@@ -725,7 +811,7 @@ async function route(req, res) {
   }
   if(url.pathname==='/api/tests/mine' && method==='GET'){
     const {user}=await requireRole(req,'teacher');
-    const tests=Object.values(await allMap('tests')).filter(t=>t.createdBy===user.email);
+    const tests=Object.values(await allMap('tests')).filter(t=>ownsTest(user,t));
     return send(res,200,{tests:tests.map(summarizeTest)});
   }
   if(url.pathname==='/api/tests/all' && method==='GET'){
@@ -733,7 +819,7 @@ async function route(req, res) {
     const tests=Object.values(await allMap('tests'));
     const submissions=Object.values(await allMap('submissions'));
     const counts={}; submissions.forEach(s=>counts[s.testId]=(counts[s.testId]||0)+1);
-    return send(res,200,{tests:tests.map(t=>({...summarizeTest(t),attempts:counts[t.id]||0}))});
+    return send(res,200,{tests:tests.map(t=>({...summarizeTest(t),createdBy:t.createdBy,attempts:counts[t.id]||0}))});
   }
 
   const mAttempt=url.pathname.match(/^\/api\/tests\/([^/]+)\/attempts$/);
@@ -742,7 +828,7 @@ async function route(req, res) {
     const tests=await allMap('tests'), t=tests[decodeURIComponent(mAttempt[1])];
     if(!t) throw new Error('Test series not found.');
     if(!['teacher','admin'].includes(user.role)) throw new Error('Not authorized.');
-    if(user.role==='teacher'&&t.createdBy!==user.email) throw new Error('You can only change your own test series.');
+    if(user.role==='teacher'&&!ownsTest(user,t)) throw new Error('You can only change your own test series.');
     t.attemptPolicy=(await body(req)).attemptPolicy==='once'?'once':'reattempt';
     tests[t.id]=t;
     await set('tests',tests);
@@ -794,7 +880,7 @@ async function route(req, res) {
       }
       qs.push({question,options,answer,subject:String(q.subject||'General').trim()||'General',marks:Number.isFinite(Number(q.marks))?Number(q.marks):1,negative:Number.isFinite(Number(q.negative))?Number(q.negative):0,explanation:String(q.explanation||''),translations});
     });
-    const t={id:uid('T'),title:String(b.title).trim(),exam:String(b.exam||'Competitive Exam').trim(),category:b.category,subjects,languages,type:String(b.type||'FREE').toUpperCase()==='PAID'?'paid':'free',price:0,duration:Number.parseInt(b.duration,10)||30,questions:qs,questionCount:qs.length,createdBy:user.email,createdAt:nowIso(),published:true,attemptPolicy:b.attemptPolicy==='once'?'once':'reattempt'};
+    const t={id:uid('T'),title:String(b.title).trim(),exam:String(b.exam||'Competitive Exam').trim(),category:b.category,subjects,languages,type:String(b.type||'FREE').toUpperCase()==='PAID'?'paid':'free',price:0,duration:Number.parseInt(b.duration,10)||30,questions:qs,questionCount:qs.length,createdBy:user.email,createdById:user.uid,createdAt:nowIso(),published:true,attemptPolicy:b.attemptPolicy==='once'?'once':'reattempt'};
     const tests=await allMap('tests'); tests[t.id]=t; await set('tests',tests);
     return send(res,200,{message:'Test Series added successfully and published.',test:summarizeTest(t)});
   }
@@ -803,7 +889,7 @@ async function route(req, res) {
   if(mDeleteTest&&method==='DELETE'){
     const {user}=await currentUser(req), tests=await allMap('tests'), id=decodeURIComponent(mDeleteTest[1]), t=tests[id];
     if(!t) throw new Error('Test series not found.');
-    if(!['teacher','admin'].includes(user.role)||user.role==='teacher'&&t.createdBy!==user.email) throw new Error('Not authorized.');
+    if(!['teacher','admin'].includes(user.role)||user.role==='teacher'&&!ownsTest(user,t)) throw new Error('Not authorized.');
     delete tests[id];
     await set('tests',tests);
     return send(res,200,{message:'Test series deleted.'});
@@ -812,12 +898,13 @@ async function route(req, res) {
   if(url.pathname==='/api/plans'&&method==='GET'){
     await currentUser(req);
     const plans=Object.values(await allMap('plans'));
-    return send(res,200,{plans,payment:(await get('payment'))||DEFAULT_PAYMENT});
+    const payment={...((await get('payment'))||DEFAULT_PAYMENT),gatewayEnabled:CFG.payment.enabled,gatewayMode:CFG.payment.enabled?'test':null};
+    return send(res,200,{plans,payment});
   }
   if(url.pathname==='/api/plans'&&method==='POST'){
     await requireRole(req,'admin');
     const b=await body(req), name=String(b.name||'').trim(), days=parseInt(b.days,10), price=parseFloat(b.price);
-    if(!name||!Number.isFinite(days)||days<1||!Number.isFinite(price)||price<0) throw new Error('Enter a valid plan.');
+    if(!name||!Number.isFinite(days)||days<1||!Number.isFinite(price)||price<=0||Math.round(price*100)<1||Math.abs(Math.round(price*100)-price*100)>0.000001) throw new Error('Enter a valid plan with a price greater than ₹0 and at most two decimal places.');
     const p={id:uid('plan-'),name,days,price};
     const plans=await allMap('plans'); plans[p.id]=p; await set('plans',plans);
     return send(res,200,{message:'Plan added.',plans:Object.values(plans)});
@@ -835,7 +922,8 @@ async function route(req, res) {
   if(url.pathname==='/api/payment-settings'&&method==='PUT'){
     await requireRole(req,'admin');
     const b=await body(req);
-    const payment={upiId:String(b.upiId||'').trim(),payeeName:String(b.payeeName||'').trim(),note:String(b.note||'').trim(),gatewayUrl:String(b.gatewayUrl||process.env.PAYMENT_GATEWAY_URL||'').trim().replace(/\/+$/,'')};
+    const gatewayInput=b.gatewayUrl===undefined?process.env.PAYMENT_GATEWAY_URL||'':b.gatewayUrl;
+    const payment={upiId:String(b.upiId||'').trim(),payeeName:String(b.payeeName||'').trim(),note:String(b.note||'').trim(),gatewayUrl:String(gatewayInput).trim().replace(/\/+$/,'')};
     await set('payment',payment);
     return send(res,200,{message:'Payment details saved.',payment});
   }
@@ -924,39 +1012,77 @@ async function route(req, res) {
 
   // Integrated Razorpay / Orders API
   if (url.pathname === '/api/orders' && method === 'POST') {
-    const { uid: userId, user } = await currentUser(req);
+    const { uid: userId, user } = await requireRole(req,'student');
+    if (!CFG.payment.enabled) throw Object.assign(new Error('Razorpay Test Mode is not configured. Add a Razorpay Test Mode Key ID beginning with rzp_test_ and its Key Secret to the server environment.'),{status:503});
     const b = await body(req);
     const plansObj = await allMap('plans');
     const plan = plansObj[b.planId] || Object.values(plansObj).find(x => x.id === b.planId);
-    if (!plan) throw new Error('Unknown plan.');
+    if (!plan || !Number.isInteger(Number(plan.days)) || Number(plan.days)<1 || !Number.isFinite(Number(plan.price)) || Number(plan.price)<=0) throw new Error('This plan is not available for online payment.');
+    const amountPaise = Math.round(Number(plan.price) * 100);
+    if (amountPaise < 1 || Math.abs(amountPaise - Number(plan.price) * 100) > 0.000001) throw new Error('Plan price must be a valid amount in rupees.');
     const receipt = 'cem_' + crypto.randomBytes(6).toString('hex');
-    const rz = CFG.payment.mock
-      ? { id: 'order_mock_' + crypto.randomBytes(6).toString('hex') }
-      : await razorpayApi('POST', '/orders', { amount: Math.round(plan.price * 100), currency: 'INR', receipt, notes: { studentId: userId, planId: plan.id } });
-    const order = { orderId: rz.id, studentId: userId, studentName: user.name, studentEmail: user.email, planId: plan.id, planName: plan.name, days: plan.days, amount: plan.price, status: 'created', createdAt: nowIso() };
+    const rz = await razorpayApi('POST', '/orders', { amount: amountPaise, currency: 'INR', receipt, notes: { studentId: userId, planId: plan.id } });
+    const order = { orderId: rz.id, studentId: userId, studentName: user.name, studentEmail: user.email, planId: plan.id, planName: plan.name, days: Number(plan.days), amount: amountPaise/100, amountPaise, currency:'INR', status: 'created', createdAt: nowIso() };
     await set('orders/' + rz.id, order);
-    return send(res, 200, { orderId: rz.id, keyId: CFG.payment.mock ? 'rzp_test_mock' : CFG.payment.keyId, amount: Math.round(plan.price * 100), currency: 'INR', planName: plan.name, mock: CFG.payment.mock });
+    return send(res, 200, { orderId: rz.id, keyId: CFG.payment.keyId, amount: amountPaise, currency: 'INR', planName: plan.name, mode:'test' });
   }
 
   if (url.pathname === '/api/verify' && method === 'POST') {
-    await currentUser(req);
-    const b = await body(req), oid = b.razorpay_order_id, pid = b.razorpay_payment_id || ('pay_' + crypto.randomBytes(6).toString('hex')), sig = b.razorpay_signature;
+    const {uid:userId}=await requireRole(req,'student');
+    if (!CFG.payment.enabled) throw Object.assign(new Error('Razorpay Test Mode is not configured on the server.'),{status:503});
+    const b = await body(req), oid = String(b.razorpay_order_id||''), pid = String(b.razorpay_payment_id||''), sig = String(b.razorpay_signature||'');
     const order = await get('orders/' + oid);
     if (!oid || !order) throw Object.assign(new Error('Invalid payment details.'), { status: 400 });
-    if (!CFG.payment.mock) {
-      const safeEq = (a, c) => { const x = Buffer.from(String(a)), y = Buffer.from(String(c)); return x.length === y.length && crypto.timingSafeEqual(x, y); };
-      const hmac = crypto.createHmac('sha256', CFG.payment.keySecret || 'mock_secret').update(oid + '|' + pid).digest('hex');
-      if (!safeEq(hmac, sig)) throw Object.assign(new Error('Payment signature mismatch.'), { status: 400 });
-    }
-    const sub = await activateOrder(order, pid, nowIso());
+    if (order.studentId !== userId) throw Object.assign(new Error('This payment order belongs to another student.'),{status:403});
+    if (!pid || !sig) throw Object.assign(new Error('Razorpay did not return complete payment details.'),{status:400});
+    if (order.status==='paid' && order.paymentId && order.paymentId!==pid) throw Object.assign(new Error('This order has already been paid with a different payment.'),{status:409});
+    const safeEq = (a, c) => { const x = Buffer.from(String(a)), y = Buffer.from(String(c)); return x.length === y.length && crypto.timingSafeEqual(x, y); };
+    const signature = crypto.createHmac('sha256', CFG.payment.keySecret).update(oid + '|' + pid).digest('hex');
+    if (!safeEq(signature, sig)) throw Object.assign(new Error('Payment signature mismatch.'), { status: 400 });
+    let paid = await razorpayApi('GET','/payments/'+encodeURIComponent(pid));
+    const expectedAmount = Number(order.amountPaise)||Math.round(Number(order.amount)*100);
+    if (paid.order_id !== oid || Number(paid.amount) !== expectedAmount || paid.currency !== 'INR') throw Object.assign(new Error('The Razorpay payment does not match this order.'),{status:400});
+    if (paid.status === 'authorized') paid = await razorpayApi('POST','/payments/'+encodeURIComponent(pid)+'/capture',{amount:expectedAmount,currency:'INR'});
+    if (paid.status !== 'captured') throw Object.assign(new Error('Razorpay has not captured this payment yet. Please wait a moment and retry.'),{status:409});
+    const paidAt = paid.created_at ? new Date(Number(paid.created_at)*1000).toISOString() : nowIso();
+    const sub = await activateOrder(order, pid, paidAt);
     return send(res, 200, { entitlement: { orderId: order.orderId, paymentId: pid, studentId: order.studentId, planId: sub.planId, planName: sub.planName, days: sub.days, amount: sub.amount, paidAt: sub.requestedAt } });
   }
 
   if (url.pathname === '/api/entitlements' && method === 'GET') {
-    const { uid: userId } = await currentUser(req);
+    const { uid: userId } = await requireRole(req,'student');
     const subs = await allMap('subscriptions');
     const list = Object.values(subs).filter(s => s.studentId === userId && s.status === 'approved' && new Date(s.expiresAt).getTime() > Date.now());
     return send(res, 200, { entitlements: list.map(s => ({ orderId: s.gatewayOrderId, paymentId: s.txnId, studentId: s.studentId, planId: s.planId, planName: s.planName, days: s.days, amount: s.amount, paidAt: s.requestedAt })) });
+  }
+
+  if (url.pathname === '/api/webhook' && method === 'POST') {
+    const raw = await new Promise((resolve,reject) => {
+      const chunks=[]; let size=0;
+      req.on('data',chunk=>{ size+=chunk.length; if(size>1e6){reject(Object.assign(new Error('Webhook body too large.'),{status:413}));req.destroy();return;} chunks.push(chunk); });
+      req.on('end',()=>resolve(Buffer.concat(chunks).toString('utf8')));
+      req.on('error',reject);
+    });
+    const signature=String(req.headers['x-razorpay-signature']||'');
+    const expected=CFG.payment.webhookSecret?crypto.createHmac('sha256',CFG.payment.webhookSecret).update(raw).digest('hex'):'';
+    const x=Buffer.from(expected),y=Buffer.from(signature);
+    if(!expected||x.length!==y.length||!crypto.timingSafeEqual(x,y)) return send(res,400,{error:'Bad signature.'});
+    let event; try{event=JSON.parse(raw);}catch(_){return send(res,400,{error:'Invalid webhook payload.'});}
+    const eventId=String(event.id||crypto.createHash('sha256').update(raw).digest('hex'));
+    if(await get('webhookEvents/'+eventId)) return send(res,200,{ok:true,duplicate:true});
+    const entity=event.payload?.payment?.entity, order=entity?.order_id?await get('orders/'+entity.order_id):null;
+    if(event.event==='payment.captured'&&order){
+      const amount=Number(order.amountPaise)||Math.round(Number(order.amount)*100);
+      if(Number(entity.amount)!==amount||entity.currency!=='INR') throw Object.assign(new Error('Captured payment does not match the saved order.'),{status:400});
+      const paidAt=entity.created_at?new Date(Number(entity.created_at)*1000).toISOString():nowIso();
+      await activateOrder(order,entity.id,paidAt);
+    } else if(event.event==='payment.failed'&&order&&order.status!=='paid') {
+      order.status='failed'; order.paymentId=entity.id||''; order.failureReason=entity.error_description||entity.error_reason||'Payment failed'; order.failedAt=nowIso();
+      await update('orders/'+order.orderId,order);
+      await sendEmail(order.studentEmail,'Subscription payment failed',emailShell('Premium payment failed','<p>Your payment attempt for <b>'+String(order.planName||'Premium')+'</b> was not successful. Please try again.</p>'));
+    }
+    await set('webhookEvents/'+eventId,{event:event.event,receivedAt:nowIso()});
+    return send(res,200,{ok:true});
   }
 
   if(url.pathname==='/api/admin/backup'&&method==='GET'){

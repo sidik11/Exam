@@ -77,4 +77,4 @@ For local browser testing, the Checkout success callback can also call `/api/ver
 
 ## Test mode
 
-Use Razorpay Test Mode keys while developing. The Razorpay Key Secret and webhook secret must stay server-side.
+Use Razorpay Test Mode keys while developing. The Key ID must begin with `rzp_test_`. The Razorpay Key Secret and webhook secret must stay server-side. Fake/mock orders cannot activate Premium; configure Test Mode keys to use the trial checkout.

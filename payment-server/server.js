@@ -9,13 +9,14 @@ loadEnv();
 const CFG={
  port:Number(process.env.PAYMENT_PORT||process.env.PORT||4000),
  keyId:process.env.RAZORPAY_KEY_ID||'',keySecret:process.env.RAZORPAY_KEY_SECRET||'',
- webhookSecret:process.env.RAZORPAY_WEBHOOK_SECRET||'',mock:process.env.MOCK_GATEWAY==='1',
+ webhookSecret:process.env.RAZORPAY_WEBHOOK_SECRET||'',
+ mock:process.env.MOCK_GATEWAY==='1'||!String(process.env.RAZORPAY_KEY_ID||'').startsWith('rzp_test_')||!process.env.RAZORPAY_KEY_SECRET,
  allowedOrigins:(process.env.ALLOWED_ORIGINS||'*').split(',').map(s=>s.trim()),
  dbUrl:process.env.FIREBASE_DATABASE_URL||'',projectId:process.env.FIREBASE_PROJECT_ID||'',
  clientEmail:process.env.FIREBASE_CLIENT_EMAIL||'',privateKey:(process.env.FIREBASE_PRIVATE_KEY||'').replace(/\\n/g,'\n'),
  gmail:{clientId:process.env.GMAIL_CLIENT_ID||'',clientSecret:process.env.GMAIL_CLIENT_SECRET||'',refreshToken:process.env.GMAIL_REFRESH_TOKEN||'',redirectUri:process.env.GMAIL_REDIRECT_URI||'',sender:process.env.GMAIL_SENDER_EMAIL||''}
 };
-if(!CFG.mock&&(!CFG.keyId||!CFG.keySecret)){console.error('Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET, or MOCK_GATEWAY=1.');process.exit(1);}
+CFG.paymentsEnabled=!CFG.mock;
 if(!CFG.dbUrl||!CFG.projectId||!CFG.clientEmail||!CFG.privateKey){console.error('Firebase Admin credentials are required for payment-server.');process.exit(1);}
 admin.initializeApp({credential:admin.credential.cert({projectId:CFG.projectId,clientEmail:CFG.clientEmail,privateKey:CFG.privateKey}),databaseURL:CFG.dbUrl});
 const db=admin.database(),auth=admin.auth();
@@ -32,6 +33,7 @@ async function currentUser(req){
  let d;try{d=await auth.verifyIdToken(h.slice(7));}catch(_){throw Object.assign(new Error('Invalid or expired login.'),{status:401});}
  const u=await get('users/'+d.uid);if(!u)throw Object.assign(new Error('Account profile not found.'),{status:403});
  if(u.blocked)throw Object.assign(new Error('Your account has been blocked.'),{status:403});
+ if(u.role!=='student')throw Object.assign(new Error('Only student accounts can buy Premium.'),{status:403});
  return {uid:d.uid,user:u};
 }
 async function sendEmail(to,subject,html){
@@ -58,19 +60,29 @@ async function activeSub(uidValue){
  const p=await get('subscriptions')||{};return Object.values(p).filter(s=>s.studentId===uidValue&&s.status==='approved'&&new Date(s.expiresAt).getTime()>Date.now()).sort((a,b)=>new Date(b.expiresAt)-new Date(a.expiresAt))[0]||null;
 }
 async function activate(order,paymentId,paidAt){
- const subs=await get('subscriptions')||{};
- const existing=Object.values(subs).find(s=>s.txnId===paymentId||s.gatewayOrderId===order.orderId);
- if(existing)return existing;
- const p=(await plans()).find(x=>x.id===order.planId);if(!p)throw new Error('Plan no longer exists.');
- const act=await activeSub(order.studentId),start=act?new Date(act.expiresAt):new Date(paidAt||Date.now());
- const sub={id:uid('sub-'),studentId:order.studentId,studentName:order.studentName,studentEmail:order.studentEmail,planId:p.id,planName:p.name,days:p.days,amount:p.price,txnId:paymentId,method:'Razorpay (Test/Live)',status:'approved',requestedAt:paidAt||new Date().toISOString(),decidedAt:new Date().toISOString(),startsAt:start.toISOString(),expiresAt:new Date(start.getTime()+p.days*86400000).toISOString(),gatewayOrderId:order.orderId};
- subs[sub.id]=sub;await set('subscriptions',subs);
- order.status='paid';order.paymentId=paymentId;order.paidAt=paidAt||new Date().toISOString();await set('orders/'+order.orderId,order);
- await sendEmail(order.studentEmail,'Subscription payment successful', '<p>Hello '+String(order.studentName||'Student').replace(/[<>]/g,'')+',</p><p>Your <b>'+p.name+'</b> Premium subscription payment was successful.</p><p>Amount: <b>₹'+p.price+'</b><br>Payment ID: <b>'+paymentId+'</b><br>Valid until: <b>'+new Date(sub.expiresAt).toLocaleString()+'</b></p>');
+ if(!order||!order.orderId||!order.studentId||!paymentId)throw new Error('Invalid payment order.');
+ const days=Number(order.days),amount=Number(order.amount);
+ if(!Number.isInteger(days)||days<1||!Number.isFinite(amount)||amount<=0)throw new Error('The saved plan details are invalid.');
+ const subId=uid('sub-'),requestedAt=paidAt||new Date().toISOString();
+ const result=await db.ref('subscriptions').transaction(current=>{
+  const subs=current&&typeof current==='object'?current:{};
+  const existing=Object.values(subs).find(s=>s.gatewayOrderId===order.orderId||s.txnId===paymentId);
+  if(existing)return;
+  const active=Object.values(subs).filter(s=>s.studentId===order.studentId&&s.status==='approved'&&new Date(s.expiresAt).getTime()>Date.now()).sort((a,b)=>new Date(b.expiresAt)-new Date(a.expiresAt))[0];
+  const start=active?new Date(active.expiresAt):new Date(requestedAt);
+  const sub={id:subId,studentId:order.studentId,studentName:order.studentName,studentEmail:order.studentEmail,planId:order.planId,planName:order.planName,days,amount,txnId:paymentId,method:'Razorpay Test Mode',status:'approved',requestedAt,decidedAt:new Date().toISOString(),startsAt:start.toISOString(),expiresAt:new Date(start.getTime()+days*86400000).toISOString(),gatewayOrderId:order.orderId};
+  subs[sub.id]=sub;return subs;
+ },undefined,false);
+ const saved=result.snapshot.val()||{};
+ const sub=Object.values(saved).find(s=>s.gatewayOrderId===order.orderId||s.txnId===paymentId);
+ if(!sub)throw new Error('Could not activate this subscription. Please retry or contact support.');
+ if(sub.gatewayOrderId!==order.orderId||sub.studentId!==order.studentId)throw new Error('This payment is already linked to another order.');
+ order.status='paid';order.paymentId=paymentId;order.paidAt=requestedAt;await db.ref('orders/'+order.orderId).update(order);
+ if(sub.id===subId)await sendEmail(order.studentEmail,'Subscription payment successful','<p>Hello '+String(order.studentName||'Student').replace(/[<>]/g,'')+',</p><p>Your <b>'+String(order.planName||'Premium').replace(/[<>]/g,'')+'</b> Premium subscription payment was successful.</p><p>Amount: <b>₹'+amount+'</b><br>Payment ID: <b>'+paymentId+'</b><br>Valid until: <b>'+new Date(sub.expiresAt).toLocaleString()+'</b></p>');
  return sub;
 }
 async function markFailed(order,paymentId,reason){
- if(!order)return;
+ if(!order||order.status==='paid')return;
  order.status='failed';order.paymentId=paymentId||order.paymentId;order.failureReason=reason||'Payment failed';order.failedAt=new Date().toISOString();await set('orders/'+order.orderId,order);
  await sendEmail(order.studentEmail,'Subscription payment failed','<p>Hello '+String(order.studentName||'Student').replace(/[<>]/g,'')+',</p><p>Your payment attempt for <b>'+String(order.planName||'Premium')+'</b> was not successful.</p><p>Please try again. If your bank account was debited, wait for the payment provider/bank to reconcile the transaction.</p>');
 }
@@ -78,33 +90,48 @@ async function markFailed(order,paymentId,reason){
 async function route(req,res){
  cors(req,res);if(req.method==='OPTIONS')return send(res,204,{});
  const u=new URL(req.url,'http://localhost'),p=u.pathname;
- if(p==='/health'&&req.method==='GET')return send(res,200,{ok:true,mock:CFG.mock,firebase:true});
- if(p==='/api/plans'&&req.method==='GET')return send(res,200,{plans:await plans()});
+ if(p==='/health'&&req.method==='GET')return send(res,200,{ok:true,mock:CFG.mock,paymentsEnabled:CFG.paymentsEnabled,paymentMode:CFG.paymentsEnabled?'test':null,firebase:true});
+ if(p==='/api/plans'&&req.method==='GET')return send(res,200,{plans:await plans(),paymentsEnabled:CFG.paymentsEnabled,paymentMode:CFG.paymentsEnabled?'test':null});
  if(p==='/api/orders'&&req.method==='POST'){
-  const {uid:userId,user}=await currentUser(req);const b=await readBody(req);const ps=await plans(),plan=ps.find(x=>x.id===b.planId);if(!plan)throw new Error('Unknown plan.');
-  const receipt='cem_'+crypto.randomBytes(6).toString('hex'),rz=CFG.mock?{id:'order_mock_'+crypto.randomBytes(6).toString('hex')}:
-   await razorpay('POST','/orders',{amount:Math.round(plan.price*100),currency:'INR',receipt,notes:{studentId:userId,planId:plan.id}});
-  const order={orderId:rz.id,studentId:userId,studentName:user.name,studentEmail:user.email,planId:plan.id,planName:plan.name,days:plan.days,amount:plan.price,status:'created',createdAt:new Date().toISOString()};
+  const {uid:userId,user}=await currentUser(req);
+  if(!CFG.paymentsEnabled)throw Object.assign(new Error('Razorpay Test Mode is not configured. Add a Razorpay Test Mode Key ID beginning with rzp_test_ and its Key Secret to the server environment.'),{status:503});
+  const b=await readBody(req);const ps=await plans(),plan=ps.find(x=>x.id===b.planId);
+  if(!plan||!Number.isInteger(Number(plan.days))||Number(plan.days)<1||!Number.isFinite(Number(plan.price))||Number(plan.price)<=0)throw new Error('This plan is not available for online payment.');
+  const amountPaise=Math.round(Number(plan.price)*100);if(amountPaise<1||Math.abs(amountPaise-Number(plan.price)*100)>0.000001)throw new Error('Plan price must be a valid amount in rupees.');
+  const receipt='cem_'+crypto.randomBytes(6).toString('hex');
+  const rz=await razorpay('POST','/orders',{amount:amountPaise,currency:'INR',receipt,notes:{studentId:userId,planId:plan.id}});
+  const order={orderId:rz.id,studentId:userId,studentName:user.name,studentEmail:user.email,planId:plan.id,planName:plan.name,days:Number(plan.days),amount:amountPaise/100,amountPaise,currency:'INR',status:'created',createdAt:new Date().toISOString()};
   await set('orders/'+rz.id,order);
-  return send(res,200,{orderId:rz.id,keyId:CFG.mock?'rzp_test_mock':CFG.keyId,amount:Math.round(plan.price*100),currency:'INR',planName:plan.name});
+  return send(res,200,{orderId:rz.id,keyId:CFG.keyId,amount:amountPaise,currency:'INR',planName:plan.name,mode:'test'});
  }
  if(p==='/api/verify'&&req.method==='POST'){
-  await currentUser(req);const b=await readBody(req),oid=b.razorpay_order_id,pid=b.razorpay_payment_id,sig=b.razorpay_signature;
+  const {uid:userId}=await currentUser(req);
+  if(!CFG.paymentsEnabled)throw Object.assign(new Error('Razorpay Test Mode is not configured on the server.'),{status:503});
+  const b=await readBody(req),oid=String(b.razorpay_order_id||''),pid=String(b.razorpay_payment_id||''),sig=String(b.razorpay_signature||'');
   const order=await get('orders/'+oid);if(!oid||!pid||!sig||!order)throw Object.assign(new Error('Invalid payment details.'),{status:400});
-  if(!safeEq(hmac(CFG.keySecret||'mock_secret',oid+'|'+pid),sig))throw Object.assign(new Error('Payment signature mismatch.'),{status:400});
-  const sub=await activate(order,pid,new Date().toISOString());return send(res,200,{entitlement:{orderId:order.orderId,paymentId:pid,studentId:order.studentId,planId:sub.planId,planName:sub.planName,days:sub.days,amount:sub.amount,paidAt:sub.requestedAt}});
+  if(order.studentId!==userId)throw Object.assign(new Error('This payment order belongs to another student.'),{status:403});
+  if(order.status==='paid'&&order.paymentId&&order.paymentId!==pid)throw Object.assign(new Error('This order has already been paid with a different payment.'),{status:409});
+  if(!safeEq(hmac(CFG.keySecret,oid+'|'+pid),sig))throw Object.assign(new Error('Payment signature mismatch.'),{status:400});
+  let paid=await razorpay('GET','/payments/'+encodeURIComponent(pid));const expectedAmount=Number(order.amountPaise)||Math.round(Number(order.amount)*100);
+  if(paid.order_id!==oid||Number(paid.amount)!==expectedAmount||paid.currency!=='INR')throw Object.assign(new Error('The Razorpay payment does not match this order.'),{status:400});
+  if(paid.status==='authorized')paid=await razorpay('POST','/payments/'+encodeURIComponent(pid)+'/capture',{amount:expectedAmount,currency:'INR'});
+  if(paid.status!=='captured')throw Object.assign(new Error('Razorpay has not captured this payment yet. Please wait a moment and retry.'),{status:409});
+  const paidAt=paid.created_at?new Date(Number(paid.created_at)*1000).toISOString():new Date().toISOString();
+  const sub=await activate(order,pid,paidAt);return send(res,200,{entitlement:{orderId:order.orderId,paymentId:pid,studentId:order.studentId,planId:sub.planId,planName:sub.planName,days:sub.days,amount:sub.amount,paidAt:sub.requestedAt}});
  }
  if(p==='/api/entitlements'&&req.method==='GET'){
   const {uid:userId}=await currentUser(req);const subs=await get('subscriptions')||{};const list=Object.values(subs).filter(s=>s.studentId===userId&&s.status==='approved'&&new Date(s.expiresAt).getTime()>Date.now());
   return send(res,200,{entitlements:list.map(s=>({orderId:s.gatewayOrderId,paymentId:s.txnId,studentId:s.studentId,planId:s.planId,planName:s.planName,days:s.days,amount:s.amount,paidAt:s.requestedAt}))});
  }
  if(p==='/api/webhook'&&req.method==='POST'){
-  const raw=await new Promise((resolve,reject)=>{const a=[];req.on('data',c=>a.push(c));req.on('end',()=>resolve(Buffer.concat(a).toString('utf8')));req.on('error',reject);});
+  const raw=await new Promise((resolve,reject)=>{const a=[];let n=0;req.on('data',c=>{n+=c.length;if(n>1000000){reject(new Error('Webhook body too large'));req.destroy();return;}a.push(c);});req.on('end',()=>resolve(Buffer.concat(a).toString('utf8')));req.on('error',reject);});
   if(!CFG.webhookSecret||!safeEq(hmac(CFG.webhookSecret,raw),req.headers['x-razorpay-signature']||''))return send(res,400,{error:'Bad signature.'});
-  const ev=JSON.parse(raw),eventId=ev.id||crypto.createHash('sha256').update(raw).digest('hex'),seen=await get('webhookEvents/'+eventId);if(seen)return send(res,200,{ok:true,duplicate:true});await set('webhookEvents/'+eventId,{event:ev.event,receivedAt:new Date().toISOString()});
+  let ev;try{ev=JSON.parse(raw);}catch(_){return send(res,400,{error:'Invalid webhook payload.'});}
+  const eventId=ev.id||crypto.createHash('sha256').update(raw).digest('hex'),seen=await get('webhookEvents/'+eventId);if(seen)return send(res,200,{ok:true,duplicate:true});
   const entity=ev.payload?.payment?.entity||ev.payload?.order?.entity;const oid=entity?.order_id||entity?.id,order=await get('orders/'+oid);
-  if(ev.event==='payment.captured'){if(order)await activate(order,entity.id,new Date().toISOString());}
+  if(ev.event==='payment.captured'&&order){const expectedAmount=Number(order.amountPaise)||Math.round(Number(order.amount)*100);if(Number(entity.amount)!==expectedAmount||entity.currency!=='INR')throw Object.assign(new Error('Captured payment does not match the saved order.'),{status:400});const paidAt=entity.created_at?new Date(Number(entity.created_at)*1000).toISOString():new Date().toISOString();await activate(order,entity.id,paidAt);}
   else if(ev.event==='payment.failed'){if(order)await markFailed(order,entity.id,entity.error_description||entity.error_reason);}
+  await set('webhookEvents/'+eventId,{event:ev.event,receivedAt:new Date().toISOString()});
   return send(res,200,{ok:true});
  }
  return send(res,404,{error:'Not found.'});

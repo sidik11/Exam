@@ -27,7 +27,7 @@ npm install
 Copy-Item .env.example .env
 ```
 
-Fill `.env` with your Firebase, Gmail and Razorpay values.
+Fill `.env` with your Firebase and Gmail values, plus Razorpay **Test Mode** credentials. The Razorpay Key ID must begin with `rzp_test_`; live keys are intentionally not accepted by this trial checkout. Keep the Key Secret server-side in `.env`.
 
 Admin login uses a fixed Gmail address:
 
@@ -52,7 +52,13 @@ Open:
 
 The server also exposes `/api/health`.
 
-## Start Razorpay payment server
+## Premium payment setup
+
+The main app includes the Razorpay order and verification endpoints. After adding the Razorpay Test Mode Key ID and Key Secret to `.env`, restart the main server. In Admin → Premium Subscriptions, leave **Separate payment server URL** blank to use the built-in checkout. Students can then select a plan, complete the Razorpay test checkout, and receive Premium access after the server confirms the captured payment.
+
+If you deploy `payment-server` separately, start it with the same Firebase and Razorpay Test Mode credentials, then enter its public base URL in Admin → Premium Subscriptions. Keep the UPI fields configured if you want manual UPI with Admin approval as a fallback.
+
+## Optional separate Razorpay payment server
 
 Open a second PowerShell window:
 
@@ -87,12 +93,12 @@ Keep the Gmail refresh token and client secret only in `.env`.
 
 ## Razorpay webhook
 
-For local development, the browser verification endpoint can activate a successful test payment immediately.
+For local development, the browser verification endpoint checks the Checkout signature and confirms the payment and amount with Razorpay before activating Premium.
 
 For webhook testing, Razorpay needs a public HTTPS URL. Configure:
 
 ```
-https://YOUR-PUBLIC-PAYMENT-SERVER/api/webhook
+https://YOUR-PUBLIC-SERVER/api/webhook
 ```
 
 with the same `RAZORPAY_WEBHOOK_SECRET` stored in `.env`.
@@ -115,4 +121,4 @@ Do not put service-account credentials, Razorpay secrets, Gmail refresh tokens o
 
 ## Important
 
-The root backend and payment backend now use Firebase as the source of truth. The old browser-local database is no longer used.
+The root backend and optional payment server use Firebase as the source of truth. The old browser-local database is no longer used. `MOCK_GATEWAY=1` does not create fake successful payments; actual Razorpay Test Mode credentials are required for online checkout.

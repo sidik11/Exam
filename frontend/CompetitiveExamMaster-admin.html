@@ -65,6 +65,16 @@ button.icon-opt.sel{background:#dbeafe;border-color:#2563eb}
 .admin-login-hint{font-size:12px;color:#64748b;line-height:1.5;margin-top:12px}
 .otp-sent{background:#ecfdf5;color:#166534;border:1px solid #bbf7d0;border-radius:10px;padding:12px;margin-bottom:14px;font-size:13px}
 #adminOtp{text-align:center;letter-spacing:9px;font-size:25px;font-weight:800}
+:root{--admin-ink:#162033;--admin-line:#e4e9f1}
+body{background:radial-gradient(ellipse at 10% 0%,#eef2ff 0,transparent 35%),radial-gradient(ellipse at 95% 12%,#fee2e2 0,transparent 26%),#f7f8fb;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55}
+header{padding:16px clamp(16px,4vw,40px) 12px;background:rgba(11,18,32,.96);backdrop-filter:blur(16px);box-shadow:0 8px 28px rgba(15,23,42,.14)}.brand-row,nav{max-width:1240px}.brand{font-size:20px;letter-spacing:-.4px}nav{gap:7px;margin-top:13px}nav button,nav a.navlink{padding:10px 13px;border-radius:11px;font-size:13px;transition:transform .18s,background .18s}nav button:hover,nav a.navlink:hover{transform:translateY(-1px)}
+main{max-width:1240px;margin:auto;padding:30px 28px 44px}.section>h2{font-size:30px;letter-spacing:-.8px;color:#17243a}.section>p{color:#667085}.dashboard-grid{gap:16px}.panel-card{border:1px solid rgba(148,163,184,.2);border-radius:18px;background:rgba(255,255,255,.92);box-shadow:0 10px 28px rgba(16,24,40,.055);transition:box-shadow .2s,border-color .2s}.panel-card:hover{border-color:#d5ddec;box-shadow:0 14px 32px rgba(16,24,40,.08)}
+.form-row input,.form-row select,.form-row textarea{border-radius:11px;border-color:#d5dce6;transition:border-color .18s,box-shadow .18s}.form-row input:focus,.form-row select:focus,.form-row textarea:focus{outline:0;border-color:#dc2626;box-shadow:0 0 0 4px rgba(220,38,38,.09)}.primary-btn,.success-btn,.danger-btn,.warn-btn,.admin-login-btn,.admin-back-btn{transition:transform .16s,filter .16s,box-shadow .16s}.primary-btn:hover,.success-btn:hover,.danger-btn:hover,.warn-btn:hover,.admin-login-btn:hover,.admin-back-btn:hover{transform:translateY(-1px);filter:brightness(1.03)}
+.admin-login-shell{position:relative;overflow:hidden;margin:clamp(32px,8vh,78px) auto;padding:clamp(25px,5vw,40px);border:1px solid rgba(148,163,184,.22);border-radius:22px;background:rgba(255,255,255,.95);box-shadow:0 24px 60px rgba(20,30,50,.12);animation:admin-login-in .55s cubic-bezier(.2,.7,.2,1) both}.admin-login-shell:before{content:"";position:absolute;width:210px;height:210px;right:-110px;top:-115px;border:1px solid rgba(220,38,38,.12);border-radius:50%;box-shadow:0 0 0 25px rgba(220,38,38,.025),0 0 0 52px rgba(220,38,38,.02);pointer-events:none}.admin-login-brand{display:grid;place-items:center;width:58px;height:58px;margin:0 auto 14px;border-radius:18px;background:linear-gradient(135deg,#fff0f0,#fee2e2);font-size:29px;animation:admin-badge-in .65s .12s both}.admin-login-shell h2{font-size:24px;letter-spacing:-.5px;color:#182235}.admin-login-sub{line-height:1.5}.admin-email-lock{border-radius:13px;background:#fff8f8}.admin-login-btn{box-shadow:0 8px 17px rgba(220,38,38,.18)}.admin-login-btn.loading{pointer-events:none;opacity:.88}.admin-login-btn.loading:after{content:"";display:inline-block;width:13px;height:13px;margin-left:9px;vertical-align:-2px;border:2px solid rgba(255,255,255,.55);border-top-color:#fff;border-radius:50%;animation:admin-spin .7s linear infinite}.admin-back-btn{background:#f4f6f9}.otp-sent,.admin-pane-enter{animation:admin-login-in .35s ease both}.admin-login-shell .form-row{animation:admin-login-in .4s ease both}.admin-login-shell .form-row:nth-of-type(2){animation-delay:.06s}.admin-login-shell .form-row:nth-of-type(3){animation-delay:.12s}
+.admin-badge{background:#c81e32}.table-wrap{border:1px solid var(--admin-line);border-radius:13px;background:#fff;overflow:auto}table{font-size:13px}th{background:#f7f8fb;color:#475467;font-size:11px;letter-spacing:.045em;text-transform:uppercase}td{color:#344054}footer{max-width:1240px;margin:auto}
+@keyframes admin-login-in{from{opacity:0;transform:translateY(11px)}to{opacity:1;transform:translateY(0)}}@keyframes admin-badge-in{from{opacity:0;transform:scale(.82) rotate(-7deg)}to{opacity:1;transform:scale(1) rotate(0)}}@keyframes admin-spin{to{transform:rotate(360deg)}}
+@media(max-width:700px){main{padding:19px 13px 32px}.section>h2{font-size:26px}.admin-login-shell{margin:25px auto}.dashboard-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
@@ -100,14 +110,14 @@ button.icon-opt.sel{background:#dbeafe;border-color:#2563eb}
     </div>
     <div id="adminOtpEmailPane">
       <div class="form-row"><label style="text-align:left">Administrator Email</label><input id="loginEmail" type="email" value="mjdeveloperodisha@gmail.com" autocomplete="email" readonly></div>
-      <button class="admin-login-btn" style="width:100%" onclick="requestAdminOtp()">Send OTP</button>
+      <button id="sendOtpBtn" class="admin-login-btn" type="button" style="width:100%" onclick="requestAdminOtp()">Send OTP</button>
       <p class="admin-login-hint">A 6-digit one-time verification code will be sent to the authorized email address.</p>
       <p id="loginMsg"></p>
     </div>
     <div id="adminOtpPane" class="hidden">
       <div class="otp-sent">✉️ OTP sent to <b>mjdeveloperodisha@gmail.com</b></div>
       <div class="form-row"><label style="text-align:left">Enter 6-digit OTP</label><input id="adminOtp" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="••••••" autocomplete="one-time-code"></div>
-      <button class="admin-login-btn" style="width:100%" onclick="verifyAdminOtp()">Verify OTP &amp; Login</button>
+      <button id="verifyOtpBtn" class="admin-login-btn" type="button" style="width:100%" onclick="verifyAdminOtp()">Verify OTP &amp; Login</button>
       <button class="admin-back-btn" style="width:100%;margin-top:8px" onclick="resetAdminOtp()">← Send a new OTP</button>
       <p id="otpMsg"></p>
     </div>
@@ -146,14 +156,14 @@ button.icon-opt.sel{background:#dbeafe;border-color:#2563eb}
       <div class="form-row" style="flex:1"><label>Payee name</label><input id="admPayee"></div>
     </div>
     <div class="form-row"><label>Note for students (optional)</label><input id="admPayNote" placeholder="e.g. Add your registered email in the payment remark"></div>
-    <div class="form-row"><label>Payment server URL — automatic activation (optional)</label><input id="admGateway" placeholder="https://pay.your-site.com"><span class="muted">When set, students pay through Razorpay (UPI/cards/net banking) and Premium activates instantly — no approval needed. Leave empty to use manual UPI + approval. Plans and prices then come from the payment server's plans.json.</span></div>
+    <div class="form-row"><label>Separate payment server URL (optional)</label><input id="admGateway" placeholder="https://pay.your-site.com"><span class="muted">Leave blank to use this app's built-in Razorpay checkout. Add a URL only when you host payment-server separately. Razorpay Test Mode keys must be configured on the payment server. If online checkout is unavailable, students can use manual UPI and Admin approval.</span></div>
     <button class="primary-btn" onclick="savePaymentDetails()">Save payment details</button> <span id="admPayMsg" class="muted"></span>
     <h4 style="margin-top:20px">Plans</h4>
     <div class="table-wrap"><table><thead><tr><th>Plan</th><th>Days</th><th>Price</th><th>Action</th></tr></thead><tbody id="planTable"></tbody></table></div>
     <div class="row" style="align-items:end;margin-top:8px">
       <div class="form-row" style="flex:2"><label>Plan name</label><input id="admPlanName" placeholder="e.g. Half-yearly"></div>
       <div class="form-row" style="flex:1"><label>Days</label><input id="admPlanDays" type="number" min="1" value="180"></div>
-      <div class="form-row" style="flex:1"><label>Price (₹)</label><input id="admPlanPrice" type="number" min="0" value="499"></div>
+      <div class="form-row" style="flex:1"><label>Price (₹)</label><input id="admPlanPrice" type="number" min="1" value="499"></div>
       <div class="form-row"><button class="primary-btn" onclick="addPlanAdmin()">Add plan</button></div>
     </div>
     <h4 style="margin-top:20px">Payment requests</h4>
@@ -254,6 +264,14 @@ function showSection(id){
   }
 }
 
+function animateAdminPane(pane){
+  if(!pane)return;
+  pane.classList.remove('admin-pane-enter');
+  void pane.offsetWidth;
+  pane.classList.add('admin-pane-enter');
+  window.setTimeout(()=>pane.classList.remove('admin-pane-enter'),420);
+}
+
 function updateUI(){
   const adminNav = document.getElementById('adminNav');
   const logoutNav = document.getElementById('logoutNav');
@@ -270,6 +288,8 @@ function updateUI(){
 }
 
 window.requestAdminOtp = async function(){
+  const btn=document.getElementById('sendOtpBtn');
+  if(btn){btn.classList.add('loading');btn.disabled=true;btn.textContent='Sending…';}
   try {
     const email = document.getElementById('loginEmail').value.trim();
     if(email !== 'mjdeveloperodisha@gmail.com') {
@@ -280,13 +300,18 @@ window.requestAdminOtp = async function(){
     msg('loginMsg', r.message, true);
     document.getElementById('adminOtpEmailPane').classList.add('hidden');
     document.getElementById('adminOtpPane').classList.remove('hidden');
+    animateAdminPane(document.getElementById('adminOtpPane'));
     document.getElementById('adminOtp').focus();
   } catch(e) {
     msg('loginMsg', e.message);
+  } finally {
+    if(btn){btn.classList.remove('loading');btn.disabled=false;btn.textContent='Send OTP';}
   }
 };
 
 window.verifyAdminOtp = async function(){
+  const btn=document.getElementById('verifyOtpBtn');
+  if(btn){btn.classList.add('loading');btn.disabled=true;btn.textContent='Checking…';}
   try {
     const otp = document.getElementById('adminOtp').value.trim();
     if(!/^\d{6}$/.test(otp)) {
@@ -302,12 +327,15 @@ window.verifyAdminOtp = async function(){
     showSection('admin');
   } catch(e) {
     msg('otpMsg', e.message);
+  } finally {
+    if(btn){btn.classList.remove('loading');btn.disabled=false;btn.textContent='Verify OTP & Login';}
   }
 };
 
 window.resetAdminOtp = function(){
   document.getElementById('adminOtpPane').classList.add('hidden');
   document.getElementById('adminOtpEmailPane').classList.remove('hidden');
+  animateAdminPane(document.getElementById('adminOtpEmailPane'));
   document.getElementById('adminOtp').value = '';
   document.getElementById('otpMsg').textContent = '';
 };

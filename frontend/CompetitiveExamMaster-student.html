@@ -207,6 +207,25 @@ main{max-width:1400px;margin:auto;padding-top:28px}.hero{position:relative;overf
 .primary-btn,.success-btn,.danger-btn,.warn-btn{border-radius:11px;box-shadow:0 6px 14px rgba(15,23,42,.1);transition:transform .15s,filter .15s}.primary-btn:hover,.success-btn:hover,.danger-btn:hover,.warn-btn:hover{transform:translateY(-1px);filter:brightness(1.03)}
 .notice{border-radius:14px;box-shadow:0 7px 20px rgba(120,53,15,.06)}@media(max-width:760px){main{padding:16px 12px}.hero{padding:30px 20px;border-radius:20px}.auth-grid{grid-template-columns:1fr}.card{padding:18px}}
 
+ :root{--ink:#101828;--muted:#667085;--line:#e4eaf2;--soft:#f8fafc;--blue:#315ee7;--blue-deep:#2346bb;--surface:var(--card)}
+html{scroll-behavior:smooth;scroll-padding-top:140px}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--fg);background:radial-gradient(ellipse at 8% 4%,rgba(219,234,254,.72),transparent 32%),radial-gradient(ellipse at 95% 10%,rgba(254,226,226,.6),transparent 27%),#f7f9fc;line-height:1.55}
+header{padding:16px clamp(16px,4vw,40px) 12px}.brand-row,nav{max-width:1240px}.brand{font-size:20px;letter-spacing:-.45px}.sub{font-size:12px;letter-spacing:.04em;text-transform:uppercase}nav{gap:7px;margin-top:13px}nav button{padding:10px 13px;border-radius:11px;font-size:13px}
+main{max-width:1240px;padding:30px 28px 44px}.section>h2{font-size:clamp(24px,3vw,32px);letter-spacing:-.8px;margin:8px 0 18px}
+.hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(270px,.75fr);align-items:center;gap:28px;min-height:350px;padding:clamp(30px,5vw,58px);margin-bottom:0;background:linear-gradient(118deg,#101b3e 0%,#183a78 60%,#315ee7 100%);box-shadow:0 24px 60px rgba(26,56,116,.2);animation:hero-enter .65s cubic-bezier(.2,.7,.2,1) both}
+.hero:after{right:-40px;top:-135px;opacity:.65}.hero-copy,.hero-visual{position:relative;z-index:2}.hero-kicker{display:inline-flex;align-items:center;gap:9px;margin-bottom:16px;padding:7px 12px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(255,255,255,.08);color:#e0eaff;font-size:12px;font-weight:700;letter-spacing:.04em}.hero-kicker-dot,.hero-live-dot{width:8px;height:8px;border-radius:50%;background:#74e2b8;box-shadow:0 0 0 4px rgba(116,226,184,.15)}
+.hero h1{max-width:650px;font-size:clamp(36px,5vw,58px);line-height:1.05;letter-spacing:-1.8px;margin:0 0 16px}.hero p{max-width:580px;color:#dbe7ff;font-size:16px;line-height:1.7;margin:0}.hero-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:25px}.hero-actions button{min-height:48px;padding:12px 17px;border-radius:13px;font-size:14px;transition:transform .18s,box-shadow .18s,background .18s}.hero-actions button:hover{transform:translateY(-2px)}.hero-primary{background:#fff;color:#15346d;box-shadow:0 10px 22px rgba(4,15,42,.2)}.hero-primary span{padding-left:8px;font-size:18px}.hero-secondary{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);color:#fff}.hero-secondary:hover{background:rgba(255,255,255,.17)}
+.hero-visual{min-height:220px;display:flex;align-items:center;justify-content:center}.hero-orbit{position:absolute;border:1px solid rgba(255,255,255,.16);border-radius:50%;aspect-ratio:1}.hero-orbit-one{width:270px}.hero-orbit-two{width:215px;border-style:dashed;opacity:.7}.hero-progress-card{position:relative;z-index:2;width:min(100%,310px);padding:20px;border:1px solid rgba(255,255,255,.3);border-radius:20px;background:rgba(255,255,255,.96);color:#14213b;box-shadow:0 24px 50px rgba(4,15,42,.24);transform:rotate(-2deg);animation:card-float 5s ease-in-out infinite}.hero-progress-top{display:flex;align-items:center;gap:9px;color:#64748b;font-size:12px;font-weight:700}.hero-progress-icon{display:grid;place-items:center;width:26px;height:26px;border-radius:8px;background:#e7f8ef;color:#17834b;font-size:15px}.hero-live-dot{margin-left:auto;width:7px;height:7px;background:#21b574;box-shadow:none}.hero-progress-title{margin:18px 0 15px;font-size:20px;font-weight:800;letter-spacing:-.5px}.hero-progress-track{height:9px;border-radius:99px;background:#e8edf5;overflow:hidden}.hero-progress-track span{display:block;width:68%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#4169e1,#67a4ff)}.hero-progress-foot{display:flex;justify-content:space-between;gap:12px;margin-top:10px;color:#7b8798;font-size:10px}.hero-progress-foot b{color:#344054;font-size:10px}.hero-float-card{position:absolute;z-index:3;right:-7px;bottom:5px;display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid rgba(255,255,255,.4);border-radius:14px;background:#fff;box-shadow:0 12px 24px rgba(4,15,42,.18);color:#23304a;animation:float-in .8s .2s both}.hero-float-card>span{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:#fff4db;color:#e59c20}.hero-float-card b,.hero-float-card small{display:block}.hero-float-card b{font-size:11px}.hero-float-card small{margin-top:2px;color:#7b8798;font-size:10px}
+.value-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0 34px}.value-item{display:flex;align-items:center;gap:12px;padding:17px 19px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.86);box-shadow:0 6px 18px rgba(16,24,40,.035)}.value-icon{display:grid;place-items:center;width:39px;height:39px;flex:0 0 39px;border-radius:12px;font-size:20px;font-weight:800}.value-blue{background:#eaf1ff;color:#315ee7}.value-violet{background:#f1eaff;color:#7848d8}.value-amber{background:#fff4df;color:#cf8a10}.value-item b,.value-item small{display:block}.value-item b{font-size:13px;color:#26334a}.value-item small{margin-top:2px;color:#7b8798;font-size:11px}.home-section-heading{display:flex;justify-content:space-between;align-items:end;gap:14px;flex-wrap:wrap;margin:0 0 14px}.section-eyebrow{color:#315ee7;font-size:10px;font-weight:800;letter-spacing:.13em}.home-section-heading h2{margin:3px 0 0;color:#17243a;font-size:24px;letter-spacing:-.6px}.home-section-heading>.muted{margin-bottom:4px}.search{display:block;max-width:540px;margin:0 0 17px;background:#fff}
+.grid{gap:18px}.card{background:var(--surface);border-color:var(--line);box-shadow:0 7px 20px rgba(16,24,40,.055)}.card:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(16,24,40,.1)}
+.auth-grid{grid-template-columns:minmax(0,1.08fr) minmax(280px,.92fr);gap:20px;max-width:980px;margin:22px auto 40px}.auth-card{padding:clamp(22px,4vw,34px);background:rgba(255,255,255,.96);animation:auth-card-in .55s cubic-bezier(.2,.7,.2,1) both}.auth-card-heading{display:flex;align-items:center;gap:13px;margin:0 0 23px}.auth-card-mark{display:grid;place-items:center;width:46px;height:46px;flex:0 0 46px;border-radius:15px;background:linear-gradient(135deg,#eaf1ff,#dbeafe);color:#315ee7;font-size:23px}.auth-card-heading h3{margin:0;color:#192842;font-size:19px;letter-spacing:-.4px}.auth-card-heading p{margin:4px 0 0;color:#7b8798;font-size:12px}.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:4px;margin-bottom:19px;border-radius:14px;background:#f1f4f9}.auth-tabs button{min-height:42px;padding:10px;border-radius:10px;box-shadow:none!important;font-size:13px}.auth-tabs button.secondary{background:transparent;color:#667085}.auth-tabs button.primary-btn{background:#fff;color:#2346bb;box-shadow:0 2px 7px rgba(16,24,40,.1)!important}.auth-role-tabs{margin-bottom:16px}.auth-card .form-row label{color:#344054;font-size:12px;font-weight:700}.auth-card .form-row input{min-height:45px;background:#fbfcfe}.auth-card .primary-btn{min-height:45px}.auth-card p a,.auth-card a{color:#315ee7;font-weight:700;text-decoration:none}.auth-card a:hover{text-decoration:underline}
+.auth-aside{position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;min-height:440px;padding:clamp(26px,4vw,40px);border:1px solid rgba(255,255,255,.16);border-radius:22px;background:linear-gradient(145deg,#111d3d,#1c3974 70%,#315ee7);color:#fff;box-shadow:0 20px 45px rgba(27,54,106,.18);animation:auth-card-in .7s .08s both}.auth-aside:after{content:"";position:absolute;width:250px;height:250px;right:-120px;top:-110px;border:1px solid rgba(255,255,255,.16);border-radius:50%;box-shadow:0 0 0 28px rgba(255,255,255,.035),0 0 0 58px rgba(255,255,255,.025)}.auth-aside-label{position:relative;z-index:1;color:#b9d1ff;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.auth-aside h3{position:relative;z-index:1;max-width:360px;margin:13px 0 9px;font-size:clamp(25px,3vw,35px);line-height:1.15;letter-spacing:-.9px}.auth-aside>p{position:relative;z-index:1;margin:0 0 25px;color:#d6e2fa;font-size:13px;line-height:1.75}.auth-benefit{position:relative;z-index:1;display:flex;gap:12px;align-items:flex-start;margin:0 0 18px}.auth-benefit>span{display:grid;place-items:center;width:28px;height:28px;flex:0 0 28px;border:1px solid rgba(255,255,255,.24);border-radius:9px;color:#cfe0ff;font-size:10px;font-weight:800}.auth-benefit b,.auth-benefit small{display:block}.auth-benefit b{font-size:12px}.auth-benefit small{margin-top:3px;color:#b8c7e1;font-size:11px}.auth-aside-note{position:relative;z-index:1;display:flex;align-items:center;gap:9px;margin-top:8px;padding-top:17px;border-top:1px solid rgba(255,255,255,.16);color:#dae6fb;font-size:11px}.auth-aside-note span{color:#ffd470;font-size:16px}.auth-pane-enter{animation:auth-panel-in .36s cubic-bezier(.2,.7,.2,1) both}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid rgba(49,94,231,.42);outline-offset:2px}.panel-card{background:var(--surface)}.table-wrap{border:1px solid var(--line);border-radius:14px;background:var(--surface)}table{font-size:13px}th{color:#475467;background:#f8fafc;font-size:11px;letter-spacing:.045em;text-transform:uppercase}td{color:#344054}footer{max-width:1240px;margin:auto;color:#778397}
+:root[data-theme="dark"] body{background:radial-gradient(ellipse at 8% 4%,rgba(30,58,138,.28),transparent 32%),radial-gradient(ellipse at 95% 10%,rgba(127,29,29,.2),transparent 27%),#0b1220}:root[data-theme="dark"] .value-item,:root[data-theme="dark"] .auth-card,:root[data-theme="dark"] .card,:root[data-theme="dark"] .panel-card{background:#1e293b;color:#e2e8f0;border-color:#334155}:root[data-theme="dark"] .home-section-heading h2,:root[data-theme="dark"] .auth-card-heading h3,:root[data-theme="dark"] .value-item b,:root[data-theme="dark"] th,:root[data-theme="dark"] td{color:#e2e8f0}:root[data-theme="dark"] .home-section-heading>.muted,:root[data-theme="dark"] .value-item small{color:#9aabc2}
+@keyframes hero-enter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}@keyframes card-float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-6px) rotate(-1deg)}}@keyframes float-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}@keyframes auth-card-in{from{opacity:0;transform:translateY(12px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}@keyframes auth-panel-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:820px){.hero{grid-template-columns:1fr;gap:18px}.hero-visual{min-height:205px}.hero-progress-card{width:min(100%,300px)}.hero-float-card{right:5%;bottom:-3px}.auth-grid{grid-template-columns:1fr;max-width:560px}.auth-aside{min-height:0}}
+@media(max-width:560px){header{padding:14px 13px 10px}.brand{font-size:17px}.sub{font-size:10px}nav{gap:6px;margin-top:11px}nav button{padding:9px 11px;font-size:12px}main{padding:18px 13px 32px}.hero{min-height:0;padding:28px 21px;border-radius:21px}.hero h1{font-size:38px}.hero p{font-size:14px}.hero-visual{min-height:185px}.hero-orbit-one{width:220px}.hero-orbit-two{width:175px}.hero-float-card{right:0;bottom:-5px}.value-strip{grid-template-columns:1fr;gap:8px;margin:12px 0 28px}.value-item{padding:12px 14px}.home-section-heading h2{font-size:21px}.auth-card{padding:21px 17px}.auth-aside{padding:25px 22px}.section>h2{font-size:25px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -233,7 +252,33 @@ main{max-width:1400px;margin:auto;padding-top:28px}.hero{position:relative;overf
 <main>
 
 <section id="home" class="section">
-<div class="hero"><h1 id="heroTitle">Prepare Smarter. Practice Better.</h1><p>Log in and take timed mock tests from our Test Series.</p></div>
+<div class="hero">
+  <div class="hero-copy">
+    <span class="hero-kicker"><span class="hero-kicker-dot"></span> Your preparation, with a plan</span>
+    <h1 id="heroTitle">Turn your preparation into progress.</h1>
+    <p>Build confidence with focused practice, timed mock exams, and clear results that help you decide what to work on next.</p>
+    <div class="hero-actions">
+      <button class="hero-primary" onclick="showTests(null)">Explore test series <span aria-hidden="true">→</span></button>
+      <button class="hero-secondary" onclick="showSection('auth');showAuthTab('register')">Create a free account</button>
+    </div>
+  </div>
+  <div class="hero-visual" aria-hidden="true">
+    <div class="hero-orbit hero-orbit-one"></div><div class="hero-orbit hero-orbit-two"></div>
+    <div class="hero-progress-card">
+      <div class="hero-progress-top"><span class="hero-progress-icon">✓</span><span>Practice session</span><span class="hero-live-dot"></span></div>
+      <div class="hero-progress-title">A little progress, every day.</div>
+      <div class="hero-progress-track"><span></span></div>
+      <div class="hero-progress-foot"><span>Stay consistent</span><b>One question at a time</b></div>
+    </div>
+    <div class="hero-float-card"><span>✦</span><div><b>Ready when you are</b><small>Choose a series to begin</small></div></div>
+  </div>
+</div>
+<div class="value-strip" aria-label="Platform features">
+  <div class="value-item"><span class="value-icon value-blue">◷</span><div><b>Timed practice</b><small>Work at exam pace</small></div></div>
+  <div class="value-item"><span class="value-icon value-violet">↗</span><div><b>Clear results</b><small>See where to focus</small></div></div>
+  <div class="value-item"><span class="value-icon value-amber">✦</span><div><b>One place to prepare</b><small>Explore all your series</small></div></div>
+</div>
+<div class="home-section-heading"><div><span class="section-eyebrow">PICK UP WHERE YOU ARE</span><h2>Find your next practice</h2></div><span class="muted">Choose a module to see available test series.</span></div>
 <input class="search" placeholder="🔍 Search test series..." oninput="filterCards(this.value)">
 <div class="grid" id="examGrid"><p class="muted">Loading exam modules…</p></div>
 </section>
@@ -341,17 +386,19 @@ main{max-width:1400px;margin:auto;padding-top:28px}.hero{position:relative;overf
 
 <section id="auth" class="section hidden">
   <h2>Account Access</h2>
-  <div class="auth-card" style="max-width:480px;margin:0 auto">
-    <div class="row" style="gap:8px;margin-bottom:14px">
-      <button id="authTabLogin" class="primary-btn" style="flex:1" onclick="showAuthTab('login')">Login</button>
-      <button id="authTabRegister" class="secondary" style="flex:1" onclick="showAuthTab('register')">Register</button>
+  <div class="auth-grid">
+   <div class="auth-card">
+    <div class="auth-card-heading"><span class="auth-card-mark">✦</span><div><h3>Welcome to your study space</h3><p>Sign in or create your account to continue.</p></div></div>
+    <div class="auth-tabs" role="tablist" aria-label="Account access">
+      <button id="authTabLogin" class="primary-btn" type="button" role="tab" aria-selected="true" onclick="showAuthTab('login')">Sign in</button>
+      <button id="authTabRegister" class="secondary" type="button" role="tab" aria-selected="false" onclick="showAuthTab('register')">Create account</button>
     </div>
 
     <div id="authPaneLogin">
       <div class="form-row"><label>Email</label><input id="loginEmail" type="email" placeholder="you@example.com" autocomplete="username"></div>
       <div class="form-row"><label>Password</label><input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password"></div>
       <label style="display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:14px"><input type="checkbox" id="rememberLogin" style="width:18px;height:18px"> Remember this email on this device</label>
-      <button class="primary-btn" style="width:100%" onclick="loginUser()">Login</button>
+      <button id="loginSubmit" class="primary-btn" style="width:100%" onclick="loginUser()">Sign in</button>
       <p id="loginMsg"></p>
       <p><a href="javascript:void(0)" onclick="toggleForgot()">Forgot password?</a></p>
 
@@ -360,23 +407,15 @@ main{max-width:1400px;margin:auto;padding-top:28px}.hero{position:relative;overf
         <button class="secondary" onclick="requestPasswordReset()">Send Reset Link</button>
         <p id="forgotMsg"></p>
 
-        <div id="resetBox" class="hidden" style="margin-top:10px">
-          <p class="muted">Password reset instructions will be sent securely to your registered email address.</p>
-          <div class="form-row"><label>Reset Token</label><input id="resetToken" placeholder="Paste the token from your reset link"></div>
-          <div class="form-row"><label>New Password</label><input id="resetNewPassword" type="password" placeholder="New password"></div>
-          <div class="form-row"><label>Confirm New Password</label><input id="resetConfirmPassword" type="password" placeholder="Re-enter new password"></div>
-          <button class="primary-btn" onclick="performPasswordReset()">Reset Password</button>
-          <p id="resetMsg"></p>
-        </div>
       </div>
 
       <p class="muted" style="margin-top:14px;text-align:center">New here? <a href="javascript:void(0)" onclick="showAuthTab('register')">Create an account</a></p>
     </div>
 
     <div id="authPaneRegister" class="hidden">
-      <div class="row" style="gap:8px;margin-bottom:14px">
-        <button id="regTabStudent" class="primary-btn" style="flex:1" onclick="showRegisterType('student')">Student</button>
-        <button id="regTabTeacher" class="secondary" style="flex:1" onclick="showRegisterType('teacher')">Teacher</button>
+      <div class="auth-tabs auth-role-tabs" role="tablist" aria-label="Choose account type">
+        <button id="regTabStudent" class="primary-btn" type="button" role="tab" aria-selected="true" onclick="showRegisterType('student')">Student</button>
+        <button id="regTabTeacher" class="secondary" type="button" role="tab" aria-selected="false" onclick="showRegisterType('teacher')">Teacher</button>
       </div>
 
       <div id="regPaneStudent">
@@ -384,8 +423,8 @@ main{max-width:1400px;margin:auto;padding-top:28px}.hero{position:relative;overf
         <div class="form-row"><label>Full name</label><input id="studentName" placeholder="Full name"></div>
         <div class="form-row"><label>Mobile Number</label><input id="studentMobile" type="tel" placeholder="e.g. 9876543210"></div>
         <div class="form-row"><label>Email</label><input id="studentEmail" type="email" placeholder="Email"></div>
-        <div class="form-row"><label>Password</label><input id="studentPassword" type="password" placeholder="Password"></div>
-        <div class="form-row"><label>Confirm Password</label><input id="studentConfirmPassword" type="password" placeholder="Re-enter password"></div>
+        <div class="form-row"><label>Password</label><input id="studentPassword" type="password" placeholder="At least 6 characters" autocomplete="new-password" minlength="6"></div>
+        <div class="form-row"><label>Confirm Password</label><input id="studentConfirmPassword" type="password" placeholder="Re-enter password" autocomplete="new-password" minlength="6"></div>
         <button class="primary-btn" style="width:100%" onclick="registerStudent()">Register as Student</button>
         <p id="studentMsg"></p>
       </div>
@@ -396,14 +435,23 @@ main{max-width:1400px;margin:auto;padding-top:28px}.hero{position:relative;overf
         <div class="form-row"><label>Mobile Number</label><input id="teacherMobile" type="tel" placeholder="e.g. 9876543210"></div>
         <div class="form-row"><label>Email</label><input id="teacherEmail" type="email" placeholder="Email"></div>
         <div class="form-row"><label>Subject / Expertise</label><input id="teacherSubject" placeholder="e.g. Mathematics"></div>
-        <div class="form-row"><label>Password</label><input id="teacherPassword" type="password" placeholder="Password"></div>
-        <div class="form-row"><label>Confirm Password</label><input id="teacherConfirmPassword" type="password" placeholder="Re-enter password"></div>
+        <div class="form-row"><label>Password</label><input id="teacherPassword" type="password" placeholder="At least 6 characters" autocomplete="new-password" minlength="6"></div>
+        <div class="form-row"><label>Confirm Password</label><input id="teacherConfirmPassword" type="password" placeholder="Re-enter password" autocomplete="new-password" minlength="6"></div>
         <button class="primary-btn" style="width:100%" onclick="registerTeacher()">Register as Teacher</button>
         <p id="teacherMsg"></p>
       </div>
 
       <p class="muted" style="margin-top:14px;text-align:center">Already have an account? <a href="javascript:void(0)" onclick="showAuthTab('login')">Login</a></p>
     </div>
+   </div>
+   <aside class="auth-aside">
+     <span class="auth-aside-label">A better way to prepare</span>
+     <h3>Small steps add up to strong results.</h3>
+     <p>Practice with purpose, understand your results, and keep building momentum toward your exam.</p>
+     <div class="auth-benefit"><span>01</span><div><b>Practice on your schedule</b><small>Choose a test series when you’re ready.</small></div></div>
+     <div class="auth-benefit"><span>02</span><div><b>Learn from every attempt</b><small>Review answers and track your progress.</small></div></div>
+     <div class="auth-aside-note"><span>✦</span> Your next focused session starts here.</div>
+   </aside>
   </div>
 </section>
 
@@ -537,7 +585,16 @@ const firebaseReady=(async()=>{
       await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
       await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js');
       if(window.firebase && !firebase.apps.length) firebase.initializeApp(cfg.firebase);
-      if(window.firebase) cemAuth=firebase.auth();
+      if(window.firebase){
+        cemAuth=firebase.auth();
+        if(cemAuth.onAuthStateChanged)await new Promise(resolve=>{
+          let unsubscribe=null,settled=false;
+          const timer=window.setTimeout(finish,4000);
+          function finish(){if(settled)return;settled=true;window.clearTimeout(timer);unsubscribe?.();resolve();}
+          unsubscribe=cemAuth.onAuthStateChanged(finish,finish);
+          if(settled)unsubscribe();
+        });
+      }
     } catch(err) {
       console.warn('Auth fallback:', err.message);
     }
@@ -635,19 +692,34 @@ function showTests(category){
 function filterCards(v){v=v.toLowerCase();document.querySelectorAll('.searchable').forEach(c=>c.style.display=c.innerText.toLowerCase().includes(v)?'block':'none')}
 
 
+function animateAuthPane(pane){
+  if(!pane)return;
+  pane.classList.remove('auth-pane-enter');
+  void pane.offsetWidth;
+  pane.classList.add('auth-pane-enter');
+  window.setTimeout(()=>pane.classList.remove('auth-pane-enter'),420);
+}
 window.showAuthTab = function(tab){
   const isLogin = tab === 'login';
-  document.getElementById('authPaneLogin').classList.toggle('hidden', !isLogin);
-  document.getElementById('authPaneRegister').classList.toggle('hidden', isLogin);
+  const loginPane=document.getElementById('authPaneLogin'),registerPane=document.getElementById('authPaneRegister');
+  loginPane.classList.toggle('hidden', !isLogin);
+  registerPane.classList.toggle('hidden', isLogin);
+  animateAuthPane(isLogin?loginPane:registerPane);
   document.getElementById('authTabLogin').className = isLogin ? 'primary-btn' : 'secondary';
   document.getElementById('authTabRegister').className = !isLogin ? 'primary-btn' : 'secondary';
+  document.getElementById('authTabLogin').setAttribute('aria-selected',String(isLogin));
+  document.getElementById('authTabRegister').setAttribute('aria-selected',String(!isLogin));
 };
 window.showRegisterType = function(type){
   const isStudent = type === 'student';
-  document.getElementById('regPaneStudent').classList.toggle('hidden', !isStudent);
-  document.getElementById('regPaneTeacher').classList.toggle('hidden', isStudent);
+  const studentPane=document.getElementById('regPaneStudent'),teacherPane=document.getElementById('regPaneTeacher');
+  studentPane.classList.toggle('hidden', !isStudent);
+  teacherPane.classList.toggle('hidden', isStudent);
+  animateAuthPane(isStudent?studentPane:teacherPane);
   document.getElementById('regTabStudent').className = isStudent ? 'primary-btn' : 'secondary';
   document.getElementById('regTabTeacher').className = !isStudent ? 'primary-btn' : 'secondary';
+  document.getElementById('regTabStudent').setAttribute('aria-selected',String(isStudent));
+  document.getElementById('regTabTeacher').setAttribute('aria-selected',String(!isStudent));
 };
 
 
@@ -706,8 +778,9 @@ window.registerStudent = async function(){
   const confirmPassword=document.getElementById('studentConfirmPassword').value;
   const email=document.getElementById('studentEmail').value.trim();
   if(password!==confirmPassword){ msg('studentMsg','Passwords do not match.'); return; }
+  if(password.length<6){ msg('studentMsg','Password must contain at least 6 characters.'); return; }
   if(!email){ msg('studentMsg','Please enter your email address.'); return; }
-  btn?.classList.add('loading'); btn && (btn.textContent='Creating account…');
+  btn?.classList.add('loading'); if(btn){btn.disabled=true;btn.textContent='Creating account…';}
   try{
     const body={name:document.getElementById('studentName').value.trim(),mobile:document.getElementById('studentMobile').value.trim(),email,password};
     const r=await registerFirebaseAccount('student',body);
@@ -715,7 +788,7 @@ window.registerStudent = async function(){
     ['studentName','studentMobile','studentEmail','studentPassword','studentConfirmPassword'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     await refreshUser();
   }catch(e){ msg('studentMsg',authError(e)); }
-  finally{ if(btn){btn.classList.remove('loading');btn.textContent='Register as Student';} }
+  finally{ if(btn){btn.classList.remove('loading');btn.disabled=false;btn.textContent='Register as Student';} }
 };
 
 window.registerTeacher = async function(){
@@ -724,8 +797,9 @@ window.registerTeacher = async function(){
   const confirmPassword=document.getElementById('teacherConfirmPassword').value;
   const email=document.getElementById('teacherEmail').value.trim();
   if(password!==confirmPassword){ msg('teacherMsg','Passwords do not match.'); return; }
+  if(password.length<6){ msg('teacherMsg','Password must contain at least 6 characters.'); return; }
   if(!email){ msg('teacherMsg','Please enter your email address.'); return; }
-  btn?.classList.add('loading'); btn && (btn.textContent='Creating account…');
+  btn?.classList.add('loading'); if(btn){btn.disabled=true;btn.textContent='Creating account…';}
   try{
     const body={name:document.getElementById('teacherName').value.trim(),mobile:document.getElementById('teacherMobile').value.trim(),email,subject:document.getElementById('teacherSubject').value.trim(),password};
     const r=await registerFirebaseAccount('teacher',body);
@@ -733,10 +807,12 @@ window.registerTeacher = async function(){
     ['teacherName','teacherMobile','teacherEmail','teacherSubject','teacherPassword','teacherConfirmPassword'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     await refreshUser();
   }catch(e){ msg('teacherMsg',authError(e)); }
-  finally{ if(btn){btn.classList.remove('loading');btn.textContent='Register as Teacher';} }
+  finally{ if(btn){btn.classList.remove('loading');btn.disabled=false;btn.textContent='Register as Teacher';} }
 };
 
 window.loginUser = async function(){
+  const btn=document.getElementById('loginSubmit');
+  if(btn){btn.classList.add('loading');btn.disabled=true;btn.textContent='Signing in…';}
   try{
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
@@ -744,7 +820,7 @@ window.loginUser = async function(){
     currentUser = r.user;
     try{
       if(document.getElementById('rememberLogin').checked){
-        localStorage.setItem('cem_saved_login', JSON.stringify({e:email,p:password}));
+        localStorage.setItem('cem_saved_login', JSON.stringify({e:email}));
       } else localStorage.removeItem('cem_saved_login');
     }catch(_){}
     msg('loginMsg','Login successful.',true);
@@ -753,6 +829,7 @@ window.loginUser = async function(){
     else if(currentUser.role==='teacher') showSection('teacher');
     else showSection('home');
   }catch(e){ msg('loginMsg', e.message); }
+  finally{if(btn){btn.classList.remove('loading');btn.disabled=false;btn.textContent='Sign in';}}
 };
 
 (function(){
@@ -761,7 +838,7 @@ window.loginUser = async function(){
     if(!em||!pw) return;
     try{
       const d=JSON.parse(localStorage.getItem('cem_saved_login')||'null');
-      if(d){ em.value=d.e||''; pw.value=d.p||''; if(rm) rm.checked=true; }
+      if(d){ em.value=d.e||''; if(rm) rm.checked=true; localStorage.setItem('cem_saved_login',JSON.stringify({e:d.e||''})); }
     }catch(_){}
     [em,pw].forEach(el=>el.addEventListener('keydown',ev=>{
       if(ev.key==='Enter'){ ev.preventDefault(); window.loginUser(); }
@@ -798,8 +875,7 @@ function updateUI(){
 
 
 window.toggleForgot=function(){document.getElementById('forgotBox').classList.toggle('hidden');};
-window.requestPasswordReset=async function(){try{await firebaseReady;const email=document.getElementById('forgotEmail').value.trim();if(!email)throw new Error('Enter your email address.');if(cemAuth&&cemAuth.sendPasswordResetEmail){await cemAuth.sendPasswordResetEmail(email,{url:location.origin+location.pathname});}msg('forgotMsg','If the account exists, a password reset link has been sent. Check your inbox and spam folder.',true);}catch(e){msg('forgotMsg',authError(e));}};
-window.performPasswordReset=async function(){msg('resetMsg','Password reset is handled securely via the link sent to your registered email.',true);};
+window.requestPasswordReset=async function(){try{await firebaseReady;const email=document.getElementById('forgotEmail').value.trim();if(!email)throw new Error('Enter your email address.');if(!cemAuth||!cemAuth.sendPasswordResetEmail)throw new Error('Password reset is unavailable until Firebase Authentication is configured.');await cemAuth.sendPasswordResetEmail(email,{url:location.origin+location.pathname});msg('forgotMsg','If the account exists, a password reset link has been sent. Check your inbox and spam folder.',true);}catch(e){msg('forgotMsg',authError(e));}};
 
 
 async function loadAccount(){
@@ -824,8 +900,39 @@ window.saveAccount = async function(){
     msg('acctMsg', r.message, true);
   }catch(e){ msg('acctMsg', e.message); }
 };
-window.changeEmail=async function(){try{const newEmail=document.getElementById('emailNew').value.trim(),currentPassword=document.getElementById('emailPwCurrent').value;if(!newEmail||!currentPassword)throw new Error('New email and current password are required.');await firebaseReauth(currentPassword);await cemAuth.currentUser.updateEmail(newEmail);await cemAuth.currentUser.getIdToken(true);const r=await api('PUT','/api/account/me',{name:currentUser.name,mobile:currentUser.mobile,subject:currentUser.subject});currentUser=r.user;updateUI();msg('emailMsg','Login email changed successfully.',true);document.getElementById('emailNew').value='';document.getElementById('emailPwCurrent').value='';}catch(e){msg('emailMsg',authError(e));}};
-window.changePassword=async function(){const newPassword=document.getElementById('pwNew').value,confirmPassword=document.getElementById('pwConfirm').value,currentPassword=document.getElementById('pwCurrent').value;if(newPassword!==confirmPassword){msg('pwMsg','Passwords do not match.');return;}try{await firebaseReauth(currentPassword);await cemAuth.currentUser.updatePassword(newPassword);msg('pwMsg','Password changed successfully.',true);['pwCurrent','pwNew','pwConfirm'].forEach(id=>document.getElementById(id).value='');}catch(e){msg('pwMsg',authError(e));}};
+window.changeEmail=async function(){
+  try{
+    const newEmail=document.getElementById('emailNew').value.trim(),currentPassword=document.getElementById('emailPwCurrent').value;
+    if(!newEmail||!currentPassword)throw new Error('New email and current password are required.');
+    let r;
+    if(cemAuth&&cemAuth.currentUser){
+      await firebaseReauth(currentPassword);
+      await cemAuth.currentUser.updateEmail(newEmail);
+      await cemAuth.currentUser.getIdToken(true);
+      r=await api('PUT','/api/account/me',{name:currentUser.name,mobile:currentUser.mobile,subject:currentUser.subject});
+    }else{
+      r=await api('PUT','/api/account/email',{email:newEmail,currentPassword});
+      if(r.sessionToken)localStorage.setItem('cem_session',r.sessionToken);
+    }
+    currentUser=r.user;updateUI();
+    if(document.getElementById('rememberLogin').checked)localStorage.setItem('cem_saved_login',JSON.stringify({e:newEmail}));
+    else localStorage.removeItem('cem_saved_login');
+    msg('emailMsg','Login email changed successfully.',true);
+    document.getElementById('emailNew').value='';document.getElementById('emailPwCurrent').value='';
+  }catch(e){msg('emailMsg',authError(e));}
+};
+window.changePassword=async function(){
+  const newPassword=document.getElementById('pwNew').value,confirmPassword=document.getElementById('pwConfirm').value,currentPassword=document.getElementById('pwCurrent').value;
+  if(newPassword!==confirmPassword){msg('pwMsg','Passwords do not match.');return;}
+  if(newPassword.length<6){msg('pwMsg','New password must contain at least 6 characters.');return;}
+  if(!currentPassword){msg('pwMsg','Enter your current password.');return;}
+  try{
+    if(cemAuth&&cemAuth.currentUser){await firebaseReauth(currentPassword);await cemAuth.currentUser.updatePassword(newPassword);}
+    else await api('PUT','/api/account/password',{currentPassword,newPassword});
+    msg('pwMsg','Password changed successfully.',true);
+    ['pwCurrent','pwNew','pwConfirm'].forEach(id=>document.getElementById(id).value='');
+  }catch(e){msg('pwMsg',authError(e));}
+};
 
 
 window.approveTeacher = async function(id, approved){
@@ -1091,12 +1198,11 @@ window.deleteModule = async function(btn, p){
     if(p==='tch') loadMyTests();
   }catch(e){ msg(p+'ModMsg', e.message); }
 };
-// Teacher dashboard: full module manager only if the Admin has granted access
 async function loadTeacherModules(){
   const box = document.getElementById('teacherModules');
   if(!box) return;
   if(!currentUser || currentUser.role!=='teacher'){ box.innerHTML = ''; return; }
-  try{ await refreshUser(); }catch(e){}  // pick up any access the Admin has just granted or removed
+  try{ await refreshUser(); }catch(e){}
   if(!currentUser || currentUser.role!=='teacher'){ box.innerHTML = ''; return; }
   if(currentUser.canManageModules){
     mountModuleManager('teacherModules','tch');
@@ -1189,17 +1295,26 @@ async function loadPremium(){
   }
   try{
     let { plans, payment } = await api('GET','/api/plans');
-    if(payment.gatewayUrl){                       // automatic mode: prices come from the payment server, and any paid-but-unrecorded payments are picked up
-      await syncGateway(payment.gatewayUrl);
-      try{ plans = (await gw(payment.gatewayUrl,'/api/plans')).plans; }catch(_){}
+    let gatewayReady = payment.gatewayEnabled === true;
+    let gatewayError = '';
+    if(payment.gatewayUrl){
+      try{
+        const remote = await gw(payment.gatewayUrl,'/api/plans');
+        if(Array.isArray(remote.plans)) plans = remote.plans;
+        gatewayReady = remote.paymentsEnabled === true;
+        if(!gatewayReady) gatewayError = 'Razorpay Test Mode is not configured on the payment server.';
+      }catch(e){ gatewayReady = false; gatewayError = 'Online payment is unavailable right now. Please contact the administrator.'; }
     }
     const mine = await api('GET','/api/subscription/mine');
-    premiumData = { plans, payment, mine };
+    premiumData = { plans, payment, mine, gatewayReady };
     const pending = mine.requests.find(r=>r.status==='pending');
     status.innerHTML = mine.active
       ? `<h3>✅ Premium active</h3><p>${esc(mine.planName)} plan • valid until <b>${fmtDate(mine.expiresAt)}</b>. You can open every paid test series. Renewing adds time on top of what is left.</p>`
       : `<h3>You are on the Free plan</h3><p class="muted">Get Premium once and open <b>all paid test series</b> — no per-test payment.</p>`;
+    if(gatewayError) status.innerHTML += `<p class="muted">${esc(gatewayError)} You can still use manual UPI if it is configured below.</p>`;
     if(pending) status.innerHTML += `<p>⏳ Your payment of ₹${pending.amount} (${esc(pending.planName)}) is waiting for Admin verification.</p>`;
+    const savedPayment=readPendingGatewayPayment();
+    if(savedPayment&&savedPayment.studentId===currentUserId())status.innerHTML+='<p class="muted">A previous Razorpay payment still needs confirmation. <button type="button" class="secondary" onclick="retryPendingGatewayPayment()">Retry confirmation</button></p>';
     plansBox.innerHTML = plans.length ? plans.map(p=>`
       <div class="card" style="text-align:center">
         <h3>${esc(p.name)}</h3>
@@ -1212,21 +1327,50 @@ async function loadPremium(){
     </tbody></table></div>` : '<p class="muted">No payments yet.</p>';
   }catch(e){ status.innerHTML = `<p class="muted">${esc(e.message)}</p>`; }
 }
-async function gw(base,path,body){await firebaseReady;const token=await getIdToken();const headers={'Content-Type':'application/json'};if(token)headers.Authorization='Bearer '+token;const r=await fetch(base+path,{method:body?'POST':'GET',headers,body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Payment server error.');return j;}
-async function syncGateway(base){ try{ await gw(base,'/api/entitlements?studentId='+encodeURIComponent(currentUser.id)); }catch(_){  } }
+async function gw(base,path,body){await firebaseReady;const token=await getIdToken();const headers={'Content-Type':'application/json'};if(token)headers.Authorization='Bearer '+token;const url=String(base||'').replace(/\/+$/,'')+path;const r=await fetch(url,{method:body?'POST':'GET',headers,body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Payment server error.');return j;}
+function readPendingGatewayPayment(){
+  try{
+    const saved=JSON.parse(sessionStorage.getItem('cem_pending_gateway_payment')||'null');
+    if(saved&&Date.now()-Number(saved.savedAt)>7*86400000){sessionStorage.removeItem('cem_pending_gateway_payment');return null;}
+    return saved;
+  }catch(_){return null;}
+}
+function currentUserId(){return currentUser?.uid||currentUser?.id||'';}
+function savePendingGatewayPayment(response,base){
+  try{sessionStorage.setItem('cem_pending_gateway_payment',JSON.stringify({studentId:currentUserId(),gatewayUrl:base,response,savedAt:Date.now()}));}catch(_){}
+}
+async function confirmGatewayPayment(response,base){
+  await gw(base,'/api/verify',response);
+  try{sessionStorage.removeItem('cem_pending_gateway_payment');}catch(_){}
+}
+window.retryPendingGatewayPayment=async function(quiet=false){
+  const saved=readPendingGatewayPayment(),message=document.getElementById('premiumStatus');
+  if(!saved||saved.studentId!==currentUserId()){if(message&&!quiet)message.innerHTML='<p class="muted">No payment confirmation is waiting for this account.</p>';return;}
+  if(message&&!quiet)message.innerHTML='<p class="muted">Checking your Razorpay payment…</p>';
+  try{
+    await confirmGatewayPayment(saved.response,saved.gatewayUrl||'');
+    if(!quiet)alert('Payment confirmed — Premium is now active! 🎉');
+    await loadPremium();
+  }catch(e){
+    if(message&&!quiet)message.innerHTML=`<p class="muted">${esc(e.message)} Your payment details are saved for another confirmation attempt.</p><button type="button" class="secondary" onclick="retryPendingGatewayPayment()">Retry confirmation</button>`;
+  }
+};
 function loadRazorpay(){
   return new Promise((ok,fail)=>{
     if(window.Razorpay) return ok();
+    if(window._razorpayScriptPromise) return window._razorpayScriptPromise.then(ok,fail);
     const sc = document.createElement('script'); sc.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    sc.onload = ok; sc.onerror = ()=>fail(new Error('Could not load the payment window. Check your internet connection.'));
+    window._razorpayScriptPromise = new Promise((resolve,reject)=>{sc.onload=resolve;sc.onerror=()=>reject(new Error('Could not load the payment window. Check your internet connection.'));});
     document.head.appendChild(sc);
+    window._razorpayScriptPromise.then(ok,fail);
   });
 }
 window.payWithGateway = async function(planId){
-  const { payment } = premiumData, base = payment.gatewayUrl, m = document.getElementById('premMsg');
+  const { payment } = premiumData, base = payment.gatewayUrl || '', m = document.getElementById('premMsg');
   try{
+    if(!premiumData.gatewayReady) throw new Error('Razorpay Test Mode is not configured. Please contact the administrator.');
     m.textContent = 'Opening secure payment…';
-    const order = await gw(base,'/api/orders',{ planId, studentId:currentUser.id, name:currentUser.name, email:currentUser.email });
+    const order = await gw(base,'/api/orders',{ planId });
     await loadRazorpay();
     const rzp = new Razorpay({
       key: order.keyId, amount: order.amount, currency: order.currency, order_id: order.orderId,
@@ -1234,15 +1378,20 @@ window.payWithGateway = async function(planId){
       description: order.planName + ' Premium', prefill:{ name:currentUser.name, email:currentUser.email },
       theme:{ color:'#2563eb' },
       handler: async resp => {
+        savePendingGatewayPayment(resp,base);
         try{
           m.textContent = 'Confirming payment…';
-          await gw(base,'/api/verify',resp);
+          await confirmGatewayPayment(resp,base);
           alert('Payment successful — Premium is now active! 🎉');
           loadPremium();
-        }catch(e){ m.textContent = e.message + ' If money was deducted, reopen this page — it activates automatically.'; }
+        }catch(e){
+          m.textContent=e.message+' Payment details are saved so you can retry confirmation without paying again.';
+          const retry=document.createElement('button');retry.type='button';retry.className='secondary';retry.textContent='Retry confirmation';retry.addEventListener('click',()=>retryPendingGatewayPayment());m.appendChild(retry);
+        }
       },
       modal:{ ondismiss:()=>{ m.textContent = 'Payment window closed.'; } }
     });
+    rzp.on('payment.failed', response=>{ m.textContent = response.error?.description || 'Payment failed. Please try again.'; });
     rzp.open();
   }catch(e){ m.textContent = e.message; }
 };
@@ -1251,7 +1400,7 @@ window.choosePlan = function(id, forceManual){
   const { plans, payment } = premiumData;
   const p = plans.find(x=>x.id===id); if(!p) return;
   const pay = document.getElementById('premiumPay');
-  if(payment.gatewayUrl && !forceManual){
+  if(premiumData.gatewayReady && !forceManual){
     pay.classList.remove('hidden');
     pay.innerHTML = `
       <h3>💳 Pay for ${esc(p.name)} Premium</h3>
@@ -1260,7 +1409,8 @@ window.choosePlan = function(id, forceManual){
         <div class="muted">${p.days} days of access to all paid test series</div>
       </div>
       <button style="width:100%;padding:14px;font-size:16px" onclick="payWithGateway('${esc(p.id)}')">🔒 Pay ₹${p.price} securely</button>
-      <p class="muted" style="text-align:center">UPI • Cards • Net banking • Wallets — Premium activates automatically after payment.</p>
+      <p class="muted" style="text-align:center">UPI • Cards • Net banking • Wallets — Premium activates after Razorpay confirms payment.</p>
+      <p class="muted" style="text-align:center">Razorpay Test Mode is enabled for trial payments; test transactions do not charge real money.</p>
       <p id="premMsg" class="muted" style="text-align:center"></p>
       ${payment.upiId ? `<p style="text-align:center"><a href="javascript:void(0)" onclick="choosePlan('${esc(p.id)}',true)">Pay manually by UPI instead</a></p>` : ''}
       <button class="secondary" onclick="document.getElementById('premiumPay').classList.add('hidden')">Cancel</button>`;
@@ -1449,9 +1599,8 @@ window.selectAnswer = function(letter){
   loadQ();
 };
 window.nextQuestion = function(){
-  if(navClickBlocked()) return; // ignore the 2nd click of a double-click
+  if(navClickBlocked()) return;
   trackTimeSpent();
-  // Save & Next: keep the answer and clear any "marked for review" flag on this question
   delete activeMarked[activeQi];
   activeQi = (activeQi + 1) % activeTest.questions.length;
   loadQ();
@@ -1461,7 +1610,7 @@ window.prevQuestion = function(){
 };
 window.clearResponse = function(){
   delete activeAnswers[activeQi];
-  delete activeMarked[activeQi]; // cleared question goes back to "Not Answered"
+  delete activeMarked[activeQi];
   loadQ();
 };
 let _lastNavClick = 0;
@@ -1472,7 +1621,7 @@ function navClickBlocked(){
   return false;
 }
 window.markForReviewAndNext = function(){
-  if(navClickBlocked()) return; // ignore the 2nd click of a double-click
+  if(navClickBlocked()) return;
   trackTimeSpent();
   activeMarked[activeQi] = true;
   activeQi = (activeQi + 1) % activeTest.questions.length;
@@ -1515,10 +1664,6 @@ window.jumpToQuestionIndex = function(i){
 
 function showModal(html){
   const root = document.getElementById('modalRoot');
-  // Always re-attach the modal root to whichever element is actually
-  // fullscreen right now (or <body> if nothing is), so the popup is
-  // guaranteed to render inside the browser's fullscreen "top layer"
-  // instead of being hidden behind it.
   const fsEl = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
   const target = fsEl || document.body;
   if(root.parentElement !== target) target.appendChild(root);
@@ -1956,7 +2101,7 @@ async function loadMyTests(){
 
 loadBranding();
 refreshModuleViews();
-refreshUser().then(()=>{ if(!location.search.includes('resetToken')) showSection('home'); });
+refreshUser().then(user=>{showSection('home');if(user?.role==='student')retryPendingGatewayPayment(true);});
 </script>
 </body>
 </html>
