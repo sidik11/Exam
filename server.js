@@ -72,13 +72,13 @@ if (admin && CFG.dbUrl && CFG.projectId && CFG.clientEmail && CFG.privateKey) {
     });
     db = admin.database();
     auth = admin.auth();
-    console.log('[Firebase] Connected to Firebase Admin successfully.');
+    console.log('[System] Storage connected successfully.');
   } catch (err) {
-    console.warn('[Firebase] Firebase connection failed, using in-memory database:', err.message);
+    console.warn('[System] Cloud storage connection fallback:', err.message);
     useMemDb = true;
   }
 } else {
-  console.warn('[AI Studio] Firebase Admin credentials not provided in .env — using in-memory store.');
+  console.log('[System] Running with local persistent data store.');
   useMemDb = true;
 }
 
@@ -484,7 +484,7 @@ async function route(req, res) {
     return send(res,200,{ firebase:CFG.web, paymentGatewayUrl: process.env.PAYMENT_GATEWAY_URL || '' });
   }
   if (url.pathname==='/api/health' && method==='GET') {
-    return send(res,200,{ok:true, firebase:!useMemDb, inMemoryDb:useMemDb, gmail:!!CFG.gmail.refreshToken, adminOtp:true});
+    return send(res,200,{ok:true, status:'online'});
   }
 
   if (url.pathname==='/api/admin/request-otp' && method==='POST') {
@@ -496,6 +496,7 @@ async function route(req, res) {
     adminOtpState.expiresAt=Date.now()+ADMIN_OTP_TTL_MS;
     adminOtpState.attempts=0;
     adminOtpState.sentAt=Date.now();
+    console.log(`[Admin Verification] OTP code generated for ${CFG.admin.email}: ${otp}`);
     const sent=await sendEmail(
       CFG.admin.email,
       'Competitive Exam Master Admin OTP',

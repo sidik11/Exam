@@ -233,7 +233,6 @@ main{max-width:1400px;margin:auto;padding-top:28px}.hero{position:relative;overf
 <main>
 
 <section id="home" class="section">
-<div class="notice">✅ <b>Connected version.</b> Firebase Authentication handles accounts and Firebase Realtime Database stores exams, users, results and subscriptions. The Node.js backend protects all database operations.</div>
 <div class="hero"><h1 id="heroTitle">Prepare Smarter. Practice Better.</h1><p>Log in and take timed mock tests from our Test Series.</p></div>
 <input class="search" placeholder="🔍 Search test series..." oninput="filterCards(this.value)">
 <div class="grid" id="examGrid"><p class="muted">Loading exam modules…</p></div>
@@ -362,7 +361,7 @@ main{max-width:1400px;margin:auto;padding-top:28px}.hero{position:relative;overf
         <p id="forgotMsg"></p>
 
         <div id="resetBox" class="hidden" style="margin-top:10px">
-          <p class="muted">Firebase Authentication sends the password-reset email securely. Check your inbox and spam folder.</p>
+          <p class="muted">Password reset instructions will be sent securely to your registered email address.</p>
           <div class="form-row"><label>Reset Token</label><input id="resetToken" placeholder="Paste the token from your reset link"></div>
           <div class="form-row"><label>New Password</label><input id="resetNewPassword" type="password" placeholder="New password"></div>
           <div class="form-row"><label>Confirm New Password</label><input id="resetConfirmPassword" type="password" placeholder="Re-enter new password"></div>
@@ -558,7 +557,30 @@ async function getIdToken(){
 async function api(method,url,body){await firebaseReady;const headers={'Content-Type':'application/json'};const token=await getIdToken();if(token)headers.Authorization='Bearer '+token;const r=await fetch(url,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||data.message||'Request failed.');return data;}
 function esc(value){const s=String(value??'');return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function msg(id,text,ok=false){const el=document.getElementById(id);if(!el)return;el.textContent=String(text||'');el.className=ok?'success':'error';}
-function authError(e){const map={'auth/email-already-in-use':'An account with this email already exists.','auth/invalid-email':'Please enter a valid email address.','auth/weak-password':'Password must contain at least 6 characters.','auth/invalid-credential':'Invalid email or password.','auth/user-not-found':'Invalid email or password.','auth/wrong-password':'Invalid email or password.','auth/operation-not-allowed':'Email/password sign-in is disabled. Enable Email/Password in Firebase Authentication.','auth/too-many-requests':'Too many attempts. Please wait and try again.','auth/network-request-failed':'Network error. Check your internet connection.'};return map[e.code]||e.message||'Authentication failed.';}
+function authError(e){
+  const code = String((e && e.code) || '').toLowerCase();
+  const msgText = String((e && e.message) || '');
+  if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found') || msgText.toLowerCase().includes('invalid-credential') || msgText.toLowerCase().includes('wrong-password') || msgText.toLowerCase().includes('user-not-found')) {
+    return 'Incorrect email or password. Please try again.';
+  }
+  if (code.includes('email-already-in-use') || msgText.toLowerCase().includes('email-already-in-use')) {
+    return 'An account with this email already exists.';
+  }
+  if (code.includes('invalid-email') || msgText.toLowerCase().includes('invalid-email')) {
+    return 'Please enter a valid email address.';
+  }
+  if (code.includes('weak-password') || msgText.toLowerCase().includes('weak-password')) {
+    return 'Password must contain at least 6 characters.';
+  }
+  if (code.includes('too-many-requests') || msgText.toLowerCase().includes('too-many-requests')) {
+    return 'Too many attempts. Please wait a few moments and try again.';
+  }
+  if (code.includes('network') || msgText.toLowerCase().includes('network')) {
+    return 'Network connection issue. Please check your internet connection.';
+  }
+  let clean = msgText.replace(/Firebase:?\s*/gi, '').replace(/\(auth\/[^)]+\)/gi, '').replace(/database/gi, 'system').trim();
+  return clean || 'Incorrect password or server error. Please try again.';
+}
 async function registerFirebaseAccount(kind,data){
   await firebaseReady;
   if (!cemAuth || !cemAuth.app || !cemAuth.app.options || !cemAuth.app.options.apiKey) {
@@ -776,8 +798,8 @@ function updateUI(){
 
 
 window.toggleForgot=function(){document.getElementById('forgotBox').classList.toggle('hidden');};
-window.requestPasswordReset=async function(){try{await firebaseReady;const email=document.getElementById('forgotEmail').value.trim();if(!email)throw new Error('Enter your email address.');await cemAuth.sendPasswordResetEmail(email,{url:location.origin+location.pathname});msg('forgotMsg','If the account exists, Firebase has sent a password-reset email. Check your inbox and spam folder.',true);}catch(e){msg('forgotMsg',authError(e));}};
-window.performPasswordReset=async function(){msg('resetMsg','Password reset is handled by the secure Firebase email link sent to your inbox.',true);};
+window.requestPasswordReset=async function(){try{await firebaseReady;const email=document.getElementById('forgotEmail').value.trim();if(!email)throw new Error('Enter your email address.');if(cemAuth&&cemAuth.sendPasswordResetEmail){await cemAuth.sendPasswordResetEmail(email,{url:location.origin+location.pathname});}msg('forgotMsg','If the account exists, a password reset link has been sent. Check your inbox and spam folder.',true);}catch(e){msg('forgotMsg',authError(e));}};
+window.performPasswordReset=async function(){msg('resetMsg','Password reset is handled securely via the link sent to your registered email.',true);};
 
 
 async function loadAccount(){
