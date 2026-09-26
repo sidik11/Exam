@@ -419,7 +419,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       </div>
 
       <div id="regPaneStudent">
-        <p class="muted">Students can register themselves and use the platform immediately.</p>
+        <p class="muted">Create your student account, then sign in with your email and password to continue.</p>
         <div class="form-row"><label>Full name</label><input id="studentName" placeholder="Full name"></div>
         <div class="form-row"><label>Mobile Number</label><input id="studentMobile" type="tel" placeholder="e.g. 9876543210"></div>
         <div class="form-row"><label>Email</label><input id="studentEmail" type="email" placeholder="Email"></div>
@@ -612,9 +612,12 @@ async function getIdToken(options={}){
   }
   const adminSession = localStorage.getItem('cem_admin_session');
   if (adminSession) return adminSession;
+  if(localStorage.getItem('cem_explicit_login')!=='1'){
+    localStorage.removeItem('cem_session');
+    return null;
+  }
   if(cemAuth && cemAuth.app && cemAuth.app.options && cemAuth.app.options.apiKey){
     const u=cemAuth.currentUser;
-    localStorage.removeItem('cem_session');
     return u ? u.getIdToken() : null;
   }
   return localStorage.getItem('cem_session');
@@ -650,20 +653,30 @@ async function registerFirebaseAccount(kind,data){
   await firebaseReady;
   localStorage.removeItem('cem_session');
   localStorage.removeItem('cem_admin_session');
+  localStorage.removeItem('cem_explicit_login');
   if(cemAuth?.currentUser)try{await cemAuth.signOut();}catch(_){}
+  currentUser=null;
+  updateUI();
   if (!cemAuth || !cemAuth.app || !cemAuth.app.options || !cemAuth.app.options.apiKey) {
-    const r=await api('POST','/api/auth/register/'+kind,data,{anonymous:true});
-    if(kind==='teacher')localStorage.removeItem('cem_session');
-    else if(r.sessionToken)localStorage.setItem('cem_session', r.sessionToken);
-    return r;
+    return api('POST','/api/auth/register/'+kind,data,{anonymous:true});
   }
   const cred=await cemAuth.createUserWithEmailAndPassword(data.email,data.password);
-  try{await cred.user.updateProfile({displayName:data.name});const r=await api('POST','/api/auth/register/'+kind,data,{firebaseAuth:true});try{await cred.user.sendEmailVerification();}catch(_){}return r;}catch(e){try{await cred.user.delete();}catch(_){}throw e;}
+  let r;
+  try{
+    await cred.user.updateProfile({displayName:data.name});
+    r=await api('POST','/api/auth/register/'+kind,data,{firebaseAuth:true});
+    try{await cred.user.sendEmailVerification();}catch(_){}
+  }catch(e){try{await cred.user.delete();}catch(_){}throw e;}
+  try{await cemAuth.signOut();}catch(_){}
+  currentUser=null;
+  updateUI();
+  return r;
 }
 async function firebaseLogin(email,password){
   await firebaseReady;
   localStorage.removeItem('cem_session');
   localStorage.removeItem('cem_admin_session');
+  localStorage.removeItem('cem_explicit_login');
   if(cemAuth?.currentUser)try{await cemAuth.signOut();}catch(_){}
   if (!cemAuth || !cemAuth.app || !cemAuth.app.options || !cemAuth.app.options.apiKey) {
     const r=await api('POST','/api/auth/login',{email,password},{anonymous:true});
@@ -780,6 +793,12 @@ async function loadBranding(){
 async function refreshUser(){
   try{
     const { user } = await api('GET','/api/auth/me');
+    if(!user){
+      localStorage.removeItem('cem_session');
+      localStorage.removeItem('cem_admin_session');
+      localStorage.removeItem('cem_explicit_login');
+      if(cemAuth?.currentUser)try{await cemAuth.signOut();}catch(_){}
+    }
     currentUser = user;
     updateUI();
     return user;
@@ -804,7 +823,11 @@ window.registerStudent = async function(){
     const r=await registerFirebaseAccount('student',body);
     msg('studentMsg',r.message,true);
     ['studentName','studentMobile','studentEmail','studentPassword','studentConfirmPassword'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-    await refreshUser();
+    document.getElementById('loginEmail').value=email;
+    document.getElementById('loginPassword').value='';
+    showSection('auth');
+    showAuthTab('login');
+    msg('loginMsg','Student account created. Please sign in with your email and password.',true);
   }catch(e){ msg('studentMsg',authError(e)); }
   finally{ if(btn){btn.classList.remove('loading');btn.disabled=false;btn.textContent='Register as Student';} }
 };
@@ -840,10 +863,12 @@ window.loginUser = async function(){
     const password = document.getElementById('loginPassword').value;
     if(!email||!password)throw new Error('Enter your email and password to sign in.');
     localStorage.removeItem('cem_session');
+    localStorage.removeItem('cem_explicit_login');
     if(cemAuth?.currentUser)await cemAuth.signOut();
     currentUser=null;
     updateUI();
     const r = await firebaseLogin(email,password);
+    localStorage.setItem('cem_explicit_login','1');
     currentUser = r.user;
     try{
       if(document.getElementById('rememberLogin').checked){
@@ -877,6 +902,7 @@ window.loginUser = async function(){
 window.logout = async function(){
   localStorage.removeItem('cem_session');
   localStorage.removeItem('cem_admin_session');
+  localStorage.removeItem('cem_explicit_login');
   if (cemAuth) try { await cemAuth.signOut(); } catch(_) {}
   try { await api('POST','/api/auth/logout'); } catch(_) {}
   currentUser = null;
@@ -2136,9 +2162,19 @@ async function loadMyTests(){
 }
 
 
+async function initializeAuthSession(){
+  await firebaseReady;
+  if(localStorage.getItem('cem_explicit_login')!=='1'){
+    localStorage.removeItem('cem_session');
+    if(cemAuth?.currentUser)try{await cemAuth.signOut();}catch(_){}
+  }
+  const user=await refreshUser();
+  showSection('home');
+  if(user?.role==='student')retryPendingGatewayPayment(true);
+}
 loadBranding();
 refreshModuleViews();
-refreshUser().then(user=>{showSection('home');if(user?.role==='student')retryPendingGatewayPayment(true);});
+initializeAuthSession().catch(()=>{currentUser=null;updateUI();showSection('home');});
 </script>
 </body>
 </html>

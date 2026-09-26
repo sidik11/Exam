@@ -628,8 +628,7 @@ async function route(req, res) {
     const credential=header.startsWith('Bearer ')?{}:{passwordHash:hashPassword(b.password)};
     const profile={uid:uidVal,name,email:emailVal,mobile,...credential,role:'student',status:'approved',blocked:false,registrationComplete:true,createdAt:existing?.createdAt||nowIso()};
     await set('users/'+uidVal,profile);
-    const sessionToken = createUserSession(uidVal, emailVal, 'student', name);
-    return send(res,200,{message:'Student registration successful. You can now use the platform.',sessionToken,user:publicUser(profile)});
+    return send(res,200,{message:'Student account created. Please sign in to continue.',user:publicUser(profile)});
   }
 
   if (url.pathname==='/api/auth/register/teacher' && method==='POST') {
