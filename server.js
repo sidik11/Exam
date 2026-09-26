@@ -79,7 +79,7 @@ if (admin && CFG.dbUrl && CFG.projectId && CFG.clientEmail && CFG.privateKey) {
     useMemDb = true;
   }
 } else {
-  console.log('[System] Running with local persistent data store.');
+  console.warn('[System] Running with in-memory demo storage. Data will be lost when the process restarts.');
   useMemDb = true;
 }
 
@@ -139,30 +139,45 @@ async function get(pathName) {
     const snap = await db.ref(pathName).once('value');
     return snap.val();
   } catch (err) {
-    console.warn('[DB Error] Falling back to in-memory for get(' + pathName + '):', err.message);
-    return memGet(pathName);
+    console.error('[DB Error] Read failed for ' + pathName + ':', err.message);
+    throw Object.assign(new Error('Data storage is temporarily unavailable. Please try again.'), { status:503 });
   }
 }
 
 async function set(pathName, value) {
-  memSet(pathName, value);
   if (!useMemDb && db) {
-    try { await db.ref(pathName).set(value); } catch (_) {}
+    try { await db.ref(pathName).set(value); }
+    catch (err) {
+      console.error('[DB Error] Save failed for ' + pathName + ':', err.message);
+      throw Object.assign(new Error('Data storage is temporarily unavailable. No changes were saved.'), { status:503 });
+    }
+    return;
   }
+  memSet(pathName, value);
 }
 
 async function update(pathName, value) {
-  memUpdate(pathName, value);
   if (!useMemDb && db) {
-    try { await db.ref(pathName).update(value); } catch (_) {}
+    try { await db.ref(pathName).update(value); }
+    catch (err) {
+      console.error('[DB Error] Update failed for ' + pathName + ':', err.message);
+      throw Object.assign(new Error('Data storage is temporarily unavailable. No changes were saved.'), { status:503 });
+    }
+    return;
   }
+  memUpdate(pathName, value);
 }
 
 async function remove(pathName) {
-  memRemove(pathName);
   if (!useMemDb && db) {
-    try { await db.ref(pathName).remove(); } catch (_) {}
+    try { await db.ref(pathName).remove(); }
+    catch (err) {
+      console.error('[DB Error] Delete failed for ' + pathName + ':', err.message);
+      throw Object.assign(new Error('Data storage is temporarily unavailable. No changes were saved.'), { status:503 });
+    }
+    return;
   }
+  memRemove(pathName);
 }
 
 const DEFAULT_MODULES = [
@@ -707,9 +722,14 @@ async function route(req, res) {
 
   if (url.pathname==='/api/admin/users' && method==='GET') {
     const {user}=await requireRole(req,'admin'); void user;
-    const users=Object.values(await allMap('users'));
-    const teachers=users.filter(u=>u.role==='teacher').map(publicUser), students=users.filter(u=>u.role==='student').map(publicUser);
+    const users=Object.entries(await allMap('users')).filter(([,u])=>u&&typeof u==='object').map(([key,u])=>({...publicUser(u),id:u.uid||u.id||key}));
+    const teachers=users.filter(u=>u.role==='teacher'), students=users.filter(u=>u.role==='student');
     return send(res,200,{teachers,students,counts:{students:students.length,approvedTeachers:teachers.filter(t=>t.status==='approved').length,pendingTeachers:teachers.filter(t=>t.status==='pending').length}});
+  }
+
+  if (url.pathname==='/api/admin/system-status' && method==='GET') {
+    await requireRole(req,'admin');
+    return send(res,200,{storagePersistent:!!db&&!useMemDb,paymentEnabled:CFG.payment.enabled});
   }
 
   const mTeacher=url.pathname.match(/^\/api\/admin\/teachers\/([^/]+)\/(approve|module-access)$/);
@@ -898,7 +918,8 @@ async function route(req, res) {
   if(url.pathname==='/api/plans'&&method==='GET'){
     await currentUser(req);
     const plans=Object.values(await allMap('plans'));
-    const payment={...((await get('payment'))||DEFAULT_PAYMENT),gatewayEnabled:CFG.payment.enabled,gatewayMode:CFG.payment.enabled?'test':null};
+    const savedPayment=(await get('payment'))||DEFAULT_PAYMENT;
+    const payment={...savedPayment,gatewayUrl:savedPayment.gatewayUrl||process.env.PAYMENT_GATEWAY_URL||'',gatewayEnabled:CFG.payment.enabled,gatewayMode:CFG.payment.enabled?'test':null};
     return send(res,200,{plans,payment});
   }
   if(url.pathname==='/api/plans'&&method==='POST'){

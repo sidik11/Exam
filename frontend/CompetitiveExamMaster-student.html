@@ -602,16 +602,24 @@ const firebaseReady=(async()=>{
   return cfg;
 })();
 function ensureAdmin(){}
-async function getIdToken(){
+async function getIdToken(options={}){
   await firebaseReady;
+  if(options.firebaseAuth){
+    const u=cemAuth&&cemAuth.currentUser;
+    if(!u)throw new Error('Your login session is not ready. Please try again.');
+    if(u)localStorage.removeItem('cem_session');
+    return u ? u.getIdToken() : null;
+  }
   const adminSession = localStorage.getItem('cem_admin_session');
   if (adminSession) return adminSession;
-  const session = localStorage.getItem('cem_session');
-  if (session) return session;
-  const u = cemAuth && cemAuth.currentUser;
-  return u ? u.getIdToken() : null;
+  if(cemAuth && cemAuth.app && cemAuth.app.options && cemAuth.app.options.apiKey){
+    const u=cemAuth.currentUser;
+    localStorage.removeItem('cem_session');
+    return u ? u.getIdToken() : null;
+  }
+  return localStorage.getItem('cem_session');
 }
-async function api(method,url,body){await firebaseReady;const headers={'Content-Type':'application/json'};const token=await getIdToken();if(token)headers.Authorization='Bearer '+token;const r=await fetch(url,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||data.message||'Request failed.');return data;}
+async function api(method,url,body,options={}){await firebaseReady;const headers={'Content-Type':'application/json'};const token=options.anonymous?null:await getIdToken(options);if(token)headers.Authorization='Bearer '+token;const r=await fetch(url,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||data.message||'Request failed.');return data;}
 function esc(value){const s=String(value??'');return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function msg(id,text,ok=false){const el=document.getElementById(id);if(!el)return;el.textContent=String(text||'');el.className=ok?'success':'error';}
 function authError(e){
@@ -640,23 +648,30 @@ function authError(e){
 }
 async function registerFirebaseAccount(kind,data){
   await firebaseReady;
+  localStorage.removeItem('cem_session');
+  localStorage.removeItem('cem_admin_session');
+  if(cemAuth?.currentUser)try{await cemAuth.signOut();}catch(_){}
   if (!cemAuth || !cemAuth.app || !cemAuth.app.options || !cemAuth.app.options.apiKey) {
-    const r=await api('POST','/api/auth/register/'+kind,data);
-    if(r.sessionToken) localStorage.setItem('cem_session', r.sessionToken);
+    const r=await api('POST','/api/auth/register/'+kind,data,{anonymous:true});
+    if(kind==='teacher')localStorage.removeItem('cem_session');
+    else if(r.sessionToken)localStorage.setItem('cem_session', r.sessionToken);
     return r;
   }
   const cred=await cemAuth.createUserWithEmailAndPassword(data.email,data.password);
-  try{await cred.user.updateProfile({displayName:data.name});const r=await api('POST','/api/auth/register/'+kind,data);try{await cred.user.sendEmailVerification();}catch(_){}return r;}catch(e){try{await cred.user.delete();}catch(_){}throw e;}
+  try{await cred.user.updateProfile({displayName:data.name});const r=await api('POST','/api/auth/register/'+kind,data,{firebaseAuth:true});try{await cred.user.sendEmailVerification();}catch(_){}return r;}catch(e){try{await cred.user.delete();}catch(_){}throw e;}
 }
 async function firebaseLogin(email,password){
   await firebaseReady;
+  localStorage.removeItem('cem_session');
+  localStorage.removeItem('cem_admin_session');
+  if(cemAuth?.currentUser)try{await cemAuth.signOut();}catch(_){}
   if (!cemAuth || !cemAuth.app || !cemAuth.app.options || !cemAuth.app.options.apiKey) {
-    const r=await api('POST','/api/auth/login',{email,password});
+    const r=await api('POST','/api/auth/login',{email,password},{anonymous:true});
     if(r.sessionToken) localStorage.setItem('cem_session', r.sessionToken);
     return r;
   }
   await cemAuth.signInWithEmailAndPassword(email,password);
-  try{return await api('POST','/api/auth/login',{email});}catch(e){await cemAuth.signOut();throw e;}
+  try{return await api('POST','/api/auth/login',{email},{firebaseAuth:true});}catch(e){await cemAuth.signOut();throw e;}
 }
 async function firebaseReauth(password){
   await firebaseReady;
@@ -664,9 +679,6 @@ async function firebaseReauth(password){
   if(!u||!u.email) return;
   await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,password));
 }
-async function refreshUser(){try{const {user}=await api('GET','/api/auth/me');currentUser=user;updateUI();return user;}catch(e){currentUser=null;updateUI();return null;}}
-
-
 let currentUser = null;
 let activeCategory = null;
 
@@ -766,10 +778,16 @@ async function loadBranding(){
 
 
 async function refreshUser(){
-  const { user } = await api('GET','/api/auth/me');
-  currentUser = user;
-  updateUI();
-  return user;
+  try{
+    const { user } = await api('GET','/api/auth/me');
+    currentUser = user;
+    updateUI();
+    return user;
+  }catch(_){
+    currentUser = null;
+    updateUI();
+    return null;
+  }
 }
 
 window.registerStudent = async function(){
@@ -803,9 +821,13 @@ window.registerTeacher = async function(){
   try{
     const body={name:document.getElementById('teacherName').value.trim(),mobile:document.getElementById('teacherMobile').value.trim(),email,subject:document.getElementById('teacherSubject').value.trim(),password};
     const r=await registerFirebaseAccount('teacher',body);
+    if(cemAuth?.currentUser)try{await cemAuth.signOut();}catch(_){}
+    localStorage.removeItem('cem_session');
+    localStorage.removeItem('cem_admin_session');
+    currentUser=null;
+    updateUI();
     msg('teacherMsg',r.message,true);
     ['teacherName','teacherMobile','teacherEmail','teacherSubject','teacherPassword','teacherConfirmPassword'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-    await refreshUser();
   }catch(e){ msg('teacherMsg',authError(e)); }
   finally{ if(btn){btn.classList.remove('loading');btn.disabled=false;btn.textContent='Register as Teacher';} }
 };
@@ -816,6 +838,11 @@ window.loginUser = async function(){
   try{
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
+    if(!email||!password)throw new Error('Enter your email and password to sign in.');
+    localStorage.removeItem('cem_session');
+    if(cemAuth?.currentUser)await cemAuth.signOut();
+    currentUser=null;
+    updateUI();
     const r = await firebaseLogin(email,password);
     currentUser = r.user;
     try{
@@ -828,7 +855,7 @@ window.loginUser = async function(){
     if(currentUser.role==='admin') showSection('admin');
     else if(currentUser.role==='teacher') showSection('teacher');
     else showSection('home');
-  }catch(e){ msg('loginMsg', e.message); }
+  }catch(e){ currentUser=null;updateUI();msg('loginMsg', authError(e)); }
   finally{if(btn){btn.classList.remove('loading');btn.disabled=false;btn.textContent='Sign in';}}
 };
 
@@ -1297,6 +1324,7 @@ async function loadPremium(){
     let { plans, payment } = await api('GET','/api/plans');
     let gatewayReady = payment.gatewayEnabled === true;
     let gatewayError = '';
+    const hasManualUpi=!!String(payment.upiId||'').trim();
     if(payment.gatewayUrl){
       try{
         const remote = await gw(payment.gatewayUrl,'/api/plans');
@@ -1305,6 +1333,9 @@ async function loadPremium(){
         if(!gatewayReady) gatewayError = 'Razorpay Test Mode is not configured on the payment server.';
       }catch(e){ gatewayReady = false; gatewayError = 'Online payment is unavailable right now. Please contact the administrator.'; }
     }
+    if(!gatewayReady&&!gatewayError)gatewayError=hasManualUpi
+      ? 'Razorpay Test Mode is unavailable; manual UPI payment is available below.'
+      : 'No payment method is configured yet. Please contact the administrator.';
     const mine = await api('GET','/api/subscription/mine');
     premiumData = { plans, payment, mine, gatewayReady };
     const pending = mine.requests.find(r=>r.status==='pending');
@@ -1418,6 +1449,12 @@ window.choosePlan = function(id, forceManual){
     return;
   }
   const upi = payment.upiId;
+  if(!premiumData.gatewayReady&&!String(upi||'').trim()){
+    pay.classList.remove('hidden');
+    pay.innerHTML=`<h3>💳 ${esc(p.name)} Premium</h3><p class="muted">No payment method is ready for this plan. The administrator must configure Razorpay Test Mode on the server or add a UPI ID before students can pay.</p><button class="secondary" onclick="document.getElementById('premiumPay').classList.add('hidden')">Close</button>`;
+    pay.scrollIntoView({behavior:'smooth'});
+    return;
+  }
   const link = upi ? `upi://pay?pa=${encodeURIComponent(upi)}&pn=${encodeURIComponent(payment.payeeName||'')}&am=${p.price}&cu=INR&tn=${encodeURIComponent('Premium '+p.name)}` : '';
   pay.classList.remove('hidden');
   pay.innerHTML = `

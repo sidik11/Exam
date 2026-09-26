@@ -132,6 +132,7 @@ main{max-width:1240px;margin:auto;padding:30px 28px 44px}.section>h2{font-size:3
     <div class="panel-card"><h3>Total Teachers</h3><div id="adminTeachersCount" style="font-size:26px;font-weight:800;color:#16a34a">0</div></div>
     <div class="panel-card"><h3>Pending Teacher Approvals</h3><div id="adminPendingCount" style="font-size:26px;font-weight:800;color:#d97706">0</div></div>
   </div>
+  <div id="adminSystemNotice" class="panel-card muted" style="margin-top:14px" aria-live="polite">Checking payment and data storage…</div>
   <div class="panel-card" id="adminModules" style="margin-top:18px"></div>
   <div class="panel-card" style="margin-top:18px">
     <h3>📝 Test Series — Attempt Settings</h3>
@@ -139,17 +140,17 @@ main{max-width:1240px;margin:auto;padding:30px 28px 44px}.section>h2{font-size:3
     <div id="adminTests"></div>
   </div>
   <div class="panel-card" style="margin-top:18px">
-    <h3>Teacher Registrations</h3>
+    <div class="row" style="align-items:center;justify-content:space-between"><h3>Teacher Registrations</h3><button class="secondary" type="button" onclick="renderAdmin()">Refresh registrations</button></div>
     <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Subject</th><th>Status</th><th>Module access</th><th>Action</th></tr></thead><tbody id="teacherTable"></tbody></table></div>
   </div>
   <div class="panel-card" style="margin-top:18px">
-    <h3>Student Accounts</h3>
+    <div class="row" style="align-items:center;justify-content:space-between"><h3>Student Accounts</h3><button class="secondary" type="button" onclick="renderAdmin()">Refresh accounts</button></div>
     <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Status</th><th>Action</th></tr></thead><tbody id="studentTable"></tbody></table></div>
   </div>
 
   <div class="panel-card" style="margin-top:18px">
     <h3>⭐ Premium Subscriptions</h3>
-    <p class="muted">One Premium payment lets a student open every paid test series. Students pay to the UPI ID below and submit the transaction ID; you verify and approve.</p>
+    <p class="muted">One Premium payment lets a student open every paid test series. Students can use Razorpay Test Mode when server test keys are configured, or manual UPI after you add a UPI ID below.</p>
     <h4>Payment details shown to students</h4>
     <div class="row">
       <div class="form-row" style="flex:1"><label>UPI ID</label><input id="admUpi" placeholder="name@bank"></div>
@@ -257,10 +258,17 @@ function showSection(id){
   if(el) el.classList.remove('hidden');
   if(id==='admin'){
     renderAdmin();
+    loadAdminSystemStatus();
     loadSettingsIntoForm();
     loadSubscriptionAdmin();
     mountModuleManager('adminModules','adm');
     loadAdminTests();
+    window.clearInterval(window.adminUsersRefreshTimer);
+    window.adminUsersRefreshTimer=window.setInterval(()=>{
+      if(!document.hidden&&!document.getElementById('admin').classList.contains('hidden'))renderAdmin();
+    },15000);
+  }else{
+    window.clearInterval(window.adminUsersRefreshTimer);
   }
 }
 
@@ -367,8 +375,8 @@ async function refreshUser(){
 function moduleAccessCell(x){
   if(x.status!=='approved') return '<span class="muted">—</span>';
   return x.canManageModules
-    ? `<span class="status-approved">Allowed</span> <button class="warn-btn" onclick="setModuleAccess('${x.id}',false)">Revoke</button>`
-    : `<span class="muted">Not allowed</span> <button class="success-btn" onclick="setModuleAccess('${x.id}',true)">Allow</button>`;
+    ? `<span class="status-approved">Allowed</span> <button class="warn-btn" data-id="${esc(x.id||x.uid)}" onclick="setModuleAccess(this.dataset.id,false)">Revoke</button>`
+    : `<span class="muted">Not allowed</span> <button class="success-btn" data-id="${esc(x.id||x.uid)}" onclick="setModuleAccess(this.dataset.id,true)">Allow</button>`;
 }
 
 window.approveTeacher = async function(id, approved){
@@ -397,20 +405,46 @@ async function renderAdmin(){
     document.getElementById('adminPendingCount').textContent = counts.pendingTeachers || 0;
 
     document.getElementById('teacherTable').innerHTML = teachers.map(x=>{
+      const id=esc(x.id||x.uid);
       const statusLabel = x.blocked ? 'blocked' : x.status;
-      const approveBtns = x.status==='pending' ? `<button class="success-btn" onclick="approveTeacher('${x.id}',true)">Approve</button> <button class="danger-btn" onclick="approveTeacher('${x.id}',false)">Reject</button> ` : '';
-      const blockBtn = x.blocked ? `<button class="success-btn" onclick="blockUser('${x.id}',false)">Unblock</button>` : `<button class="warn-btn" onclick="blockUser('${x.id}',true)">Block</button>`;
-      return `<tr><td>${esc(x.name)}</td><td>${esc(x.email)}</td><td>${esc(x.mobile||'')}</td><td>${esc(x.subject||'')}</td><td class="status-${statusLabel}">${statusLabel}</td><td>${moduleAccessCell(x)}</td><td>${approveBtns}${blockBtn} <button class="danger-btn" onclick="deleteUser('${x.id}','${esc(x.name)}')">Delete</button></td></tr>`;
+      const approveBtns = x.status==='pending' ? `<button class="success-btn" data-id="${id}" onclick="approveTeacher(this.dataset.id,true)">Approve</button> <button class="danger-btn" data-id="${id}" onclick="approveTeacher(this.dataset.id,false)">Reject</button> ` : '';
+      const blockBtn = x.blocked ? `<button class="success-btn" data-id="${id}" onclick="blockUser(this.dataset.id,false)">Unblock</button>` : `<button class="warn-btn" data-id="${id}" onclick="blockUser(this.dataset.id,true)">Block</button>`;
+      const actions=`${approveBtns}${blockBtn} <button class="danger-btn" data-id="${id}" data-name="${esc(x.name)}" onclick="deleteUser(this.dataset.id,this.dataset.name)">Delete</button>`;
+      return `<tr><td>${esc(x.name)}</td><td>${esc(x.email)}</td><td>${esc(x.mobile||'')}</td><td>${esc(x.subject||'')}</td><td class="status-${esc(statusLabel)}">${esc(statusLabel)}</td><td>${moduleAccessCell({...x,id})}</td><td>${actions}</td></tr>`;
     }).join('') || '<tr><td colspan="7">No teacher registrations.</td></tr>';
 
     document.getElementById('studentTable').innerHTML = students.map(x=>{
+      const id=esc(x.id||x.uid);
       const statusLabel = x.blocked ? 'blocked' : 'approved';
-      const blockBtn = x.blocked ? `<button class="success-btn" onclick="blockUser('${x.id}',false)">Unblock</button>` : `<button class="warn-btn" onclick="blockUser('${x.id}',true)">Block</button>`;
-      return `<tr><td>${esc(x.name)}</td><td>${esc(x.email)}</td><td>${esc(x.mobile||'')}</td><td class="status-${statusLabel}">${statusLabel}</td><td>${blockBtn} <button class="danger-btn" onclick="deleteUser('${x.id}','${esc(x.name)}')">Delete</button></td></tr>`;
+      const blockBtn = x.blocked ? `<button class="success-btn" data-id="${id}" onclick="blockUser(this.dataset.id,false)">Unblock</button>` : `<button class="warn-btn" data-id="${id}" onclick="blockUser(this.dataset.id,true)">Block</button>`;
+      return `<tr><td>${esc(x.name)}</td><td>${esc(x.email)}</td><td>${esc(x.mobile||'')}</td><td class="status-${esc(statusLabel)}">${esc(statusLabel)}</td><td>${blockBtn} <button class="danger-btn" data-id="${id}" data-name="${esc(x.name)}" onclick="deleteUser(this.dataset.id,this.dataset.name)">Delete</button></td></tr>`;
     }).join('') || '<tr><td colspan="5">No students registered.</td></tr>';
   }catch(e){
     document.getElementById('teacherTable').innerHTML = `<tr><td colspan="7">${esc(e.message)}</td></tr>`;
+    document.getElementById('studentTable').innerHTML = `<tr><td colspan="5">${esc(e.message)}</td></tr>`;
   }
+}
+
+async function loadAdminSystemStatus(){
+  const box=document.getElementById('adminSystemNotice');
+  if(!box)return;
+  try{
+    const [{storagePersistent,paymentEnabled},{payment}]=await Promise.all([
+      api('GET','/api/admin/system-status'),api('GET','/api/plans')
+    ]);
+    const storageText=storagePersistent?'Registration data is saved in persistent storage.':'This server is using temporary demo storage; registrations and payment records can disappear when it restarts. Configure the database connection before using it with real students.';
+    let gatewayReady=paymentEnabled;
+    if(!gatewayReady&&payment?.gatewayUrl){
+      try{
+        const response=await fetch(String(payment.gatewayUrl).replace(/\/+$/,'')+'/api/plans');
+        const remote=await response.json().catch(()=>({}));
+        gatewayReady=response.ok&&remote.paymentsEnabled===true;
+      }catch(_){}
+    }
+    const paymentText=gatewayReady?'Razorpay Test Mode is ready for trial payments.':payment?.upiId?'Razorpay Test Mode is not ready; students can pay by the saved UPI ID.':'No payment method is ready. Add Razorpay Test Mode keys on the built-in or separate payment server, or save a UPI ID below.';
+    box.textContent=storageText+' '+paymentText;
+    box.className='panel-card '+(storagePersistent&&paymentEnabled?'success':'muted');
+  }catch(e){box.textContent='Could not check data storage and payment readiness: '+e.message;}
 }
 
 /* ---------- admin: tests attempt settings ---------- */
@@ -440,6 +474,7 @@ async function loadSubscriptionAdmin(){
     document.getElementById('admPayee').value = (payment && payment.payeeName) || '';
     document.getElementById('admPayNote').value = (payment && payment.note) || '';
     document.getElementById('admGateway').value = (payment && payment.gatewayUrl) || '';
+    loadAdminSystemStatus();
     document.getElementById('planTable').innerHTML = plans.map(p=>`<tr><td>${esc(p.name)}</td><td>${p.days}</td><td>₹${p.price}</td><td><button class="secondary" onclick="deletePlanAdmin('${esc(p.id)}')">🗑 Remove</button></td></tr>`).join('') || '<tr><td colspan="4">No plans yet.</td></tr>';
     const { subscriptions } = await api('GET','/api/subscription');
     document.getElementById('subTable').innerHTML = subscriptions.map(s=>`<tr>
@@ -458,6 +493,7 @@ window.savePaymentDetails = async function(){
       gatewayUrl: document.getElementById('admGateway').value
     });
     document.getElementById('admPayMsg').textContent = 'Saved ✓';
+    await loadAdminSystemStatus();
   } catch(e){ alert(e.message); }
 };
 
