@@ -404,7 +404,8 @@ async function sendEmail(to, subject, html, text='') {
   }
 }
 
-const emailShell = (title, body) => '<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px"><h2>'+title+'</h2>'+body+'<hr><p style="color:#64748b;font-size:12px">Competitive Exam Master</p></div>';
+const escapeHtml = value => String(value ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
+const emailShell = (title, body) => '<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:24px"><h2>'+escapeHtml(title)+'</h2>'+body+'<hr><p style="color:#64748b;font-size:12px">Competitive Exam Master</p></div>';
 
 function summarizeTest(t) {
   return {
@@ -531,7 +532,7 @@ async function activateOrder(order, paymentId, paidAt) {
   order.paidAt = requestedAt;
   await update('orders/' + order.orderId, order);
   if (subscription.id === subId) {
-    await sendEmail(order.studentEmail, 'Subscription payment successful', emailShell('Premium is active', '<p>Your <b>'+String(order.planName||'Premium')+'</b> subscription payment was successful.</p><p>Amount: <b>₹'+amount+'</b><br>Payment ID: <b>'+paymentId+'</b><br>Valid until: <b>'+new Date(subscription.expiresAt).toLocaleString()+'</b></p>'));
+    await sendEmail(order.studentEmail, 'Subscription payment successful', emailShell('Premium is active', '<p>Your <b>'+escapeHtml(order.planName||'Premium')+'</b> subscription payment was successful.</p><p>Amount: <b>₹'+amount+'</b><br>Payment ID: <b>'+paymentId+'</b><br>Valid until: <b>'+new Date(subscription.expiresAt).toLocaleString()+'</b></p>'));
   }
   return subscription;
 }
@@ -994,7 +995,7 @@ async function route(req, res) {
     sub.decidedAt=nowIso();
     subs[sub.id]=sub;
     await set('subscriptions',subs);
-    await sendEmail(sub.studentEmail,'Premium subscription '+sub.status,emailShell('Premium subscription '+sub.status,'<p>Your '+sub.planName+' subscription request is <b>'+sub.status+'</b>.</p>'+ (sub.expiresAt?'<p>Valid until: <b>'+new Date(sub.expiresAt).toLocaleString()+'</b></p>':'')));
+    await sendEmail(sub.studentEmail,'Premium subscription '+sub.status,emailShell('Premium subscription '+sub.status,'<p>Your '+escapeHtml(sub.planName)+' subscription request is <b>'+escapeHtml(sub.status)+'</b>.</p>'+ (sub.expiresAt?'<p>Valid until: <b>'+new Date(sub.expiresAt).toLocaleString()+'</b></p>':'')));
     return send(res,200,{message:'Payment '+sub.status+'.',subscription:sub});
   }
 
@@ -1059,7 +1060,7 @@ async function route(req, res) {
     p.decidedAt=nowIso();
     ps[p.id]=p;
     await set('purchases',ps);
-    await sendEmail(p.studentEmail,'Test access request '+p.status,emailShell('Test access '+p.status,'<p>Your access request for <b>'+p.testTitle+'</b> has been '+p.status+'.</p>'));
+    await sendEmail(p.studentEmail,'Test access request '+p.status,emailShell('Test access '+p.status,'<p>Your access request for <b>'+escapeHtml(p.testTitle)+'</b> has been '+escapeHtml(p.status)+'.</p>'));
     return send(res,200,{message:'Request '+p.status+'.',purchase:p});
   }
 
