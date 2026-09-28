@@ -72,6 +72,12 @@ if (admin && CFG.dbUrl && CFG.projectId && CFG.clientEmail && CFG.privateKey) {
   useMemDb = true;
 }
 
+// Never silently run with volatile storage in production. A Firebase outage or
+// configuration error must fail closed instead of risking data loss or split state.
+if (process.env.NODE_ENV === 'production' && (!db || useMemDb)) {
+  throw new Error('Firebase Realtime Database is required in production. Refusing to start with in-memory storage.');
+}
+
 // In-memory data store for standalone/mock mode
 const memStore = {};
 
