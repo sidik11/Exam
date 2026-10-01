@@ -268,6 +268,7 @@ async function ensureSeeds() {
   if (!(await get('examAttempts'))) await set('examAttempts', {});
   if (!(await get('webhookEvents'))) await set('webhookEvents', {});
   if (!(await get('passwordResets'))) await set('passwordResets', {});
+  if (!(await get('notices'))) await set('notices', {['notice-default']:{id:'notice-default',audience:'both',text:'Welcome ... Have a good day',createdBy:'system',createdAt:nowIso()}});
   if (!(await get('scoreIndex'))) {
     const subs=await allMap('submissions'),idx={};
     for(const x of Object.values(subs)){if(!x?.testId||!x?.id)continue;(idx[x.testId] ||= {})[x.id]={score:Number(x.score)||0,userId:x.userId||'',submittedAt:x.submittedAt||nowIso()};}
@@ -680,6 +681,36 @@ async function route(req, res) {
     return send(res,200,{storagePersistent:!!db&&!useMemDb,paymentEnabled:CFG.payment.enabled});
   }
 
+  if(url.pathname==='/api/notices'&&method==='GET'){
+    const {user}=await currentUser(req);
+    const notices=Object.values(await allMap('notices')).filter(n=>n&&typeof n==='object');
+    const visible=user.role==='admin'
+      ? notices
+      : notices.filter(n=>n.audience==='both'||n.audience===user.role);
+    visible.sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0));
+    return send(res,200,{notices:visible.slice(0,20).map(n=>({id:n.id,audience:n.audience,text:n.text,createdAt:n.createdAt,createdBy:n.createdBy||''}))});
+  }
+
+  if(url.pathname==='/api/notices'&&method==='POST'){
+    const {user}=await requireRole(req,'admin');
+    const b=await body(req), audience=String(b.audience||'both').trim().toLowerCase(), textValue=String(b.text||'').trim();
+    if(!['student','teacher','both'].includes(audience)) throw new Error('Choose Student, Teacher or Both.');
+    if(!textValue) throw new Error('Notice cannot be empty.');
+    if(textValue.length>1000) throw new Error('Notice must be 1000 characters or less.');
+    const notice={id:uid('notice-'),audience,text:textValue,createdBy:user.email||user.name||'admin',createdAt:nowIso()};
+    const notices=await allMap('notices'); notices[notice.id]=notice; await set('notices',notices);
+    return send(res,200,{message:'Notice added successfully.',notice});
+  }
+
+  const mNotice=url.pathname.match(/^\/api\/notices\/([^/]+)$/);
+  if(mNotice&&method==='DELETE'){
+    await requireRole(req,'admin');
+    const notices=await allMap('notices'), id=decodeURIComponent(mNotice[1]);
+    if(!notices[id]) throw new Error('Notice not found.');
+    delete notices[id]; await set('notices',notices);
+    return send(res,200,{message:'Notice deleted.'});
+  }
+
   const mTeacher=url.pathname.match(/^\/api\/admin\/teachers\/([^/]+)\/(approve|module-access)$/);
   if(mTeacher && method==='POST'){
     await requireRole(req,'admin');
@@ -740,8 +771,7 @@ async function route(req, res) {
     return send(res,200,{modules:mods.map(m=>({...m,testCount:tests.filter(t=>t.category===m.name).length}))});
   }
   if(url.pathname==='/api/modules' && method==='POST'){
-    const {user}=await currentUser(req);
-    if(!(user.role==='admin'||(user.role==='teacher'&&user.status==='approved'&&user.canManageModules))) throw new Error('You do not have permission to manage exam modules.');
+    const {user}=await requireRole(req,'admin');
     const b=await body(req), name=String(b.name||'').replace(/\s+/g,' ').trim();
     if(!name||name.length>40) throw new Error('Module name is required and must be 40 characters or less.');
     const mods=await allMap('modules');
@@ -754,8 +784,7 @@ async function route(req, res) {
 
   const mDelMod=url.pathname.match(/^\/api\/modules\/([^/]+)$/);
   if(mDelMod && method==='DELETE'){
-    const {user}=await currentUser(req);
-    if(!(user.role==='admin'||(user.role==='teacher'&&user.status==='approved'&&user.canManageModules))) throw new Error('Not authorized.');
+    const {user}=await requireRole(req,'admin');
     const id=decodeURIComponent(mDelMod[1]), mods=await allMap('modules'), mod=mods[id];
     if(!mod) throw new Error('Module not found.');
     const tests=await allMap('tests'), affected=Object.values(tests).filter(t=>t.category===mod.name);
@@ -791,11 +820,9 @@ async function route(req, res) {
 
   const mAttempt=url.pathname.match(/^\/api\/tests\/([^/]+)\/attempts$/);
   if(mAttempt&&method==='POST'){
-    const {user}=await currentUser(req);
+    await requireRole(req,'admin');
     const tests=await allMap('tests'), t=tests[decodeURIComponent(mAttempt[1])];
     if(!t) throw new Error('Test series not found.');
-    if(!['teacher','admin'].includes(user.role)) throw new Error('Not authorized.');
-    if(user.role==='teacher'&&!ownsTest(user,t)) throw new Error('You can only change your own test series.');
     t.attemptPolicy=(await body(req)).attemptPolicy==='once'?'once':'reattempt';
     tests[t.id]=t;
     await set('tests',tests);
@@ -846,7 +873,7 @@ async function route(req, res) {
   }
 
   if(url.pathname==='/api/tests'&&method==='POST'){
-    const {user}=await requireRole(req,'teacher');
+    const {user}=await requireRole(req,'admin');
     const b=await body(req);
     const mods=await allMap('modules');
     if(!mods || !Object.values(mods).some(m=>m.name===b.category)) throw new Error('Please choose a valid exam module.');
@@ -871,9 +898,9 @@ async function route(req, res) {
 
   const mDeleteTest=url.pathname.match(/^\/api\/tests\/([^/]+)$/);
   if(mDeleteTest&&method==='DELETE'){
-    const {user}=await currentUser(req), tests=await allMap('tests'), id=decodeURIComponent(mDeleteTest[1]), t=tests[id];
+    await requireRole(req,'admin');
+    const tests=await allMap('tests'), id=decodeURIComponent(mDeleteTest[1]), t=tests[id];
     if(!t) throw new Error('Test series not found.');
-    if(!['teacher','admin'].includes(user.role)||user.role==='teacher'&&!ownsTest(user,t)) throw new Error('Not authorized.');
     delete tests[id];
     await set('tests',tests);
     return send(res,200,{message:'Test series deleted.'});
@@ -955,6 +982,34 @@ async function route(req, res) {
     await set('subscriptions',subs);
     await sendEmail(sub.studentEmail,'Premium subscription '+sub.status,emailShell('Premium subscription '+sub.status,'<p>Your '+sub.planName+' subscription request is <b>'+sub.status+'</b>.</p>'+ (sub.expiresAt?'<p>Valid until: <b>'+new Date(sub.expiresAt).toLocaleString()+'</b></p>':'')));
     return send(res,200,{message:'Payment '+sub.status+'.',subscription:sub});
+  }
+
+  if(url.pathname.match(/^\/api\/subscription\/[^/]+\/(pause|resume)$/)&&method==='POST'){
+    const mPause=url.pathname.match(/^\/api\/subscription\/([^/]+)\/(pause|resume)$/);
+    await requireRole(req,'admin');
+    const subs=await allMap('subscriptions'), id=decodeURIComponent(mPause[1]), action=mPause[2], sub=subs[id];
+    if(!sub) throw new Error('Subscription not found.');
+    if(action==='pause'){
+      if(sub.status!=='approved') throw new Error('Only an active Premium subscription can be paused.');
+      const remainingMs=new Date(sub.expiresAt).getTime()-Date.now();
+      if(!Number.isFinite(remainingMs)||remainingMs<=0) throw new Error('This Premium subscription has already expired.');
+      sub.status='paused';
+      sub.pausedAt=nowIso();
+      sub.remainingMsAtPause=remainingMs;
+      sub.pausedBy=CFG.admin.email;
+    } else {
+      if(sub.status!=='paused') throw new Error('This Premium subscription is not paused.');
+      const remainingMs=Number(sub.remainingMsAtPause)||0;
+      if(remainingMs<=0) throw new Error('This paused Premium subscription has no remaining access time.');
+      sub.status='approved';
+      sub.expiresAt=new Date(Date.now()+remainingMs).toISOString();
+      sub.resumedAt=nowIso();
+      delete sub.pausedAt;
+      delete sub.remainingMsAtPause;
+      delete sub.pausedBy;
+    }
+    subs[id]=sub; await set('subscriptions',subs);
+    return send(res,200,{message:action==='pause'?'Premium access paused.':'Premium access resumed.',subscription:sub});
   }
 
   if(url.pathname==='/api/purchases'&&method==='GET'){
@@ -1089,7 +1144,7 @@ async function route(req, res) {
 
   if(url.pathname==='/api/admin/backup'&&method==='GET'){
     await requireRole(req,'admin');
-    const names=['users','tests','purchases','subscriptions','plans','payment','modules','settings','submissions','ratings','attemptLocks','examAttempts','scoreIndex','webhookEvents'];
+    const names=['users','tests','purchases','subscriptions','plans','payment','modules','settings','submissions','ratings','attemptLocks','examAttempts','scoreIndex','webhookEvents','notices'];
     const out={}; for(const n of names) out[n]=await get(n);
     return send(res,200,out);
   }
@@ -1097,7 +1152,7 @@ async function route(req, res) {
     await requireRole(req,'admin');
     const b=await body(req);
     if(!b.users||!b.tests) throw new Error('Backup is missing users/tests.');
-    for(const n of ['users','tests','purchases','subscriptions','plans','payment','modules','settings','submissions','ratings','attemptLocks','examAttempts','scoreIndex','webhookEvents']) if(b[n]!==undefined) await set(n,b[n]);
+    for(const n of ['users','tests','purchases','subscriptions','plans','payment','modules','settings','submissions','ratings','attemptLocks','examAttempts','scoreIndex','webhookEvents','notices']) if(b[n]!==undefined) await set(n,b[n]);
     return send(res,200,{message:'Restore complete.'});
   }
 
