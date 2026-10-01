@@ -116,7 +116,7 @@ main{max-width:1240px;margin:auto;padding:30px 28px 44px}.section>h2{font-size:3
     </div>
     <div id="adminOtpPane" class="hidden">
       <div class="otp-sent">✉️ OTP sent to <b>mjdeveloperodisha@gmail.com</b></div>
-      <div class="form-row"><label style="text-align:left">Enter 6-digit OTP</label><input id="adminOtp" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="••••••" autocomplete="one-time-code"></div>
+      <div class="form-row"><label style="text-align:left">Enter 6-digit OTP</label><input id="adminOtp" type="password" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="••••••" autocomplete="one-time-code"></div>
       <button id="verifyOtpBtn" class="admin-login-btn" type="button" style="width:100%" onclick="verifyAdminOtp()">Verify OTP &amp; Login</button>
       <button class="admin-back-btn" style="width:100%;margin-top:8px" onclick="resetAdminOtp()">← Send a new OTP</button>
       <p id="otpMsg"></p>
@@ -133,11 +133,43 @@ main{max-width:1240px;margin:auto;padding:30px 28px 44px}.section>h2{font-size:3
     <div class="panel-card"><h3>Pending Teacher Approvals</h3><div id="adminPendingCount" style="font-size:26px;font-weight:800;color:#d97706">0</div></div>
   </div>
   <div id="adminSystemNotice" class="panel-card muted" style="margin-top:14px" aria-live="polite">Checking payment and data storage…</div>
+  <div class="panel-card" style="margin-top:18px">
+    <h3>📢 Notices</h3>
+    <p class="muted">Add a notice for Students, Teachers, or both. Maximum 1000 characters.</p>
+    <div class="row" style="align-items:flex-end">
+      <div class="form-row" style="flex:1;min-width:180px"><label>Audience</label><select id="noticeAudience"><option value="both">Student + Teacher</option><option value="student">Students only</option><option value="teacher">Teachers only</option></select></div>
+      <div class="form-row" style="flex:3;min-width:260px"><label>Notice</label><textarea id="noticeText" maxlength="1000" rows="3" placeholder="Welcome ... Have a good day"></textarea></div>
+      <button class="primary-btn" type="button" onclick="addAdminNotice()">Add Notice</button>
+    </div>
+    <p id="noticeAdminMsg"></p>
+    <div class="table-wrap"><table><thead><tr><th>Audience</th><th>Notice</th><th>Created</th><th>Action</th></tr></thead><tbody id="adminNoticeTable"></tbody></table></div>
+  </div>
+
   <div class="panel-card" id="adminModules" style="margin-top:18px"></div>
   <div class="panel-card" style="margin-top:18px">
     <h3>📝 Test Series — Attempt Settings</h3>
     <p class="muted">Choose whether students can attempt each test only once or reattempt it.</p>
     <div id="adminTests"></div>
+  </div>
+  <div class="panel-card" style="margin-top:18px">
+    <h3>➕ Add Test Series</h3>
+    <p class="muted">Only the Administrator can publish or delete test series. Teachers no longer have test-series management access.</p>
+    <div class="row">
+      <div class="form-row" style="flex:2;min-width:220px"><label>Test Series Title</label><input id="admTestTitle" maxlength="120" placeholder="e.g. OSSSC Combined Mock 1"></div>
+      <div class="form-row" style="flex:1;min-width:180px"><label>Exam Module</label><select id="admTestCategory"><option value="">Loading modules…</option></select></div>
+    </div>
+    <div class="row">
+      <div class="form-row" style="flex:2;min-width:220px"><label>Exam Name</label><input id="admTestExam" value="Competitive Exam" placeholder="e.g. OSSSC"></div>
+      <div class="form-row" style="flex:1"><label>Language(s)</label><input id="admTestLanguages" value="English" placeholder="English, Hindi"></div>
+      <div class="form-row" style="flex:1"><label>Type</label><select id="admTestType"><option value="FREE">Free</option><option value="PAID">Premium</option></select></div>
+    </div>
+    <div class="row">
+      <div class="form-row" style="flex:1"><label>Duration (minutes)</label><input id="admTestDuration" type="number" min="1" max="1440" value="30"></div>
+      <div class="form-row" style="flex:1"><label>Attempts</label><select id="admTestAttempts"><option value="reattempt">🔁 Reattempt allowed</option><option value="once">🔒 One attempt only</option></select></div>
+    </div>
+    <div id="admTestQuestions"></div>
+    <button type="button" class="secondary" onclick="addAdminQuestion()">➕ Add Question</button>
+    <div class="row" style="margin-top:12px"><button class="primary-btn" type="button" onclick="submitAdminTest()">Publish Test Series</button><span id="admTestMsg"></span></div>
   </div>
   <div class="panel-card" style="margin-top:18px">
     <div class="row" style="align-items:center;justify-content:space-between"><h3>Teacher Registrations</h3><button class="secondary" type="button" onclick="renderAdmin()">Refresh registrations</button></div>
@@ -267,6 +299,9 @@ function showSection(id){
     loadSubscriptionAdmin();
     mountModuleManager('adminModules','adm');
     loadAdminTests();
+    loadAdminTestFormModules();
+    if(!document.querySelector('#admTestQuestions > .panel-card')) addAdminQuestion();
+    loadAdminNotices();
     loadAdminRatings();
     window.clearInterval(window.adminUsersRefreshTimer);
     window.adminUsersRefreshTimer=window.setInterval(()=>{
@@ -462,8 +497,8 @@ async function loadAdminTests(){
   const box = document.getElementById('adminTests'); if(!box) return;
   try{
     const { tests } = await api('GET','/api/tests/all');
-    box.innerHTML = tests.length ? `<div class="table-wrap"><table><thead><tr><th>Title</th><th>Module</th><th>Created by</th><th>Attempts taken</th><th>Attempts allowed</th></tr></thead><tbody>
-      ${tests.map(t=>`<tr><td>${esc(t.title)}</td><td>${esc(t.category||'')}</td><td>${esc(t.createdBy||'')}</td><td>${t.attempts}</td><td><select onchange="changeAttemptPolicy('${esc(t.id)}', this.value, loadAdminTests)"><option value="reattempt" ${t.attemptPolicy!=='once'?'selected':''}>🔁 Reattempt allowed</option><option value="once" ${t.attemptPolicy==='once'?'selected':''}>🔒 One attempt only</option></select></td></tr>`).join('')}
+    box.innerHTML = tests.length ? `<div class="table-wrap"><table><thead><tr><th>Title</th><th>Module</th><th>Created by</th><th>Attempts taken</th><th>Attempts allowed</th><th>Action</th></tr></thead><tbody>
+      ${tests.map(t=>`<tr><td>${esc(t.title)}</td><td>${esc(t.category||'')}</td><td>${esc(t.createdBy||'')}</td><td>${t.attempts}</td><td><select onchange="changeAttemptPolicy('${esc(t.id)}', this.value, loadAdminTests)"><option value="reattempt" ${t.attemptPolicy!=='once'?'selected':''}>🔁 Reattempt allowed</option><option value="once" ${t.attemptPolicy==='once'?'selected':''}>🔒 One attempt only</option></select></td><td><button class="danger-btn" data-id="${esc(t.id)}" data-title="${esc(t.title)}" onclick="deleteAdminTest(this.dataset.id,this.dataset.title)">🗑 Delete</button></td></tr>`).join('')}
     </tbody></table></div>` : '<p class="muted">No test series yet.</p>';
   }catch(e){ box.innerHTML = `<p class="muted">${esc(e.message)}</p>`; }
 }
@@ -482,10 +517,11 @@ async function loadSubscriptionAdmin(){
     loadAdminSystemStatus();
     document.getElementById('planTable').innerHTML = plans.map(p=>`<tr><td>${esc(p.name)}</td><td>${p.days}</td><td>₹${p.price}</td><td><button class="secondary" onclick="deletePlanAdmin('${esc(p.id)}')">🗑 Remove</button></td></tr>`).join('') || '<tr><td colspan="4">No plans yet.</td></tr>';
     const { subscriptions } = await api('GET','/api/subscription');
-    document.getElementById('subTable').innerHTML = subscriptions.map(s=>`<tr>
-      <td>${esc(s.studentName)}<br><span class="muted">${esc(s.studentEmail)}</span></td><td>${esc(s.planName)} (${s.days}d)</td><td>₹${s.amount}</td><td>${esc(s.txnId)}</td><td>${fmtDate(s.requestedAt)}</td>
-      <td>${s.status==='approved'?'✅ Until '+fmtDate(s.expiresAt):s.status==='pending'?'⏳ Pending':'❌ Rejected'}</td>
-      <td>${s.status==='pending'?`<button class="success-btn" onclick="decideSub('${s.id}',true)">Approve</button> <button class="danger-btn" onclick="decideSub('${s.id}',false)">Reject</button>`:''}</td></tr>`).join('') || '<tr><td colspan="7">No payment requests yet.</td></tr>';
+    document.getElementById('subTable').innerHTML = subscriptions.map(s=>{
+      const status=s.status==='approved'?'✅ Until '+fmtDate(s.expiresAt):s.status==='paused'?'⏸ Paused':'❌ Rejected';
+      const action=s.status==='pending'?`<button class="success-btn" onclick="decideSub('${s.id}',true)">Approve</button> <button class="danger-btn" onclick="decideSub('${s.id}',false)">Reject</button>`:s.status==='approved'?`<button class="warn-btn" onclick="pausePremium('${s.id}')">⏸ Pause</button>`:s.status==='paused'?`<button class="success-btn" onclick="resumePremium('${s.id}')">▶ Resume</button>`:'';
+      return `<tr><td>${esc(s.studentName)}<br><span class="muted">${esc(s.studentEmail)}</span></td><td>${esc(s.planName)} (${s.days}d)</td><td>₹${s.amount}</td><td>${esc(s.txnId)}</td><td>${fmtDate(s.requestedAt)}</td><td>${status}</td><td>${action}</td></tr>`;
+    }).join('') || '<tr><td colspan="7">No payment requests yet.</td></tr>';
   }catch(e){ document.getElementById('subTable').innerHTML = `<tr><td colspan="7">${esc(e.message)}</td></tr>`; }
 }
 
@@ -530,6 +566,93 @@ window.deletePlanAdmin = async function(id){
 window.decideSub = async function(id, approved){
   try{ await api('POST','/api/subscription/'+encodeURIComponent(id)+'/decide',{ approved }); loadSubscriptionAdmin(); }
   catch(e){ alert(e.message); }
+};
+window.pausePremium = async function(id){
+  if(!confirm('Pause this student Premium access? Their remaining Premium time will be frozen until you resume it.')) return;
+  try{ await api('POST','/api/subscription/'+encodeURIComponent(id)+'/pause'); loadSubscriptionAdmin(); }
+  catch(e){ alert(e.message); }
+};
+window.resumePremium = async function(id){
+  if(!confirm('Resume this student Premium access?')) return;
+  try{ await api('POST','/api/subscription/'+encodeURIComponent(id)+'/resume'); loadSubscriptionAdmin(); }
+  catch(e){ alert(e.message); }
+};
+
+/* ---------- admin: test creation ---------- */
+let adminQuestionCount=0;
+function loadAdminTestFormModules(){
+  const sel=document.getElementById('admTestCategory'); if(!sel)return;
+  api('GET','/api/modules').then(r=>{
+    const mods=r.modules||[];
+    sel.innerHTML=mods.length?mods.map(m=>\`<option value="\${esc(m.name)}">\${esc(m.name)}</option>\`).join(''):'<option value="">No modules available</option>';
+  }).catch(e=>{sel.innerHTML='<option value="">Could not load modules</option>';});
+}
+function addAdminQuestion(){
+  adminQuestionCount++;
+  const box=document.getElementById('admTestQuestions'), wrap=document.createElement('div');
+  wrap.className='panel-card';
+  wrap.style.cssText='margin:14px 0;padding:14px;border:1px dashed #d5dce6;box-shadow:none';
+  wrap.innerHTML=\`
+    <div class="row"><b>Question \${adminQuestionCount}</b><button type="button" class="danger-btn" onclick="this.closest('.panel-card').remove()">Remove</button></div>
+    <div class="form-row"><label>Question</label><textarea class="adm-q-text" rows="2" maxlength="5000"></textarea></div>
+    <div class="row"><div class="form-row" style="flex:1"><label>Option A</label><input class="adm-q-a"></div><div class="form-row" style="flex:1"><label>Option B</label><input class="adm-q-b"></div></div>
+    <div class="row"><div class="form-row" style="flex:1"><label>Option C</label><input class="adm-q-c"></div><div class="form-row" style="flex:1"><label>Option D</label><input class="adm-q-d"></div></div>
+    <div class="row"><div class="form-row" style="flex:1"><label>Correct Option</label><select class="adm-q-answer"><option>A</option><option>B</option><option>C</option><option>D</option></select></div><div class="form-row" style="flex:1"><label>Section / Subject</label><input class="adm-q-subject" value="General"></div><div class="form-row" style="flex:1"><label>Marks</label><input class="adm-q-marks" type="number" step="any" value="1"></div><div class="form-row" style="flex:1"><label>Negative</label><input class="adm-q-negative" type="number" step="any" value="0"></div></div>
+    <div class="form-row"><label>Explanation / Solution</label><textarea class="adm-q-explanation" rows="2" maxlength="5000"></textarea></div>\`;
+  box.appendChild(wrap);
+}
+window.submitAdminTest=async function(){
+  try{
+    const title=document.getElementById('admTestTitle').value.trim();
+    const category=document.getElementById('admTestCategory').value;
+    const exam=document.getElementById('admTestExam').value.trim()||'Competitive Exam';
+    const languages=[...new Set(document.getElementById('admTestLanguages').value.split(',').map(x=>x.trim()).filter(Boolean))];
+    const rows=[...document.querySelectorAll('#admTestQuestions > .panel-card')];
+    const questions=rows.map(w=>({question:w.querySelector('.adm-q-text').value.trim(),options:['.adm-q-a','.adm-q-b','.adm-q-c','.adm-q-d'].map(s=>w.querySelector(s).value.trim()),answer:w.querySelector('.adm-q-answer').value,subject:w.querySelector('.adm-q-subject').value.trim()||'General',marks:w.querySelector('.adm-q-marks').value,negative:w.querySelector('.adm-q-negative').value,explanation:w.querySelector('.adm-q-explanation').value.trim()}));
+    const subjects=[...new Set(questions.map(q=>q.subject).filter(Boolean))];
+    if(!title)throw new Error('Enter a test series title.');
+    if(!category)throw new Error('Choose an exam module.');
+    if(!languages.length)throw new Error('Enter at least one exam language.');
+    if(!questions.length)throw new Error('Add at least one question.');
+    const r=await api('POST','/api/tests',{title,category,exam,languages,subjects,type:document.getElementById('admTestType').value,duration:document.getElementById('admTestDuration').value,attemptPolicy:document.getElementById('admTestAttempts').value,questions});
+    msg('admTestMsg',r.message,true);
+    document.getElementById('admTestTitle').value='';
+    document.getElementById('admTestQuestions').innerHTML='';
+    adminQuestionCount=0;
+    addAdminQuestion();
+    await loadAdminTests();
+    await refreshModuleViews();
+  }catch(e){msg('admTestMsg',e.message);}
+};
+window.deleteAdminTest=async function(id,title){
+  if(!confirm('Delete the test series "'+title+'"? This cannot be undone.'))return;
+  try{await api('DELETE','/api/tests/'+encodeURIComponent(id));await loadAdminTests();await refreshModuleViews();}
+  catch(e){alert(e.message);}
+};
+
+/* ---------- admin: notices ---------- */
+async function loadAdminNotices(){
+  const box=document.getElementById('adminNoticeTable'); if(!box)return;
+  try{
+    const {notices=[]}=await api('GET','/api/notices');
+    box.innerHTML=notices.length?notices.map(n=>\`<tr><td>\${n.audience==='both'?'Student + Teacher':n.audience==='student'?'Students':'Teachers'}</td><td style="white-space:pre-wrap;min-width:260px">\${esc(n.text)}</td><td>\${fmtDate(n.createdAt)}</td><td><button class="danger-btn" onclick="deleteAdminNotice('\${esc(n.id)}')">Delete</button></td></tr>\`).join(''):'<tr><td colspan="4">No notices yet.</td></tr>';
+  }catch(e){box.innerHTML='<tr><td colspan="4">'+esc(e.message)+'</td></tr>';}
+}
+window.addAdminNotice=async function(){
+  try{
+    const text=document.getElementById('noticeText').value.trim();
+    if(!text)throw new Error('Enter a notice.');
+    if(text.length>1000)throw new Error('Notice must be 1000 characters or less.');
+    const r=await api('POST','/api/notices',{audience:document.getElementById('noticeAudience').value,text});
+    msg('noticeAdminMsg',r.message,true);
+    document.getElementById('noticeText').value='';
+    await loadAdminNotices();
+  }catch(e){msg('noticeAdminMsg',e.message);}
+};
+window.deleteAdminNotice=async function(id){
+  if(!confirm('Delete this notice?'))return;
+  try{await api('DELETE','/api/notices/'+encodeURIComponent(id));await loadAdminNotices();}
+  catch(e){alert(e.message);}
 };
 
 /* ---------- exam modules manager ---------- */
