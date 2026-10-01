@@ -584,7 +584,7 @@ function loadAdminTestFormModules(){
   const sel=document.getElementById('admTestCategory'); if(!sel)return;
   api('GET','/api/modules').then(r=>{
     const mods=r.modules||[];
-    sel.innerHTML=mods.length?mods.map(m=>\`<option value="\${esc(m.name)}">\${esc(m.name)}</option>\`).join(''):'<option value="">No modules available</option>';
+    sel.innerHTML=mods.length?mods.map(m=>`<option value="${esc(m.name)}">${esc(m.name)}</option>`).join(''):'<option value="">No modules available</option>';
   }).catch(e=>{sel.innerHTML='<option value="">Could not load modules</option>';});
 }
 function addAdminQuestion(){
@@ -592,13 +592,14 @@ function addAdminQuestion(){
   const box=document.getElementById('admTestQuestions'), wrap=document.createElement('div');
   wrap.className='panel-card';
   wrap.style.cssText='margin:14px 0;padding:14px;border:1px dashed #d5dce6;box-shadow:none';
-  wrap.innerHTML=\`
-    <div class="row"><b>Question \${adminQuestionCount}</b><button type="button" class="danger-btn" onclick="this.closest('.panel-card').remove()">Remove</button></div>
+  wrap.innerHTML=`
+    <div class="row"><b>Question ${adminQuestionCount}</b><button type="button" class="danger-btn" onclick="this.closest('.panel-card').remove()">Remove</button></div>
     <div class="form-row"><label>Question</label><textarea class="adm-q-text" rows="2" maxlength="5000"></textarea></div>
     <div class="row"><div class="form-row" style="flex:1"><label>Option A</label><input class="adm-q-a"></div><div class="form-row" style="flex:1"><label>Option B</label><input class="adm-q-b"></div></div>
     <div class="row"><div class="form-row" style="flex:1"><label>Option C</label><input class="adm-q-c"></div><div class="form-row" style="flex:1"><label>Option D</label><input class="adm-q-d"></div></div>
     <div class="row"><div class="form-row" style="flex:1"><label>Correct Option</label><select class="adm-q-answer"><option>A</option><option>B</option><option>C</option><option>D</option></select></div><div class="form-row" style="flex:1"><label>Section / Subject</label><input class="adm-q-subject" value="General"></div><div class="form-row" style="flex:1"><label>Marks</label><input class="adm-q-marks" type="number" step="any" value="1"></div><div class="form-row" style="flex:1"><label>Negative</label><input class="adm-q-negative" type="number" step="any" value="0"></div></div>
-    <div class="form-row"><label>Explanation / Solution</label><textarea class="adm-q-explanation" rows="2" maxlength="5000"></textarea></div>\`;
+    <div class="form-row"><label>Explanation / Solution</label><textarea class="adm-q-explanation" rows="2" maxlength="5000"></textarea></div>
+  `;
   box.appendChild(wrap);
 }
 window.submitAdminTest=async function(){
@@ -635,7 +636,7 @@ async function loadAdminNotices(){
   const box=document.getElementById('adminNoticeTable'); if(!box)return;
   try{
     const {notices=[]}=await api('GET','/api/notices');
-    box.innerHTML=notices.length?notices.map(n=>\`<tr><td>\${n.audience==='both'?'Student + Teacher':n.audience==='student'?'Students':'Teachers'}</td><td style="white-space:pre-wrap;min-width:260px">\${esc(n.text)}</td><td>\${fmtDate(n.createdAt)}</td><td><button class="danger-btn" onclick="deleteAdminNotice('\${esc(n.id)}')">Delete</button></td></tr>\`).join(''):'<tr><td colspan="4">No notices yet.</td></tr>';
+    box.innerHTML=notices.length?notices.map(n=>`<tr><td>${n.audience==='both'?'Student + Teacher':n.audience==='student'?'Students':'Teachers'}</td><td style="white-space:pre-wrap;min-width:260px">${esc(n.text)}</td><td>${fmtDate(n.createdAt)}</td><td><button class="danger-btn" onclick="deleteAdminNotice('${esc(n.id)}')">Delete</button></td></tr>`).join(''):'<tr><td colspan="4">No notices yet.</td></tr>';
   }catch(e){box.innerHTML='<tr><td colspan="4">'+esc(e.message)+'</td></tr>';}
 }
 window.addAdminNotice=async function(){
