@@ -440,10 +440,10 @@ async function body(req) {
 }
 
 function isHttps(req){return process.env.NODE_ENV==='production'||String(req.headers['x-forwarded-proto']||'').split(',')[0].trim()==='https';}
-function cookieBase(res){return 'Path=/; HttpOnly; '+(isHttps(res.req)?'Secure; ':'')+'SameSite=Strict; Max-Age=43200';}
+function cookieBase(res){return 'Path=/; HttpOnly; '+(isHttps(res.req)?'Secure; ':'')+'SameSite=Lax; Max-Age=43200';}
 function setSessionCookie(res,token,portal){const name=portal==='admin'?'cem_admin_session':'cem_user_session';res.setHeader('Set-Cookie',name+'='+encodeURIComponent(token)+'; '+cookieBase(res));}
-function clearSessionCookie(res,portal){const base='Path=/; HttpOnly; '+(isHttps(res.req)?'Secure; ':'')+'SameSite=Strict; Max-Age=0';const names=portal==='admin'?['cem_admin_session']:portal==='student'?['cem_user_session']:['cem_admin_session','cem_user_session'];res.setHeader('Set-Cookie',names.map(n=>n+'=; '+base));}
-function csrfCookieBase(req){return 'Path=/; '+(isHttps(req)?'Secure; ':'')+'SameSite=Strict; Max-Age=43200';}
+function clearSessionCookie(res,portal){const base='Path=/; HttpOnly; '+(isHttps(res.req)?'Secure; ':'')+'SameSite=Lax; Max-Age=0';const names=portal==='admin'?['cem_admin_session']:portal==='student'?['cem_user_session']:['cem_admin_session','cem_user_session'];res.setHeader('Set-Cookie',names.map(n=>n+'=; '+base));}
+function csrfCookieBase(req){return 'Path=/; '+(isHttps(req)?'Secure; ':'')+'SameSite=Lax; Max-Age=43200';}
 function createCsrfToken(){const random=crypto.randomBytes(32).toString('base64url');const sig=crypto.createHmac('sha256',AUTH_SESSION_SECRET).update('csrf|'+random).digest('base64url');return random+'.'+sig;}
 function setCsrfCookie(res,token){res.setHeader('Set-Cookie',(res.getHeader('Set-Cookie')||[]).concat(['cem_csrf='+encodeURIComponent(token)+'; '+csrfCookieBase(res.req)]));}
 function validCsrfToken(token){const parts=String(token||'').split('.');if(parts.length!==2||!/^[A-Za-z0-9_-]{32,100}$/.test(parts[0]))return false;const expected=crypto.createHmac('sha256',AUTH_SESSION_SECRET).update('csrf|'+parts[0]).digest('base64url');return parts[1].length===expected.length&&crypto.timingSafeEqual(Buffer.from(parts[1]),Buffer.from(expected));}
@@ -534,7 +534,7 @@ async function route(req, res) {
   const url = new URL(req.url, 'http://localhost');
   const method = req.method;
   if (method==='OPTIONS') return send(res,204,{});
-  if (url.pathname==='/api/auth/csrf' && method==='GET') { const token=createCsrfToken(); setCsrfCookie(res,token); return send(res,200,{csrfToken:token}); }
+  if (url.pathname==='/api/auth/csrf' && method==='GET') { const existing=decodeURIComponent(String(parseCookies(req).cem_csrf||'')); const token=validCsrfToken(existing)?existing:createCsrfToken(); if(token!==existing) setCsrfCookie(res,token); return send(res,200,{csrfToken:token}); }
   if (url.pathname.startsWith('/api/') && method!=='GET' && url.pathname!=='/api/webhook') { rateLimit(req,'api-global',180,60000); validateCsrf(req); }
 
   if (url.pathname==='/api/config' && method==='GET') {
@@ -588,7 +588,14 @@ async function route(req, res) {
     try {
       const portal=String(req.headers['x-cem-portal']||'').toLowerCase();
       const roles=portal==='admin'?['admin']:portal==='student'?['student','teacher']:undefined;
-      const {user}=await currentUser(req,roles); return send(res,200,{user:publicUser(user)}); }
+      const {user,decoded}=await currentUser(req,roles);
+      // Refresh the stateless session cookie on every successful session check.
+      // This keeps the account alive across normal page refreshes and avoids
+      // losing a valid session simply because the original 12-hour cookie aged.
+      if(decoded.role==='admin') setSessionCookie(res,createAdminSession(decoded.uid),'admin');
+      else setSessionCookie(res,createUserSession(decoded.uid,decoded.email,decoded.role,decoded.name),'student');
+      return send(res,200,{user:publicUser(user)});
+    }
     catch(e){ if(errorStatus(e)===401) return send(res,200,{user:null}); throw e; }
   }
 
