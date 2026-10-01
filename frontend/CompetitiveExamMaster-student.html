@@ -486,8 +486,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   <div class="panel-card" style="margin-top:18px">
     <h3>Change Password</h3>
     <div class="form-row"><label>Current Password</label><input id="pwCurrent" type="password"></div>
-    <div class="form-row"><label>New Password</label><input id="pwNew" type="password"></div>
-    <div class="form-row"><label>Confirm New Password</label><input id="pwConfirm" type="password"></div>
+    <div class="form-row"><label>New Password</label><input id="pwNew" type="password" minlength="8" placeholder="At least 8 characters"></div>
+    <div class="form-row"><label>Confirm New Password</label><input id="pwConfirm" type="password" minlength="8" placeholder="Re-enter password"></div>
     <button class="primary-btn" onclick="changePassword()">Change Password</button>
     <p id="pwMsg"></p>
   </div>
@@ -1189,9 +1189,12 @@ async function loadPremium(){
     const mine = await api('GET','/api/subscription/mine');
     premiumData = { plans, payment, mine, gatewayReady };
     const pending = mine.requests.find(r=>r.status==='pending');
+    const paused = mine.requests.find(r=>r.status==='paused');
     status.innerHTML = mine.active
       ? `<h3>✅ Premium active</h3><p>${esc(mine.planName)} plan • valid until <b>${fmtDate(mine.expiresAt)}</b>. You can open every paid test series. Renewing adds time on top of what is left.</p>`
-      : `<h3>You are on the Free plan</h3><p class="muted">Get Premium once and open <b>all paid test series</b> — no per-test payment.</p>`;
+      : paused
+        ? `<h3>⏸ Premium paused</h3><p class="muted">An Administrator has paused your Premium access. Your remaining Premium time is preserved until access is resumed.</p>`
+        : `<h3>You are on the Free plan</h3><p class="muted">Get Premium once and open <b>all paid test series</b> — no per-test payment.</p>`;
     if(gatewayError) status.innerHTML += `<p class="muted">${esc(gatewayError)} You can still use manual UPI if it is configured below.</p>`;
     if(pending) status.innerHTML += `<p>⏳ Your payment of ₹${pending.amount} (${esc(pending.planName)}) is waiting for Admin verification.</p>`;
     const savedPayment=readPendingGatewayPayment();
