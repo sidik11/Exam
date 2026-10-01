@@ -173,7 +173,7 @@ main{max-width:1240px;margin:auto;padding:30px 28px 44px}.section>h2{font-size:3
   </div>
   <div class="panel-card" style="margin-top:18px">
     <div class="row" style="align-items:center;justify-content:space-between"><h3>Teacher Registrations</h3><button class="secondary" type="button" onclick="renderAdmin()">Refresh registrations</button></div>
-    <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Subject</th><th>Status</th><th>Module access</th><th>Action</th></tr></thead><tbody id="teacherTable"></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>Mobile</th><th>Subject</th><th>Status</th><th>Action</th></tr></thead><tbody id="teacherTable"></tbody></table></div>
   </div>
   <div class="panel-card" style="margin-top:18px">
     <div class="row" style="align-items:center;justify-content:space-between"><h3>Student Accounts</h3><button class="secondary" type="button" onclick="renderAdmin()">Refresh accounts</button></div>
@@ -411,13 +411,6 @@ async function refreshUser(){
 }
 
 /* ---------- admin: users & teachers ---------- */
-function moduleAccessCell(x){
-  if(x.status!=='approved') return '<span class="muted">—</span>';
-  return x.canManageModules
-    ? `<span class="status-approved">Allowed</span> <button class="warn-btn" data-id="${esc(x.id||x.uid)}" onclick="setModuleAccess(this.dataset.id,false)">Revoke</button>`
-    : `<span class="muted">Not allowed</span> <button class="success-btn" data-id="${esc(x.id||x.uid)}" onclick="setModuleAccess(this.dataset.id,true)">Allow</button>`;
-}
-
 window.approveTeacher = async function(id, approved){
   try{ await api('POST', '/api/admin/teachers/'+encodeURIComponent(id)+'/approve', { approved }); renderAdmin(); }
   catch(e){ alert(e.message); }
@@ -429,10 +422,6 @@ window.blockUser = async function(id, blocked){
 window.deleteUser = async function(id, name){
   if(!confirm(`Delete the account "${name}"? This can't be undone.`)) return;
   try{ await api('DELETE', '/api/admin/users/'+encodeURIComponent(id)); renderAdmin(); }
-  catch(e){ alert(e.message); }
-};
-window.setModuleAccess = async function(id, allowed){
-  try{ await api('POST', '/api/admin/teachers/'+encodeURIComponent(id)+'/module-access', { allowed }); renderAdmin(); }
   catch(e){ alert(e.message); }
 };
 
@@ -449,7 +438,7 @@ async function renderAdmin(){
       const approveBtns = x.status==='pending' ? `<button class="success-btn" data-id="${id}" onclick="approveTeacher(this.dataset.id,true)">Approve</button> <button class="danger-btn" data-id="${id}" onclick="approveTeacher(this.dataset.id,false)">Reject</button> ` : '';
       const blockBtn = x.blocked ? `<button class="success-btn" data-id="${id}" onclick="blockUser(this.dataset.id,false)">Unblock</button>` : `<button class="warn-btn" data-id="${id}" onclick="blockUser(this.dataset.id,true)">Block</button>`;
       const actions=`${approveBtns}${blockBtn} <button class="danger-btn" data-id="${id}" data-name="${esc(x.name)}" onclick="deleteUser(this.dataset.id,this.dataset.name)">Delete</button>`;
-      return `<tr><td>${esc(x.name)}</td><td>${esc(x.email)}</td><td>${esc(x.mobile||'')}</td><td>${esc(x.subject||'')}</td><td class="status-${esc(statusLabel)}">${esc(statusLabel)}</td><td>${moduleAccessCell({...x,id})}</td><td>${actions}</td></tr>`;
+      return `<tr><td>${esc(x.name)}</td><td>${esc(x.email)}</td><td>${esc(x.mobile||'')}</td><td>${esc(x.subject||'')}</td><td class="status-${esc(statusLabel)}">${esc(statusLabel)}</td><td>${actions}</td></tr>`;
     }).join('') || '<tr><td colspan="7">No teacher registrations.</td></tr>';
 
     document.getElementById('studentTable').innerHTML = students.map(x=>{
@@ -459,7 +448,7 @@ async function renderAdmin(){
       return `<tr><td>${esc(x.name)}</td><td>${esc(x.email)}</td><td>${esc(x.mobile||'')}</td><td class="status-${esc(statusLabel)}">${esc(statusLabel)}</td><td>${blockBtn} <button class="danger-btn" data-id="${id}" data-name="${esc(x.name)}" onclick="deleteUser(this.dataset.id,this.dataset.name)">Delete</button></td></tr>`;
     }).join('') || '<tr><td colspan="5">No students registered.</td></tr>';
   }catch(e){
-    document.getElementById('teacherTable').innerHTML = `<tr><td colspan="7">${esc(e.message)}</td></tr>`;
+    document.getElementById('teacherTable').innerHTML = `<tr><td colspan="6">${esc(e.message)}</td></tr>`;
     document.getElementById('studentTable').innerHTML = `<tr><td colspan="5">${esc(e.message)}</td></tr>`;
   }
 }
@@ -518,7 +507,7 @@ async function loadSubscriptionAdmin(){
     document.getElementById('planTable').innerHTML = plans.map(p=>`<tr><td>${esc(p.name)}</td><td>${p.days}</td><td>₹${p.price}</td><td><button class="secondary" onclick="deletePlanAdmin('${esc(p.id)}')">🗑 Remove</button></td></tr>`).join('') || '<tr><td colspan="4">No plans yet.</td></tr>';
     const { subscriptions } = await api('GET','/api/subscription');
     document.getElementById('subTable').innerHTML = subscriptions.map(s=>{
-      const status=s.status==='approved'?'✅ Until '+fmtDate(s.expiresAt):s.status==='paused'?'⏸ Paused':'❌ Rejected';
+      const status=s.status==='approved'?'✅ Until '+fmtDate(s.expiresAt):s.status==='paused'?'⏸ Paused':s.status==='pending'?'⏳ Pending':'❌ Rejected';
       const action=s.status==='pending'?`<button class="success-btn" onclick="decideSub('${s.id}',true)">Approve</button> <button class="danger-btn" onclick="decideSub('${s.id}',false)">Reject</button>`:s.status==='approved'?`<button class="warn-btn" onclick="pausePremium('${s.id}')">⏸ Pause</button>`:s.status==='paused'?`<button class="success-btn" onclick="resumePremium('${s.id}')">▶ Resume</button>`:'';
       return `<tr><td>${esc(s.studentName)}<br><span class="muted">${esc(s.studentEmail)}</span></td><td>${esc(s.planName)} (${s.days}d)</td><td>₹${s.amount}</td><td>${esc(s.txnId)}</td><td>${fmtDate(s.requestedAt)}</td><td>${status}</td><td>${action}</td></tr>`;
     }).join('') || '<tr><td colspan="7">No payment requests yet.</td></tr>';
