@@ -625,7 +625,7 @@ async function loadAdminNotices(){
   const box=document.getElementById('adminNoticeTable'); if(!box)return;
   try{
     const {notices=[]}=await api('GET','/api/notices');
-    box.innerHTML=notices.length?notices.map(n=>`<tr><td>${n.audience==='both'?'Student + Teacher':n.audience==='student'?'Students':'Teachers'}</td><td style="white-space:pre-wrap;min-width:260px">${esc(n.text)}</td><td>${fmtDate(n.createdAt)}</td><td><button class="danger-btn" onclick="deleteAdminNotice('${esc(n.id)}')">Delete</button></td></tr>`).join(''):'<tr><td colspan="4">No notices yet.</td></tr>';
+    box.innerHTML=notices.length?notices.map(n=>`<tr><td>${n.audience==='both'?'Student + Teacher':n.audience==='student'?'Students':'Teachers'}</td><td style="white-space:pre-wrap;min-width:260px">${esc(n.text)}</td><td>${fmtDate(n.createdAt)}</td><td>${n.id==='notice-default'?'<span class="muted">Default</span>':`<button class="danger-btn" onclick="deleteAdminNotice('${esc(n.id)}')">Delete</button>`}</td></tr>`).join(''):'<tr><td colspan="4">No notices yet.</td></tr>';
   }catch(e){box.innerHTML='<tr><td colspan="4">'+esc(e.message)+'</td></tr>';}
 }
 window.addAdminNotice=async function(){
@@ -706,6 +706,7 @@ async function refreshModuleViews(){
     const n = m.testCount || 0;
     return `<tr><td>${esc(m.icon||'📘')} <b>${esc(m.name)}</b></td><td>${esc(m.description||'')}</td><td>${n}</td><td>${m.createdBy==='system' ? 'Default' : esc(m.createdBy||'')}</td><td><button class="danger-btn" data-id="${esc(m.id)}" data-name="${esc(m.name)}" data-count="${n}" onclick="deleteModule(this,'adm')">Delete</button></td></tr>`;
   }).join('') || '<tr><td colspan="5">No exam modules yet. Add one above.</td></tr>';
+  if(typeof loadAdminTestFormModules==='function') loadAdminTestFormModules();
 }
 
 window.addModule = async function(p){
