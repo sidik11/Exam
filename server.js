@@ -268,7 +268,11 @@ async function ensureSeeds() {
   if (!(await get('examAttempts'))) await set('examAttempts', {});
   if (!(await get('webhookEvents'))) await set('webhookEvents', {});
   if (!(await get('passwordResets'))) await set('passwordResets', {});
-  if (!(await get('notices'))) await set('notices', {['notice-default']:{id:'notice-default',audience:'both',text:'Welcome ... Have a good day',createdBy:'system',createdAt:nowIso()}});
+  const seededNotices = (await get('notices')) || {};
+  if (!seededNotices['notice-default']) {
+    seededNotices['notice-default']={id:'notice-default',audience:'both',text:'Welcome ... Have a good day',createdBy:'system',createdAt:nowIso()};
+    await set('notices',seededNotices);
+  }
   if (!(await get('scoreIndex'))) {
     const subs=await allMap('submissions'),idx={};
     for(const x of Object.values(subs)){if(!x?.testId||!x?.id)continue;(idx[x.testId] ||= {})[x.id]={score:Number(x.score)||0,userId:x.userId||'',submittedAt:x.submittedAt||nowIso()};}
@@ -707,6 +711,7 @@ async function route(req, res) {
     await requireRole(req,'admin');
     const notices=await allMap('notices'), id=decodeURIComponent(mNotice[1]);
     if(!notices[id]) throw new Error('Notice not found.');
+    if(id==='notice-default') throw new Error('The default notice cannot be deleted.');
     delete notices[id]; await set('notices',notices);
     return send(res,200,{message:'Notice deleted.'});
   }
