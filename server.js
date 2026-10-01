@@ -711,21 +711,15 @@ async function route(req, res) {
     return send(res,200,{message:'Notice deleted.'});
   }
 
-  const mTeacher=url.pathname.match(/^\/api\/admin\/teachers\/([^/]+)\/(approve|module-access)$/);
+  const mTeacher=url.pathname.match(/^\/api\/admin\/teachers\/([^/]+)\/approve$/);
   if(mTeacher && method==='POST'){
     await requireRole(req,'admin');
-    const id=decodeURIComponent(mTeacher[1]), action=mTeacher[2], b=await body(req);
+    const id=decodeURIComponent(mTeacher[1]), b=await body(req);
     const u=await get('users/'+id); if(!u || u.role!=='teacher') throw new Error('Teacher not found.');
-    if(action==='approve'){
-      u.status=!!b.approved?'approved':'rejected';
-      await set('users/'+id,u);
-      if(u.status==='approved') await sendEmail(u.email,'Teacher account approved',emailShell('Teacher account approved','<p>Your teacher account has been approved. You can now log in and publish test series.</p>'));
-    } else {
-      if(u.status!=='approved') throw new Error('Approve this teacher before giving module access.');
-      u.canManageModules=!!b.allowed;
-      await set('users/'+id,u);
-    }
-    return send(res,200,{message:action==='approve'?('Teacher '+(u.status==='approved'?'approved':'rejected')+'.'):(u.canManageModules?'Module access granted.':'Module access removed.'),user:publicUser(u)});
+    u.status=!!b.approved?'approved':'rejected';
+    await set('users/'+id,u);
+    if(u.status==='approved') await sendEmail(u.email,'Teacher account approved',emailShell('Teacher account approved','<p>Your teacher account has been approved. You can now log in and use the Teacher Dashboard.</p>'));
+    return send(res,200,{message:'Teacher '+(u.status==='approved'?'approved':'rejected')+'.',user:publicUser(u)});
   }
 
   const mBlock=url.pathname.match(/^\/api\/admin\/users\/([^/]+)\/block$/);
