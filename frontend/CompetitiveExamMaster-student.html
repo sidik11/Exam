@@ -1312,7 +1312,7 @@ window.choosePlan = function(id, forceManual){
         <div class="muted">Amount to pay</div><div style="font-size:36px;font-weight:800">₹${p.price}</div>
         <div class="muted">${p.days} days of access to all paid test series</div>
       </div>
-      <button style="width:100%;padding:14px;font-size:16px" onclick="payWithGateway('${esc(p.id)}')">🔒 Pay ₹${p.price} securely</button>
+      <button style="width:100%;padding:14px;font-size:16px;background:#dc2626;color:#fff;border:0;border-radius:10px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(220,38,38,.22)" onmouseover="this.style.background='#b91c1c'" onmouseout="this.style.background='#dc2626'" onclick="payWithGateway('${esc(p.id)}')">🔒 Pay ₹${p.price} securely</button>
       <p class="muted" style="text-align:center">UPI • Cards • Net banking • Wallets — Premium activates after Razorpay confirms payment.</p>
       <p class="muted" style="text-align:center">Razorpay Test Mode is enabled for trial payments; test transactions do not charge real money.</p>
       <p id="premMsg" class="muted" style="text-align:center"></p>
