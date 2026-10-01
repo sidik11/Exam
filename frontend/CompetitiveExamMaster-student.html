@@ -259,7 +259,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     <p>Build confidence with focused practice, timed mock exams, and clear results that help you decide what to work on next.</p>
     <div class="hero-actions">
       <button class="hero-primary" onclick="showTests(null)">Explore test series <span aria-hidden="true">→</span></button>
-      <button class="hero-secondary" onclick="showSection('auth');showAuthTab('register')">Create a free account</button>
+      <button id="createAccountHeroBtn" class="hero-secondary" onclick="showSection('auth');showAuthTab('register')">Create a free account</button>
     </div>
   </div>
   <div class="hero-visual" aria-hidden="true">
@@ -278,6 +278,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   <div class="value-item"><span class="value-icon value-violet">↗</span><div><b>Clear results</b><small>See where to focus</small></div></div>
   <div class="value-item"><span class="value-icon value-amber">✦</span><div><b>One place to prepare</b><small>Explore all your series</small></div></div>
 </div>
+<div id="studentNoticePanel" class="notice hidden" style="margin-top:18px"></div>
 <div class="home-section-heading"><div><span class="section-eyebrow">PICK UP WHERE YOU ARE</span><h2>Find your next practice</h2></div><span class="muted">Choose a module to see available test series.</span></div>
 <input class="search" placeholder="🔍 Search test series..." oninput="filterCards(this.value)">
 <div class="grid" id="examGrid"><p class="muted">Loading exam modules…</p></div>
@@ -423,8 +424,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
         <div class="form-row"><label>Full name</label><input id="studentName" placeholder="Full name"></div>
         <div class="form-row"><label>Mobile Number</label><input id="studentMobile" type="tel" placeholder="e.g. 9876543210"></div>
         <div class="form-row"><label>Email</label><input id="studentEmail" type="email" placeholder="Email"></div>
-        <div class="form-row"><label>Password</label><input id="studentPassword" type="password" placeholder="At least 6 characters" autocomplete="new-password" minlength="6"></div>
-        <div class="form-row"><label>Confirm Password</label><input id="studentConfirmPassword" type="password" placeholder="Re-enter password" autocomplete="new-password" minlength="6"></div>
+        <div class="form-row"><label>Password</label><input id="studentPassword" type="password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8"></div>
+        <div class="form-row"><label>Confirm Password</label><input id="studentConfirmPassword" type="password" placeholder="Re-enter password" autocomplete="new-password" minlength="8"></div>
         <button class="primary-btn" style="width:100%" onclick="registerStudent()">Register as Student</button>
         <p id="studentMsg"></p>
       </div>
@@ -435,8 +436,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
         <div class="form-row"><label>Mobile Number</label><input id="teacherMobile" type="tel" placeholder="e.g. 9876543210"></div>
         <div class="form-row"><label>Email</label><input id="teacherEmail" type="email" placeholder="Email"></div>
         <div class="form-row"><label>Subject / Expertise</label><input id="teacherSubject" placeholder="e.g. Mathematics"></div>
-        <div class="form-row"><label>Password</label><input id="teacherPassword" type="password" placeholder="At least 6 characters" autocomplete="new-password" minlength="6"></div>
-        <div class="form-row"><label>Confirm Password</label><input id="teacherConfirmPassword" type="password" placeholder="Re-enter password" autocomplete="new-password" minlength="6"></div>
+        <div class="form-row"><label>Password</label><input id="teacherPassword" type="password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8"></div>
+        <div class="form-row"><label>Confirm Password</label><input id="teacherConfirmPassword" type="password" placeholder="Re-enter password" autocomplete="new-password" minlength="8"></div>
         <button class="primary-btn" style="width:100%" onclick="registerTeacher()">Register as Teacher</button>
         <p id="teacherMsg"></p>
       </div>
@@ -496,76 +497,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   <h2>Teacher Dashboard</h2>
   <div class="panel-card">
     <p id="teacherWelcome"></p>
+    <p class="muted">Test series and exam modules are managed by the Administrator. You can view notices and use your account settings here.</p>
   </div>
-
-  <div class="panel-card" id="teacherModules" style="margin-top:18px"></div>
-
   <div class="panel-card" style="margin-top:18px">
-    <h3>➕ Add Test Series</h3>
-    <div class="form-row"><label>Test Series Title</label><input id="ntTitle" placeholder="e.g. OSSSC Combined Mock 1"></div>
-    <div class="form-row"><label>Exam Module</label>
-      <select id="ntCategory">
-        <option value="">Loading modules…</option>
-      </select>
-      <p class="muted" style="margin:4px 0 0">This decides which module's Test Series list it appears in — an SSC test won't show under Banking.</p>
-    </div>
-    <div class="form-row"><label>Exam Name (specific)</label><input id="ntExam" placeholder="e.g. SSC CGL, or OSSSC for Odisha" value="Competitive Exam"></div>
-
-    <div class="form-row">
-      <label>Exam Language(s) — comma separated. First one is the primary language.</label>
-      <input id="ntLanguages" placeholder="e.g. English, Hindi" value="English" onchange="syncSections()">
-      <p class="muted" style="margin:4px 0 0">Add a second (or more) language to let students pick their exam language before starting. Set this before adding questions so the translation fields below match — students will only be offered a language choice when more than one is listed here.</p>
-    </div>
-
-    <div class="form-row">
-      <label>Sections of the exam (e.g. Mathematics, G.K, Current Affairs, English)</label>
-      <div id="ntPresetChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
-      <div class="row" style="flex-wrap:nowrap">
-        <input id="ntNewSection" style="flex:1" placeholder="Type a section name, e.g. Reasoning" onkeydown="if(event.key==='Enter'){event.preventDefault();addSectionFromInput()}">
-        <button type="button" class="secondary" onclick="addSectionFromInput()">➕ Add Section</button>
-      </div>
-      <input id="ntSubjects" type="hidden">
-      <p class="muted" style="margin:4px 0 0">Add one section per subject. Students will see these as section tabs during the mock test. Add your questions inside each section below; you can set Marks / Negative marks per section.</p>
-    </div>
-
-    <div class="row">
-      <div class="form-row" style="flex:1"><label>Type</label>
-        <select id="ntType">
-          <option value="FREE">Free</option><option value="PAID">Premium (paid users only)</option>
-        </select>
-      </div>
-      <div class="form-row" style="flex:1"><label>Duration (minutes)</label><input id="ntDuration" type="number" min="1" value="30"></div>
-      <div class="form-row" style="flex:1"><label>Attempts allowed</label>
-        <select id="ntAttempts"><option value="reattempt">🔁 Reattempt allowed</option><option value="once">🔒 Only one attempt</option></select>
-      </div>
-    </div>
-
-    <div class="form-row" style="border:1px dashed #ccc;border-radius:10px;padding:12px">
-      <label>📥 Import Questions from Excel (.xlsx / .xls / .csv)</label>
-      <p class="muted" style="margin:0 0 6px">
-        Columns, in this order: <b>Question, OptionA, OptionB, OptionC, OptionD, Answer (A/B/C/D), Marks, Negative, Subject</b>.
-        The first row is treated as a header and skipped. <b>Subject = section name</b> — sections are created automatically
-        (e.g. Odia, English, Math…); leave blank to use the first section (or "General"). One row = one question, any number of rows.
-        <b>Needs an internet connection</b> the first time (loads a parsing library from a CDN).
-      </p>
-      <input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
-      <div class="row" style="margin-top:6px">
-        <button type="button" class="secondary" onclick="importExcel()">Import into Question Builder</button>
-        <span id="excelMsg" class="muted"></span>
-      </div>
-    </div>
-
-    <p id="ntSecEmpty" class="muted" style="border:1px dashed #ccc;border-radius:10px;padding:14px">No sections yet. Add a section above (or import an Excel file) and then add questions inside it.</p>
-    <div id="ntQuestions"></div>
-    <div class="row" style="margin-top:14px">
-      <button class="primary-btn" onclick="submitNewTest()">Publish Test Series</button>
-    </div>
-    <p id="ntMsg"></p>
-  </div>
-
-  <div class="panel-card" style="margin-top:18px">
-    <h3>My Test Series</h3>
-    <div id="myTests"><p class="muted">Loading…</p></div>
+    <h3>📢 Notices</h3>
+    <div id="teacherNoticePanel" class="notice hidden"></div>
   </div>
 </section>
 
@@ -602,7 +538,8 @@ function showSection(id){
   if(id==='premium') loadPremium();
   if(id==='admin') { renderAdmin(); loadSettingsIntoForm(); loadPurchaseRequests(); mountModuleManager('adminModules','adm'); }
   if(id==='tests') loadTests();
-  if(id==='teacher') { loadMyTests(); loadTeacherModules(); }
+  if(id==='teacher') loadNotices('teacher');
+  if(id==='home' && currentUser && (currentUser.role==='student'||currentUser.role==='teacher')) loadNotices('student');
   if(id==='account') loadAccount();
 }
 function showTests(category){
@@ -800,6 +737,17 @@ window.loginUser = async function(){
 
 window.logout=async function(){try{await api('POST','/api/auth/logout');}catch(_){}currentUser=null;updateUI();showSection('home');};
 
+async function loadNotices(target){
+  const box=document.getElementById(target==='teacher'?'teacherNoticePanel':'studentNoticePanel');
+  if(!box || !currentUser || !['student','teacher'].includes(currentUser.role)) return;
+  try{
+    const {notices=[]}=await api('GET','/api/notices');
+    if(!notices.length){box.classList.add('hidden');box.innerHTML='';return;}
+    box.classList.remove('hidden');
+    box.innerHTML='<b>📢 Notice</b><div style="margin-top:6px">'+notices.slice(0,5).map(n=>'<div style="padding:8px 0;border-top:1px solid rgba(122,91,0,.18);white-space:pre-wrap">'+esc(n.text)+'</div>').join('')+'</div>';
+  }catch(_){box.classList.add('hidden');}
+}
+
 function updateUI(){
   ['adminNav','teacherNav','logoutNav','accountNav','premiumNav'].forEach(id=>document.getElementById(id)?.classList.add('hidden'));
   document.getElementById('authNav')?.classList.remove('hidden');
@@ -810,6 +758,7 @@ function updateUI(){
     if(currentUser.role==='admin') document.getElementById('adminNav')?.classList.remove('hidden');
     if(currentUser.role==='teacher') document.getElementById('teacherNav')?.classList.remove('hidden');
     if(currentUser.role==='student') document.getElementById('premiumNav')?.classList.remove('hidden');
+    document.getElementById('createAccountHeroBtn')?.classList.toggle('hidden', !!currentUser);
     const w=document.getElementById('teacherWelcome');
     if(w && currentUser.role==='teacher') w.textContent='Welcome, '+currentUser.name+' — '+(currentUser.subject||'')+'.';
   }
@@ -821,7 +770,7 @@ window.requestPasswordReset=async function(){
   try{
     const email=document.getElementById('forgotEmail').value.trim();if(!email)throw new Error('Enter your email address.');
     const r=await api('POST','/api/auth/forgot/request',{email});
-    document.getElementById('forgotBox').innerHTML='<input id="forgotEmail" type="hidden" value="'+esc(email)+'"><div class="form-row"><label>Reset code</label><input id="forgotOtp" inputmode="numeric" maxlength="6" placeholder="6-digit code"></div><div class="form-row"><label>New password</label><input id="forgotNewPassword" type="password" placeholder="At least 8 characters"></div><button class="secondary" onclick="confirmPasswordReset()">Reset Password</button><p id="forgotMsg"></p>';
+    document.getElementById('forgotBox').innerHTML='<input id="forgotEmail" type="hidden" value="'+esc(email)+'"><div class="form-row"><label>Reset code</label><input id="forgotOtp" inputmode="numeric" maxlength="6" placeholder="6-digit code"></div><div class="form-row"><label>New password</label><input id="forgotNewPassword" type="password" placeholder="At least 8 characters" minlength="8"></div><button class="secondary" onclick="confirmPasswordReset()">Reset Password</button><p id="forgotMsg"></p>';
     msg('forgotMsg',r.message,true);
   }catch(e){msg('forgotMsg',authError(e));}
 };
@@ -1176,12 +1125,19 @@ async function loadTests(){
     const attemptedSet = new Set(attemptedIds||[]);
     document.getElementById('testsHint').textContent = tests.length + ' test series available';
     grid.innerHTML = tests.map(t => {
-      const startBtn = t => (t.attemptPolicy==='once' && attemptedSet.has(t.id)) ? `<button onclick="viewSolution('${t.id}')">📖 View Solution</button>` : `<button onclick="startTest('${t.id}')">Start Test</button>` + solBtn(t);
-      const solBtn = t => attemptedSet.has(t.id) ? ` <button class="secondary" onclick="viewSolution('${t.id}')">📖 Solution</button>` : '';
+      const attempted = attemptedSet.has(t.id);
+      const resultBtn = attempted ? `<button class="secondary" onclick="viewSolution('${t.id}')">📊 View the Result</button>` : '';
       let action;
+      if(attempted){
+        action = t.attemptPolicy==='reattempt'
+          ? `<button onclick="startTest('${t.id}')">🔄 Re-attempt</button> ${resultBtn}`
+          : resultBtn;
+      } else {
+        action = `<button onclick="startTest('${t.id}')">Start Test</button>`;
+      }
       if(t.type === 'paid' && currentUser && currentUser.role === 'student' && !premiumActive){
-        action = `<button class="secondary" onclick="showSection('premium')">🔒 Unlock with Premium</button>` + solBtn(t);
-      } else action = startBtn(t);
+        action = `<button class="secondary" onclick="showSection('premium')">🔒 Unlock with Premium</button>` + resultBtn;
+      }
       return `
       <div class="card">
         <h3>${t.type==='paid' ? '⭐' : '🆓'} ${esc(t.title)}</h3>
@@ -2047,6 +2003,7 @@ async function loadMyTests(){
 
 async function initializeAuthSession(){
 const user=await refreshUser();
+  document.getElementById('createAccountHeroBtn')?.classList.toggle('hidden', !!user);
   showSection('home');
   if(user?.role==='student')retryPendingGatewayPayment(true);
 }
