@@ -506,22 +506,35 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 </section>
 
 </main>
-<footer id="siteFooter">Competitive Exam Master<br><a href="CompetitiveExamMaster-admin.html" style="color:inherit">🛡️ Admin Panel</a></footer>
+<footer id="siteFooter">Competitive Exam Master</footer>
 
 <script>
 
-async function getCsrfToken(){
-  if(window.__cemCsrfToken) return window.__cemCsrfToken;
+async function getCsrfToken(force=false){
+  if(!force && window.__cemCsrfToken) return window.__cemCsrfToken;
   const r=await fetch('/api/auth/csrf',{method:'GET',credentials:'same-origin',cache:'no-store'});
   const data=await r.json().catch(()=>({}));
-  if(!r.ok||!data.csrfToken) throw new Error('Security token initialization failed. Refresh the page.');
-  window.__cemCsrfToken=data.csrfToken; return data.csrfToken;
+  if(!r.ok||!data.csrfToken) throw new Error('Security token initialization failed. Please reload the page.');
+  window.__cemCsrfToken=data.csrfToken;
+  return data.csrfToken;
 }
 async function api(method,url,body){
-  const headers={'Content-Type':'application/json','X-CEM-Portal':'student'};
-  if(method!=='GET'&&method!=='HEAD'&&method!=='OPTIONS') headers['X-CSRF-Token']=await getCsrfToken();
-  const r=await fetch(url,{method,headers,credentials:'same-origin',body:body===undefined?undefined:JSON.stringify(body)});
-  const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||data.message||'Request failed.');return data;
+  const isWrite=!['GET','HEAD','OPTIONS'].includes(method);
+  let csrf=isWrite?await getCsrfToken():null;
+  for(let attempt=0;attempt<2;attempt++){
+    const headers={'Content-Type':'application/json','X-CEM-Portal':'student'};
+    if(isWrite) headers['X-CSRF-Token']=csrf;
+    const r=await fetch(url,{method,headers,credentials:'same-origin',body:body===undefined?undefined:JSON.stringify(body)});
+    const data=await r.json().catch(()=>({}));
+    if(r.status===403 && isWrite && /CSRF validation failed/i.test(String(data.error||'')) && attempt===0){
+      window.__cemCsrfToken=null;
+      csrf=await getCsrfToken(true);
+      continue;
+    }
+    if(!r.ok) throw new Error(data.error||data.message||'Request failed.');
+    return data;
+  }
+  throw new Error('Request failed.');
 }
 function esc(value){const s=String(value??'');return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function msg(id,text,ok=false){const el=document.getElementById(id);if(!el)return;el.textContent=String(text||'');el.className=ok?'success':'error';}
