@@ -729,7 +729,7 @@ function showSection(id){
   if(id==='premium') loadPremium();
   if(id==='admin') { renderAdmin(); loadSettingsIntoForm(); loadPurchaseRequests(); mountModuleManager('adminModules','adm'); }
   if(id==='tests') loadTests();
-  if(id==='teacher') loadNotices('teacher');
+  if(id==='teacher') { loadMyTests(); loadTeacherModules(); loadNotices('teacher'); }
   if(id==='home' && currentUser && (currentUser.role==='student'||currentUser.role==='teacher')) loadNotices('student');
   if(id==='account') loadAccount();
 }
