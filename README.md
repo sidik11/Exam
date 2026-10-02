@@ -1,124 +1,78 @@
 # Competitive Exam Master
 
-This version uses:
+Production-oriented online competitive-exam platform.
 
-- Firebase Authentication for student/teacher/admin authentication.
-- Firebase Realtime Database for users, admins, modules, exams, questions, attempts, results, subscriptions, purchases and settings.
-- Gmail API for Admin OTP and subscription/payment emails.
-- Razorpay Test Mode for online Premium payments.
-- Node.js backend for authorization and all protected database operations.
-- No Firebase Storage is used.
+Architecture
+- Node.js backend in server.js
+- Firebase Realtime Database is the server-side data store.
+- Firebase Authentication is not used.
+- Student/teacher/admin authentication is handled by the application.
+- Passwords are stored only as salted scrypt hashes.
+- Sessions use secure HttpOnly cookies.
+- Gmail API sends Admin OTP, password-reset OTP and application emails.
+- Razorpay Test Mode is integrated directly into the main app server.
+- Manual UPI payment supports UPI ID + uploaded QR code + Admin verification.
+- Exam submissions use per-attempt records and atomic one-attempt locks.
+- Student post-exam ratings and feedback are stored server-side.
+- RTDB rules are locked down because the backend uses the Firebase Admin SDK.
 
-## Requirements
-
+Requirements
 - Node.js 22+
-- Firebase project with Email/Password Authentication and Realtime Database enabled.
-- Firebase Admin service-account credentials.
-- Gmail API OAuth credentials with a refresh token and `gmail.send` scope.
-- Razorpay Test Mode keys for online payment testing.
+- Firebase project with Realtime Database enabled
+- Firebase Admin service-account credentials
+- Gmail API OAuth credentials with a refresh token and send permission
+- Razorpay Test Mode credentials for online payment testing
 
-## First local setup
+Firebase Authentication does not need to be enabled for this application.
 
-From the repository root:
-
-```powershell
-git pull origin main
+Setup
 npm install
 Copy-Item .env.example .env
-```
-
-Fill `.env` with your Firebase and Gmail values, plus Razorpay **Test Mode** credentials. The Razorpay Key ID must begin with `rzp_test_`; live keys are intentionally not accepted by this trial checkout. Keep the Key Secret server-side in `.env`.
-
-Admin login uses a fixed Gmail address:
-
-```text
-mjdeveloperodisha@gmail.com
-```
-
-The Admin panel asks for this email and sends a 6-digit OTP through the configured Gmail API. The OTP expires after 10 minutes and is limited to five verification attempts. No Admin password is entered in the Admin panel.
-
-The backend still ensures the Firebase Auth/RTDB admin profile exists so the authenticated Admin session can use protected Admin APIs.
-
-## Start the main server
-
-```powershell
 npm start
-```
 
-Open:
+Open http://localhost:3000/student and http://localhost:3000/admin.
 
-- http://localhost:3000/student
-- http://localhost:3000/admin
+For production, configure a strong AUTH_SESSION_SECRET (32+ random characters) and keep all service-account, Gmail and Razorpay secrets outside Git.
 
-The server also exposes `/api/health`.
+Authentication
+Student and teacher registration is handled by the backend and stored in RTDB. Login checks the password hash and creates an HttpOnly session cookie. Teachers remain pending until an Admin approves them.
+Admin login uses a 6-digit OTP delivered through Gmail API. OTPs expire and are rate-limited.
+Forgot-password uses a Gmail OTP. The reset code is short-lived and rate-limited.
 
-## Premium payment setup
+Payments
+Razorpay is integrated into the main server.js; the separate payment-server directory has been removed.
+Online flow: server creates the order using the server-side plan price, Razorpay Checkout handles payment, the server verifies the signature and then checks order ID, amount, currency and capture status before activating Premium.
+Razorpay webhook processing provides server-to-server confirmation and duplicate-event protection.
+Use Razorpay Test Mode while developing. The Key ID must start with rzp_test_. Configure the webhook at https://YOUR-PUBLIC-SERVER/api/webhook.
+Razorpay supports QR-based UPI payment flows; this project also supports an Admin-uploaded static UPI QR for manual payment: https://razorpay.com/qr-code/.
 
-The main app includes the Razorpay order and verification endpoints. After adding the Razorpay Test Mode Key ID and Key Secret to `.env`, restart the main server. In Admin → Premium Subscriptions, leave **Separate payment server URL** blank to use the built-in checkout. Students can then select a plan, complete the Razorpay test checkout, and receive Premium access after the server confirms the captured payment.
+Manual UPI
+Admin → Premium Subscriptions supports UPI ID, payee name, payment note and UPI QR upload/preview/remove.
+Students can scan the QR, open a UPI app using the UPI URI, then submit the UTR/transaction ID. Admin approval activates the subscription. A submitted UTR never automatically grants Premium.
 
-If you deploy `payment-server` separately, start it with the same Firebase and Razorpay Test Mode credentials, then enter its public base URL in Admin → Premium Subscriptions. Keep the UPI fields configured if you want manual UPI with Admin approval as a fallback.
+Exam submission reliability
+Submissions are stored as individual records at submissions/<attempt-id> instead of reading and rewriting the complete submissions collection.
+For one-attempt tests, an atomic lock is maintained at attemptLocks/<test-id>/<user-id>. This prevents concurrent duplicate submissions while allowing a failed network request to safely retry the same attempt.
+Firebase Realtime Database transactions are designed for concurrent writes that could otherwise overwrite each other.
 
-## Optional separate Razorpay payment server
+Ratings
+After completing a test, students can submit one 1–5 star rating and optional feedback. A student can update their own rating but cannot create multiple ratings for the same test.
+Admins can review ratings and feedback from the Admin panel.
 
-Open a second PowerShell window:
+Security
+- Firebase RTDB is not exposed directly to the browser.
+- database.rules.json denies direct reads and writes.
+- Passwords are never stored in plaintext.
+- Auth sessions use HttpOnly, Secure and SameSite cookies.
+- Login and OTP endpoints are rate-limited.
+- Razorpay secrets remain server-side.
+- Razorpay signatures are verified with HMAC.
+- Payment amounts are checked against the saved server-side order.
+- Webhook events are deduplicated.
+- Protected APIs enforce user roles server-side.
+- User-supplied HTML is escaped before being rendered into the UI.
+- Security response headers are added by the backend.
 
-```powershell
-cd payment-server
-npm install
-node server.js
-```
-
-Payment server:
-
-- http://localhost:4000/health
-- Webhook path: `POST /api/webhook`
-
-Set the same shared Firebase/Gmail credentials in the root `.env`. The payment server reads the root `.env`.
-
-## Firebase password reset
-
-Forgot-password uses Firebase Authentication's built-in reset email. No separate password-reset API or Gmail API is required for this flow.
-
-## Gmail API
-
-Gmail is used by the backend for application emails such as:
-
-- Premium payment successful
-- Premium payment failed
-- Manual subscription approved/rejected
-- Teacher approval
-- Test access approval/rejection
-
-Keep the Gmail refresh token and client secret only in `.env`.
-
-## Razorpay webhook
-
-For local development, the browser verification endpoint checks the Checkout signature and confirms the payment and amount with Razorpay before activating Premium.
-
-For webhook testing, Razorpay needs a public HTTPS URL. Configure:
-
-```
-https://YOUR-PUBLIC-SERVER/api/webhook
-```
-
-with the same `RAZORPAY_WEBHOOK_SECRET` stored in `.env`.
-
-Recommended events:
-
-- `payment.captured`
-- `payment.failed`
-- Do not rely on `order.paid` for activation; `payment.captured` is the activation event
-
-## RTDB security
-
-The repository contains `database.rules.json`. Because the Node backend uses the Firebase Admin SDK, direct browser access can remain locked down. Deploy the rules with Firebase CLI when you are ready:
-
-```powershell
-firebase deploy --only database
-```
-
-Do not put service-account credentials, Razorpay secrets, Gmail refresh tokens or `.env` into Git.
-
-## Important
-
-The root backend and optional payment server use Firebase as the source of truth. The old browser-local database is no longer used. `MOCK_GATEWAY=1` does not create fake successful payments; actual Razorpay Test Mode credentials are required for online checkout.
+Important production note
+No web application can honestly be called unhackable. Production deployment still requires HTTPS, a strong unique AUTH_SESSION_SECRET, protection of Firebase/Gmail/Razorpay credentials, a reverse proxy/WAF such as Cloudflare, dependency updates, monitoring and backups.
+Never commit .env, service-account JSON, OAuth refresh tokens, or payment secrets.

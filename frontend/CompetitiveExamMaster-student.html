@@ -226,6 +226,141 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 @media(max-width:820px){.hero{grid-template-columns:1fr;gap:18px}.hero-visual{min-height:205px}.hero-progress-card{width:min(100%,300px)}.hero-float-card{right:5%;bottom:-3px}.auth-grid{grid-template-columns:1fr;max-width:560px}.auth-aside{min-height:0}}
 @media(max-width:560px){header{padding:14px 13px 10px}.brand{font-size:17px}.sub{font-size:10px}nav{gap:6px;margin-top:11px}nav button{padding:9px 11px;font-size:12px}main{padding:18px 13px 32px}.hero{min-height:0;padding:28px 21px;border-radius:21px}.hero h1{font-size:38px}.hero p{font-size:14px}.hero-visual{min-height:185px}.hero-orbit-one{width:220px}.hero-orbit-two{width:175px}.hero-float-card{right:0;bottom:-5px}.value-strip{grid-template-columns:1fr;gap:8px;margin:12px 0 28px}.value-item{padding:12px 14px}.home-section-heading h2{font-size:21px}.auth-card{padding:21px 17px}.auth-aside{padding:25px 22px}.section>h2{font-size:25px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+/* ---------- Student UI refresh: visual-only styling ---------- */
+:root{
+  --bg:#f4f7fb;--fg:#172033;--primary:#e11d48;--primary-2:#7c3aed;
+  --card:#ffffff;--border:#e2e8f0;--muted:#64748b;
+  --surface:#f8fafc;--surface-2:#eef2ff;--shadow:0 14px 40px rgba(15,23,42,.08);
+  --shadow-hover:0 20px 55px rgba(15,23,42,.14);--radius:18px;
+}
+:root[data-theme="dark"]{
+  --bg:#080d18;--fg:#e5e7eb;--primary:#fb7185;--primary-2:#a78bfa;
+  --card:#111827;--border:#263244;--muted:#94a3b8;--surface:#0f172a;--surface-2:#1e1b4b;
+  --shadow:0 14px 40px rgba(0,0,0,.28);--shadow-hover:0 20px 55px rgba(0,0,0,.42);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  background:
+    radial-gradient(circle at 8% -5%,rgba(99,102,241,.16),transparent 30%),
+    radial-gradient(circle at 94% 4%,rgba(244,63,94,.12),transparent 28%),
+    var(--bg);
+  color:var(--fg);line-height:1.55;
+}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background:linear-gradient(120deg,transparent 0 48%,rgba(255,255,255,.025) 50%,transparent 52%);z-index:-1}
+header{
+  background:rgba(15,23,42,.86);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  border-bottom:1px solid rgba(255,255,255,.09);box-shadow:0 10px 35px rgba(15,23,42,.18);
+  padding:16px clamp(14px,3vw,32px);
+}
+.brand-row{min-height:40px}.brand{font-size:21px;font-weight:850;letter-spacing:-.45px}.sub{font-size:11px;color:#cbd5e1}
+.brand-row img{height:38px;width:38px;border-radius:11px;box-shadow:0 5px 18px rgba(0,0,0,.2)}
+nav{gap:7px;margin-top:13px;scrollbar-width:none}nav::-webkit-scrollbar{display:none}
+nav button{
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.07);color:#e2e8f0;
+  padding:9px 14px;border-radius:12px;transition:all .2s ease;box-shadow:none;
+}
+nav button:hover{background:rgba(255,255,255,.14);transform:translateY(-1px)}
+nav button.active{background:linear-gradient(135deg,var(--primary),#be123c)!important;border-color:transparent;box-shadow:0 8px 20px rgba(225,29,72,.28)}
+main{max-width:1500px;margin:auto;padding:24px clamp(14px,3vw,42px)}
+.hero{
+  position:relative;overflow:hidden;padding:clamp(24px,4vw,42px);border-radius:26px;
+  background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 52%,#881337 100%);
+  box-shadow:0 24px 65px rgba(15,23,42,.22);margin-bottom:22px;
+}
+.hero::before,.hero::after{content:"";position:absolute;border-radius:50%;pointer-events:none}
+.hero::before{width:280px;height:280px;right:-80px;top:-150px;background:rgba(244,63,94,.22);filter:blur(2px)}
+.hero::after{width:220px;height:220px;left:45%;bottom:-170px;background:rgba(99,102,241,.2)}
+.hero>*{position:relative;z-index:1}.hero h1{font-size:clamp(28px,4vw,42px);letter-spacing:-1.2px}.hero p{max-width:760px}
+.notice{border:1px solid #f5cf73;background:linear-gradient(135deg,#fff9e9,#fff5d6);box-shadow:0 8px 25px rgba(146,96,0,.07);color:#765500}
+.grid,.auth-grid,.dashboard-grid{gap:18px}
+.card,.auth-card,.panel-card,.ut-card,.reader{
+  border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);
+  transition:transform .22s ease,box-shadow .22s ease,border-color .22s ease;
+}
+.card:hover,.auth-card:hover,.panel-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-hover);border-color:#cbd5e1}
+.card{padding:20px}.card h3{font-size:17px;letter-spacing:-.2px}
+.muted{color:var(--muted)}
+button{
+  font-family:inherit;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,opacity .16s ease;
+}
+button:not(:disabled):hover{transform:translateY(-1px)}button:not(:disabled):active{transform:translateY(0)}
+.primary,.primary-btn,.submit-btn{background:linear-gradient(135deg,var(--primary),#be123c);box-shadow:0 8px 20px rgba(225,29,72,.2)}
+.secondary,.tb-btn-light{background:var(--surface)!important;color:var(--fg)!important;border:1px solid var(--border)!important}
+.search{
+  background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:14px;
+  box-shadow:0 6px 20px rgba(15,23,42,.05);outline:none;transition:border-color .2s,box-shadow .2s;
+}
+.search:focus,.form-row input:focus,.form-row select:focus,.form-row textarea:focus{
+  border-color:var(--primary);box-shadow:0 0 0 4px rgba(225,29,72,.1);outline:none;
+}
+.form-row input,.form-row select,.form-row textarea{
+  border:1px solid var(--border);border-radius:11px;min-height:43px;transition:border-color .2s,box-shadow .2s;
+}
+.form-row textarea{resize:vertical}
+.auth-card,.panel-card{padding:24px}
+.auth-card h3,.panel-card h3{font-size:20px;letter-spacing:-.35px}
+.user-pill,.subject-pill{border:1px solid var(--border);background:var(--surface)}
+.subject-pill.active{background:linear-gradient(135deg,#0f172a,#334155);border-color:#0f172a;box-shadow:0 5px 14px rgba(15,23,42,.16)}
+table{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--card)}
+th{background:var(--surface);color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+th,td{border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:0}tbody tr:hover{background:var(--surface)}
+.modal-overlay{background:rgba(2,6,23,.7);backdrop-filter:blur(7px)}
+.modal-box{border:1px solid var(--border);border-radius:20px;box-shadow:0 28px 90px rgba(0,0,0,.35)}
+.quiz-layout{gap:20px}.quiz-palette{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow)}
+.palette-btn{transition:transform .15s,box-shadow .15s}.palette-btn:hover{transform:scale(1.06)}
+.tb-exam{border:1px solid var(--border);border-radius:20px;box-shadow:var(--shadow);background:var(--card)}
+.tb-topbar{background:linear-gradient(135deg,#0b1227,#25164a 58%,#701a35);padding:14px 18px}
+.tb-timer-box{border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.38);border-radius:9px;padding:6px 11px}
+.tb-sections{background:var(--surface);border-color:var(--border);padding:8px 10px}
+.tb-section-tab{color:var(--muted);transition:.18s}.tb-section-tab:hover{background:var(--surface-2);color:var(--fg)}
+.tb-section-tab.active{background:linear-gradient(135deg,#0f172a,#312e81);box-shadow:0 5px 14px rgba(15,23,42,.18)}
+.tb-main{padding:22px clamp(16px,3vw,28px)}
+.tb-question{font-size:17px;font-weight:600;letter-spacing:-.15px}
+.tb-divider{height:3px;background:linear-gradient(90deg,var(--primary),transparent);border-radius:99px}
+.tb-option-row{padding:14px 12px;border:1px solid transparent;transition:.18s}
+.tb-option-row:hover{background:var(--surface);border-color:var(--border)}
+.tb-option-row.selected{background:rgba(99,102,241,.09);border-color:#c7d2fe;box-shadow:0 5px 15px rgba(99,102,241,.08)}
+.tb-radio{border-color:#94a3b8}.tb-option-text{color:var(--fg)}
+.tb-sidebar{background:var(--surface);border-color:var(--border)}
+.tb-section-label{background:linear-gradient(135deg,#dbeafe,#ede9fe);color:#312e81;border:1px solid #c7d2fe}
+.tb-qnum{transition:transform .15s,box-shadow .15s}.tb-qnum:hover{transform:translateY(-1px)}
+.tb-actions{border-color:var(--border)}
+.ut-card{padding:clamp(20px,4vw,32px)}
+.ut-rules,.solution-block,.nt-translate-block{background:var(--surface);border-color:var(--border)}
+.ut-agree{background:#fff8e7;border-color:#f1cf79}
+.result-header{border-color:var(--border)}
+.rh-btn{background:var(--card);color:var(--fg);border-color:var(--border)}
+.section-title,.perf-text b,.perf-note-text{color:var(--fg)}
+.summary-cards .stat{background:var(--surface);border-color:var(--border)}
+.sec-table-wrap{border-color:var(--border)}
+table.sec-table th{background:var(--surface);color:var(--muted);border-color:var(--border)}
+table.sec-table td{border-color:var(--border)}
+.qbuilder,.nt-sec{background:var(--card);border-color:var(--border);box-shadow:0 5px 18px rgba(15,23,42,.04)}
+.nt-sec-head{background:linear-gradient(135deg,#0f172a,#312e81)}
+.icon-picker{border-color:var(--border);box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+button.icon-opt{background:var(--surface);border-color:transparent}button.icon-opt:hover{background:var(--surface-2)}
+.logo-preview{border-color:var(--border)}
+footer{padding:32px 16px;color:var(--muted)}
+.hidden{display:none!important}
+@media(max-width:760px){
+  header{padding:13px 12px}.brand{font-size:18px}.sub{font-size:10px}
+  main{padding:16px 12px}.hero{border-radius:20px;padding:22px}.hero h1{font-size:28px}
+  .card,.auth-card,.panel-card{padding:17px}.tb-exam{border-radius:15px}
+  .tb-main{padding:17px 14px}.tb-sidebar{padding:14px}
+}
+@media(max-width:480px){
+  nav button{padding:8px 11px;font-size:12px}.hero p{font-size:13px}
+  .grid{grid-template-columns:1fr}.auth-grid,.dashboard-grid{grid-template-columns:1fr}
+  .perf-summary{gap:14px}.perf-stat{min-width:130px}.perf-icon{width:44px;height:44px}
+  .tb-topbar{align-items:flex-start}.tb-meta-right{gap:8px}.tb-actions-left,.tb-actions-right{width:100%}
+  .tb-actions button{flex:1}.ut-actions button{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
@@ -259,7 +394,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     <p>Build confidence with focused practice, timed mock exams, and clear results that help you decide what to work on next.</p>
     <div class="hero-actions">
       <button class="hero-primary" onclick="showTests(null)">Explore test series <span aria-hidden="true">→</span></button>
-      <button class="hero-secondary" onclick="showSection('auth');showAuthTab('register')">Create a free account</button>
+      <button id="createAccountHeroBtn" class="hero-secondary" onclick="showSection('auth');showAuthTab('register')">Create a free account</button>
     </div>
   </div>
   <div class="hero-visual" aria-hidden="true">
@@ -278,6 +413,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   <div class="value-item"><span class="value-icon value-violet">↗</span><div><b>Clear results</b><small>See where to focus</small></div></div>
   <div class="value-item"><span class="value-icon value-amber">✦</span><div><b>One place to prepare</b><small>Explore all your series</small></div></div>
 </div>
+<div id="studentNoticePanel" class="notice hidden" style="margin-top:18px"></div>
 <div class="home-section-heading"><div><span class="section-eyebrow">PICK UP WHERE YOU ARE</span><h2>Find your next practice</h2></div><span class="muted">Choose a module to see available test series.</span></div>
 <input class="search" placeholder="🔍 Search test series..." oninput="filterCards(this.value)">
 <div class="grid" id="examGrid"><p class="muted">Loading exam modules…</p></div>
@@ -423,8 +559,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
         <div class="form-row"><label>Full name</label><input id="studentName" placeholder="Full name"></div>
         <div class="form-row"><label>Mobile Number</label><input id="studentMobile" type="tel" placeholder="e.g. 9876543210"></div>
         <div class="form-row"><label>Email</label><input id="studentEmail" type="email" placeholder="Email"></div>
-        <div class="form-row"><label>Password</label><input id="studentPassword" type="password" placeholder="At least 6 characters" autocomplete="new-password" minlength="6"></div>
-        <div class="form-row"><label>Confirm Password</label><input id="studentConfirmPassword" type="password" placeholder="Re-enter password" autocomplete="new-password" minlength="6"></div>
+        <div class="form-row"><label>Password</label><input id="studentPassword" type="password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8"></div>
+        <div class="form-row"><label>Confirm Password</label><input id="studentConfirmPassword" type="password" placeholder="Re-enter password" autocomplete="new-password" minlength="8"></div>
         <button class="primary-btn" style="width:100%" onclick="registerStudent()">Register as Student</button>
         <p id="studentMsg"></p>
       </div>
@@ -435,8 +571,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
         <div class="form-row"><label>Mobile Number</label><input id="teacherMobile" type="tel" placeholder="e.g. 9876543210"></div>
         <div class="form-row"><label>Email</label><input id="teacherEmail" type="email" placeholder="Email"></div>
         <div class="form-row"><label>Subject / Expertise</label><input id="teacherSubject" placeholder="e.g. Mathematics"></div>
-        <div class="form-row"><label>Password</label><input id="teacherPassword" type="password" placeholder="At least 6 characters" autocomplete="new-password" minlength="6"></div>
-        <div class="form-row"><label>Confirm Password</label><input id="teacherConfirmPassword" type="password" placeholder="Re-enter password" autocomplete="new-password" minlength="6"></div>
+        <div class="form-row"><label>Password</label><input id="teacherPassword" type="password" placeholder="At least 8 characters" autocomplete="new-password" minlength="8"></div>
+        <div class="form-row"><label>Confirm Password</label><input id="teacherConfirmPassword" type="password" placeholder="Re-enter password" autocomplete="new-password" minlength="8"></div>
         <button class="primary-btn" style="width:100%" onclick="registerTeacher()">Register as Teacher</button>
         <p id="teacherMsg"></p>
       </div>
@@ -485,8 +621,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   <div class="panel-card" style="margin-top:18px">
     <h3>Change Password</h3>
     <div class="form-row"><label>Current Password</label><input id="pwCurrent" type="password"></div>
-    <div class="form-row"><label>New Password</label><input id="pwNew" type="password"></div>
-    <div class="form-row"><label>Confirm New Password</label><input id="pwConfirm" type="password"></div>
+    <div class="form-row"><label>New Password</label><input id="pwNew" type="password" minlength="8" placeholder="At least 8 characters"></div>
+    <div class="form-row"><label>Confirm New Password</label><input id="pwConfirm" type="password" minlength="8" placeholder="Re-enter password"></div>
     <button class="primary-btn" onclick="changePassword()">Change Password</button>
     <p id="pwMsg"></p>
   </div>
@@ -498,7 +634,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     <p id="teacherWelcome"></p>
   </div>
 
-  <div class="panel-card" id="teacherModules" style="margin-top:18px"></div>
+  <div class="panel-card" id="teacherModules" style="margin-top:18px">
+    <h3>🗂️ Exam Modules</h3>
+    <p class="muted">Only the Administrator can add or delete exam modules. Teachers can create and manage their Test Series below.</p>
+  </div>
 
   <div class="panel-card" style="margin-top:18px">
     <h3>➕ Add Test Series</h3>
@@ -510,56 +649,39 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
       <p class="muted" style="margin:4px 0 0">This decides which module's Test Series list it appears in — an SSC test won't show under Banking.</p>
     </div>
     <div class="form-row"><label>Exam Name (specific)</label><input id="ntExam" placeholder="e.g. SSC CGL, or OSSSC for Odisha" value="Competitive Exam"></div>
-
     <div class="form-row">
       <label>Exam Language(s) — comma separated. First one is the primary language.</label>
       <input id="ntLanguages" placeholder="e.g. English, Hindi" value="English" onchange="syncSections()">
-      <p class="muted" style="margin:4px 0 0">Add a second (or more) language to let students pick their exam language before starting. Set this before adding questions so the translation fields below match — students will only be offered a language choice when more than one is listed here.</p>
+      <p class="muted" style="margin:4px 0 0">Add a second (or more) language to let students pick their exam language before starting.</p>
     </div>
-
     <div class="form-row">
-      <label>Sections of the exam (e.g. Mathematics, G.K, Current Affairs, English)</label>
+      <label>Sections of the exam</label>
       <div id="ntPresetChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
       <div class="row" style="flex-wrap:nowrap">
         <input id="ntNewSection" style="flex:1" placeholder="Type a section name, e.g. Reasoning" onkeydown="if(event.key==='Enter'){event.preventDefault();addSectionFromInput()}">
         <button type="button" class="secondary" onclick="addSectionFromInput()">➕ Add Section</button>
       </div>
       <input id="ntSubjects" type="hidden">
-      <p class="muted" style="margin:4px 0 0">Add one section per subject. Students will see these as section tabs during the mock test. Add your questions inside each section below; you can set Marks / Negative marks per section.</p>
+      <p class="muted" style="margin:4px 0 0">Add one section per subject. Students will see these as section tabs during the mock test.</p>
     </div>
-
     <div class="row">
       <div class="form-row" style="flex:1"><label>Type</label>
-        <select id="ntType">
-          <option value="FREE">Free</option><option value="PAID">Premium (paid users only)</option>
-        </select>
+        <select id="ntType"><option value="FREE">Free</option><option value="PAID">Premium (paid users only)</option></select>
       </div>
       <div class="form-row" style="flex:1"><label>Duration (minutes)</label><input id="ntDuration" type="number" min="1" value="30"></div>
       <div class="form-row" style="flex:1"><label>Attempts allowed</label>
         <select id="ntAttempts"><option value="reattempt">🔁 Reattempt allowed</option><option value="once">🔒 Only one attempt</option></select>
       </div>
     </div>
-
     <div class="form-row" style="border:1px dashed #ccc;border-radius:10px;padding:12px">
       <label>📥 Import Questions from Excel (.xlsx / .xls / .csv)</label>
-      <p class="muted" style="margin:0 0 6px">
-        Columns, in this order: <b>Question, OptionA, OptionB, OptionC, OptionD, Answer (A/B/C/D), Marks, Negative, Subject</b>.
-        The first row is treated as a header and skipped. <b>Subject = section name</b> — sections are created automatically
-        (e.g. Odia, English, Math…); leave blank to use the first section (or "General"). One row = one question, any number of rows.
-        <b>Needs an internet connection</b> the first time (loads a parsing library from a CDN).
-      </p>
+      <p class="muted" style="margin:0 0 6px">Columns: Question, OptionA, OptionB, OptionC, OptionD, Answer (A/B/C/D), Marks, Negative, Subject.</p>
       <input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
-      <div class="row" style="margin-top:6px">
-        <button type="button" class="secondary" onclick="importExcel()">Import into Question Builder</button>
-        <span id="excelMsg" class="muted"></span>
-      </div>
+      <div class="row" style="margin-top:6px"><button type="button" class="secondary" onclick="importExcel()">Import into Question Builder</button><span id="excelMsg" class="muted"></span></div>
     </div>
-
     <p id="ntSecEmpty" class="muted" style="border:1px dashed #ccc;border-radius:10px;padding:14px">No sections yet. Add a section above (or import an Excel file) and then add questions inside it.</p>
     <div id="ntQuestions"></div>
-    <div class="row" style="margin-top:14px">
-      <button class="primary-btn" onclick="submitNewTest()">Publish Test Series</button>
-    </div>
+    <div class="row" style="margin-top:14px"><button class="primary-btn" onclick="submitNewTest()">Publish Test Series</button></div>
     <p id="ntMsg"></p>
   </div>
 
@@ -567,133 +689,39 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
     <h3>My Test Series</h3>
     <div id="myTests"><p class="muted">Loading…</p></div>
   </div>
+
+  <div class="panel-card" style="margin-top:18px">
+    <h3>📢 Notices</h3>
+    <div id="teacherNoticePanel" class="notice hidden"></div>
+  </div>
 </section>
 
 </main>
-<footer id="siteFooter">Competitive Exam Master<br><a href="CompetitiveExamMaster-admin.html" style="color:inherit">🛡️ Admin Panel</a></footer>
+<footer id="siteFooter">Competitive Exam Master</footer>
 
 <script>
 
-let cemAuth = null;
-function loadScript(src){return new Promise((resolve,reject)=>{if(document.querySelector('script[src="'+src+'"]'))return resolve();const s=document.createElement('script');s.src=src;s.async=false;s.onload=resolve;s.onerror=()=>reject(new Error('Network error loading security components.'));document.head.appendChild(s);});}
-const firebaseReady=(async()=>{
-  const cfgRes=await fetch('/api/config');
-  if(!cfgRes.ok)throw new Error('Service temporarily unavailable. Please try again.');
-  const cfg=await cfgRes.json();
-  if (cfg.firebase && cfg.firebase.apiKey) {
-    try {
-      await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
-      await loadScript('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js');
-      if(window.firebase && !firebase.apps.length) firebase.initializeApp(cfg.firebase);
-      if(window.firebase){
-        cemAuth=firebase.auth();
-        if(cemAuth.onAuthStateChanged)await new Promise(resolve=>{
-          let unsubscribe=null,settled=false;
-          const timer=window.setTimeout(finish,4000);
-          function finish(){if(settled)return;settled=true;window.clearTimeout(timer);unsubscribe?.();resolve();}
-          unsubscribe=cemAuth.onAuthStateChanged(finish,finish);
-          if(settled)unsubscribe();
-        });
-      }
-    } catch(err) {
-      console.warn('Auth fallback:', err.message);
-    }
-  }
-  return cfg;
-})();
-function ensureAdmin(){}
-async function getIdToken(options={}){
-  await firebaseReady;
-  if(options.firebaseAuth){
-    const u=cemAuth&&cemAuth.currentUser;
-    if(!u)throw new Error('Your login session is not ready. Please try again.');
-    if(u)localStorage.removeItem('cem_session');
-    return u ? u.getIdToken() : null;
-  }
-  const adminSession = localStorage.getItem('cem_admin_session');
-  if (adminSession) return adminSession;
-  if(localStorage.getItem('cem_explicit_login')!=='1'){
-    localStorage.removeItem('cem_session');
-    return null;
-  }
-  if(cemAuth && cemAuth.app && cemAuth.app.options && cemAuth.app.options.apiKey){
-    const u=cemAuth.currentUser;
-    return u ? u.getIdToken() : null;
-  }
-  return localStorage.getItem('cem_session');
+async function getCsrfToken(){
+  if(window.__cemCsrfToken) return window.__cemCsrfToken;
+  const r=await fetch('/api/auth/csrf',{method:'GET',credentials:'same-origin',cache:'no-store'});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok||!data.csrfToken) throw new Error('Security token initialization failed. Refresh the page.');
+  window.__cemCsrfToken=data.csrfToken; return data.csrfToken;
 }
-async function api(method,url,body,options={}){await firebaseReady;const headers={'Content-Type':'application/json'};const token=options.anonymous?null:await getIdToken(options);if(token)headers.Authorization='Bearer '+token;const r=await fetch(url,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||data.message||'Request failed.');return data;}
+async function api(method,url,body){
+  const headers={'Content-Type':'application/json','X-CEM-Portal':'student'};
+  if(method!=='GET'&&method!=='HEAD'&&method!=='OPTIONS') headers['X-CSRF-Token']=await getCsrfToken();
+  const r=await fetch(url,{method,headers,credentials:'same-origin',body:body===undefined?undefined:JSON.stringify(body)});
+  const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||data.message||'Request failed.');return data;
+}
 function esc(value){const s=String(value??'');return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function msg(id,text,ok=false){const el=document.getElementById(id);if(!el)return;el.textContent=String(text||'');el.className=ok?'success':'error';}
-function authError(e){
-  const code = String((e && e.code) || '').toLowerCase();
-  const msgText = String((e && e.message) || '');
-  if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found') || msgText.toLowerCase().includes('invalid-credential') || msgText.toLowerCase().includes('wrong-password') || msgText.toLowerCase().includes('user-not-found')) {
-    return 'Incorrect email or password. Please try again.';
-  }
-  if (code.includes('email-already-in-use') || msgText.toLowerCase().includes('email-already-in-use')) {
-    return 'An account with this email already exists.';
-  }
-  if (code.includes('invalid-email') || msgText.toLowerCase().includes('invalid-email')) {
-    return 'Please enter a valid email address.';
-  }
-  if (code.includes('weak-password') || msgText.toLowerCase().includes('weak-password')) {
-    return 'Password must contain at least 6 characters.';
-  }
-  if (code.includes('too-many-requests') || msgText.toLowerCase().includes('too-many-requests')) {
-    return 'Too many attempts. Please wait a few moments and try again.';
-  }
-  if (code.includes('network') || msgText.toLowerCase().includes('network')) {
-    return 'Network connection issue. Please check your internet connection.';
-  }
-  let clean = msgText.replace(/Firebase:?\s*/gi, '').replace(/\(auth\/[^)]+\)/gi, '').replace(/database/gi, 'system').trim();
-  return clean || 'Incorrect password or server error. Please try again.';
-}
-async function registerFirebaseAccount(kind,data){
-  await firebaseReady;
-  localStorage.removeItem('cem_session');
-  localStorage.removeItem('cem_admin_session');
-  localStorage.removeItem('cem_explicit_login');
-  if(cemAuth?.currentUser)try{await cemAuth.signOut();}catch(_){}
-  currentUser=null;
-  updateUI();
-  if (!cemAuth || !cemAuth.app || !cemAuth.app.options || !cemAuth.app.options.apiKey) {
-    return api('POST','/api/auth/register/'+kind,data,{anonymous:true});
-  }
-  const cred=await cemAuth.createUserWithEmailAndPassword(data.email,data.password);
-  let r;
-  try{
-    await cred.user.updateProfile({displayName:data.name});
-    r=await api('POST','/api/auth/register/'+kind,data,{firebaseAuth:true});
-    try{await cred.user.sendEmailVerification();}catch(_){}
-  }catch(e){try{await cred.user.delete();}catch(_){}throw e;}
-  try{await cemAuth.signOut();}catch(_){}
-  currentUser=null;
-  updateUI();
-  return r;
-}
-async function firebaseLogin(email,password){
-  await firebaseReady;
-  localStorage.removeItem('cem_session');
-  localStorage.removeItem('cem_admin_session');
-  localStorage.removeItem('cem_explicit_login');
-  if(cemAuth?.currentUser)try{await cemAuth.signOut();}catch(_){}
-  if (!cemAuth || !cemAuth.app || !cemAuth.app.options || !cemAuth.app.options.apiKey) {
-    const r=await api('POST','/api/auth/login',{email,password},{anonymous:true});
-    if(r.sessionToken) localStorage.setItem('cem_session', r.sessionToken);
-    return r;
-  }
-  await cemAuth.signInWithEmailAndPassword(email,password);
-  try{return await api('POST','/api/auth/login',{email},{firebaseAuth:true});}catch(e){await cemAuth.signOut();throw e;}
-}
-async function firebaseReauth(password){
-  await firebaseReady;
-  const u=cemAuth&&cemAuth.currentUser;
-  if(!u||!u.email) return;
-  await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,password));
-}
+function authError(e){return String((e&&e.message)||'Unable to complete the request.');}
+async function registerAccount(kind,data){return api('POST','/api/auth/register/'+kind,data);}
+async function loginAccount(email,password){return api('POST','/api/auth/login',{email,password});}
 let currentUser = null;
 let activeCategory = null;
+
 
 function showSection(id){
   document.querySelectorAll('main>section').forEach(s=>s.classList.add('hidden'));
@@ -701,7 +729,8 @@ function showSection(id){
   if(id==='premium') loadPremium();
   if(id==='admin') { renderAdmin(); loadSettingsIntoForm(); loadPurchaseRequests(); mountModuleManager('adminModules','adm'); }
   if(id==='tests') loadTests();
-  if(id==='teacher') { loadMyTests(); loadTeacherModules(); }
+  if(id==='teacher') { loadMyTests(); loadTeacherModules(); loadNotices('teacher'); }
+  if(id==='home' && currentUser && (currentUser.role==='student'||currentUser.role==='teacher')) loadNotices('student');
   if(id==='account') loadAccount();
 }
 function showTests(category){
@@ -794,10 +823,10 @@ async function refreshUser(){
   try{
     const { user } = await api('GET','/api/auth/me');
     if(!user){
-      localStorage.removeItem('cem_session');
-      localStorage.removeItem('cem_admin_session');
-      localStorage.removeItem('cem_explicit_login');
-      if(cemAuth?.currentUser)try{await cemAuth.signOut();}catch(_){}
+      
+      
+      
+      
     }
     currentUser = user;
     updateUI();
@@ -815,12 +844,12 @@ window.registerStudent = async function(){
   const confirmPassword=document.getElementById('studentConfirmPassword').value;
   const email=document.getElementById('studentEmail').value.trim();
   if(password!==confirmPassword){ msg('studentMsg','Passwords do not match.'); return; }
-  if(password.length<6){ msg('studentMsg','Password must contain at least 6 characters.'); return; }
+  if(password.length<8||!/[A-Z]/.test(password)||!/[a-z]/.test(password)||!/[0-9]/.test(password)){ msg('studentMsg','Password must contain at least 8 characters with uppercase, lowercase and a number.'); return; }
   if(!email){ msg('studentMsg','Please enter your email address.'); return; }
   btn?.classList.add('loading'); if(btn){btn.disabled=true;btn.textContent='Creating account…';}
   try{
     const body={name:document.getElementById('studentName').value.trim(),mobile:document.getElementById('studentMobile').value.trim(),email,password};
-    const r=await registerFirebaseAccount('student',body);
+    const r=await registerAccount('student',body);
     msg('studentMsg',r.message,true);
     ['studentName','studentMobile','studentEmail','studentPassword','studentConfirmPassword'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
     document.getElementById('loginEmail').value=email;
@@ -838,15 +867,15 @@ window.registerTeacher = async function(){
   const confirmPassword=document.getElementById('teacherConfirmPassword').value;
   const email=document.getElementById('teacherEmail').value.trim();
   if(password!==confirmPassword){ msg('teacherMsg','Passwords do not match.'); return; }
-  if(password.length<6){ msg('teacherMsg','Password must contain at least 6 characters.'); return; }
+  if(password.length<8||!/[A-Z]/.test(password)||!/[a-z]/.test(password)||!/[0-9]/.test(password)){ msg('teacherMsg','Password must contain at least 8 characters with uppercase, lowercase and a number.'); return; }
   if(!email){ msg('teacherMsg','Please enter your email address.'); return; }
   btn?.classList.add('loading'); if(btn){btn.disabled=true;btn.textContent='Creating account…';}
   try{
     const body={name:document.getElementById('teacherName').value.trim(),mobile:document.getElementById('teacherMobile').value.trim(),email,subject:document.getElementById('teacherSubject').value.trim(),password};
-    const r=await registerFirebaseAccount('teacher',body);
-    if(cemAuth?.currentUser)try{await cemAuth.signOut();}catch(_){}
-    localStorage.removeItem('cem_session');
-    localStorage.removeItem('cem_admin_session');
+    const r=await registerAccount('teacher',body);
+    
+    
+    
     currentUser=null;
     updateUI();
     msg('teacherMsg',r.message,true);
@@ -862,13 +891,11 @@ window.loginUser = async function(){
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     if(!email||!password)throw new Error('Enter your email and password to sign in.');
-    localStorage.removeItem('cem_session');
-    localStorage.removeItem('cem_explicit_login');
-    if(cemAuth?.currentUser)await cemAuth.signOut();
+    
+    
     currentUser=null;
     updateUI();
-    const r = await firebaseLogin(email,password);
-    localStorage.setItem('cem_explicit_login','1');
+    const r = await loginAccount(email,password);
     currentUser = r.user;
     try{
       if(document.getElementById('rememberLogin').checked){
@@ -899,17 +926,18 @@ window.loginUser = async function(){
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 })();
 
-window.logout = async function(){
-  localStorage.removeItem('cem_session');
-  localStorage.removeItem('cem_admin_session');
-  localStorage.removeItem('cem_explicit_login');
-  if (cemAuth) try { await cemAuth.signOut(); } catch(_) {}
-  try { await api('POST','/api/auth/logout'); } catch(_) {}
-  currentUser = null;
-  updateUI();
-  { const m=document.getElementById('loginMsg'); if(m) m.textContent=''; const pw=document.getElementById('loginPassword'); if(pw && !document.getElementById('rememberLogin')?.checked) pw.value=''; }
-  showSection('home');
-};
+window.logout=async function(){try{await api('POST','/api/auth/logout');}catch(_){}currentUser=null;updateUI();showSection('home');};
+
+async function loadNotices(target){
+  const box=document.getElementById(target==='teacher'?'teacherNoticePanel':'studentNoticePanel');
+  if(!box || !currentUser || !['student','teacher'].includes(currentUser.role)) return;
+  try{
+    const {notices=[]}=await api('GET','/api/notices');
+    if(!notices.length){box.classList.add('hidden');box.innerHTML='';return;}
+    box.classList.remove('hidden');
+    box.innerHTML='<b>📢 Notice</b><div style="margin-top:6px">'+notices.slice(0,5).map(n=>'<div style="padding:8px 0;border-top:1px solid rgba(122,91,0,.18);white-space:pre-wrap">'+esc(n.text)+'</div>').join('')+'</div>';
+  }catch(_){box.classList.add('hidden');}
+}
 
 function updateUI(){
   ['adminNav','teacherNav','logoutNav','accountNav','premiumNav'].forEach(id=>document.getElementById(id)?.classList.add('hidden'));
@@ -921,6 +949,7 @@ function updateUI(){
     if(currentUser.role==='admin') document.getElementById('adminNav')?.classList.remove('hidden');
     if(currentUser.role==='teacher') document.getElementById('teacherNav')?.classList.remove('hidden');
     if(currentUser.role==='student') document.getElementById('premiumNav')?.classList.remove('hidden');
+    document.getElementById('createAccountHeroBtn')?.classList.toggle('hidden', !!currentUser);
     const w=document.getElementById('teacherWelcome');
     if(w && currentUser.role==='teacher') w.textContent='Welcome, '+currentUser.name+' — '+(currentUser.subject||'')+'.';
   }
@@ -928,7 +957,18 @@ function updateUI(){
 
 
 window.toggleForgot=function(){document.getElementById('forgotBox').classList.toggle('hidden');};
-window.requestPasswordReset=async function(){try{await firebaseReady;const email=document.getElementById('forgotEmail').value.trim();if(!email)throw new Error('Enter your email address.');if(!cemAuth||!cemAuth.sendPasswordResetEmail)throw new Error('Password reset is unavailable until Firebase Authentication is configured.');await cemAuth.sendPasswordResetEmail(email,{url:location.origin+location.pathname});msg('forgotMsg','If the account exists, a password reset link has been sent. Check your inbox and spam folder.',true);}catch(e){msg('forgotMsg',authError(e));}};
+window.requestPasswordReset=async function(){
+  try{
+    const email=document.getElementById('forgotEmail').value.trim();if(!email)throw new Error('Enter your email address.');
+    const r=await api('POST','/api/auth/forgot/request',{email});
+    document.getElementById('forgotBox').innerHTML='<input id="forgotEmail" type="hidden" value="'+esc(email)+'"><div class="form-row"><label>Reset code</label><input id="forgotOtp" inputmode="numeric" maxlength="6" placeholder="6-digit code"></div><div class="form-row"><label>New password</label><input id="forgotNewPassword" type="password" placeholder="At least 8 characters" minlength="8"></div><button class="secondary" onclick="confirmPasswordReset()">Reset Password</button><p id="forgotMsg"></p>';
+    msg('forgotMsg',r.message,true);
+  }catch(e){msg('forgotMsg',authError(e));}
+};
+window.confirmPasswordReset=async function(){
+  try{const email=document.getElementById('forgotEmail').value.trim(),otp=document.getElementById('forgotOtp').value.trim(),newPassword=document.getElementById('forgotNewPassword').value;const r=await api('POST','/api/auth/forgot/confirm',{email,otp,newPassword});msg('forgotMsg',r.message,true);}
+  catch(e){msg('forgotMsg',authError(e));}
+};
 
 
 async function loadAccount(){
@@ -954,37 +994,13 @@ window.saveAccount = async function(){
   }catch(e){ msg('acctMsg', e.message); }
 };
 window.changeEmail=async function(){
-  try{
-    const newEmail=document.getElementById('emailNew').value.trim(),currentPassword=document.getElementById('emailPwCurrent').value;
-    if(!newEmail||!currentPassword)throw new Error('New email and current password are required.');
-    let r;
-    if(cemAuth&&cemAuth.currentUser){
-      await firebaseReauth(currentPassword);
-      await cemAuth.currentUser.updateEmail(newEmail);
-      await cemAuth.currentUser.getIdToken(true);
-      r=await api('PUT','/api/account/me',{name:currentUser.name,mobile:currentUser.mobile,subject:currentUser.subject});
-    }else{
-      r=await api('PUT','/api/account/email',{email:newEmail,currentPassword});
-      if(r.sessionToken)localStorage.setItem('cem_session',r.sessionToken);
-    }
-    currentUser=r.user;updateUI();
-    if(document.getElementById('rememberLogin').checked)localStorage.setItem('cem_saved_login',JSON.stringify({e:newEmail}));
-    else localStorage.removeItem('cem_saved_login');
-    msg('emailMsg','Login email changed successfully.',true);
-    document.getElementById('emailNew').value='';document.getElementById('emailPwCurrent').value='';
-  }catch(e){msg('emailMsg',authError(e));}
+  try{const newEmail=document.getElementById('emailNew').value.trim(),currentPassword=document.getElementById('emailPwCurrent').value;if(!newEmail||!currentPassword)throw new Error('New email and current password are required.');const r=await api('PUT','/api/account/email',{email:newEmail,currentPassword});currentUser=r.user;updateUI();msg('emailMsg','Login email changed successfully.',true);document.getElementById('emailNew').value='';document.getElementById('emailPwCurrent').value='';}
+  catch(e){msg('emailMsg',authError(e));}
 };
 window.changePassword=async function(){
   const newPassword=document.getElementById('pwNew').value,confirmPassword=document.getElementById('pwConfirm').value,currentPassword=document.getElementById('pwCurrent').value;
-  if(newPassword!==confirmPassword){msg('pwMsg','Passwords do not match.');return;}
-  if(newPassword.length<6){msg('pwMsg','New password must contain at least 6 characters.');return;}
-  if(!currentPassword){msg('pwMsg','Enter your current password.');return;}
-  try{
-    if(cemAuth&&cemAuth.currentUser){await firebaseReauth(currentPassword);await cemAuth.currentUser.updatePassword(newPassword);}
-    else await api('PUT','/api/account/password',{currentPassword,newPassword});
-    msg('pwMsg','Password changed successfully.',true);
-    ['pwCurrent','pwNew','pwConfirm'].forEach(id=>document.getElementById(id).value='');
-  }catch(e){msg('pwMsg',authError(e));}
+  if(newPassword!==confirmPassword){msg('pwMsg','Passwords do not match.');return;}if(newPassword.length<8){msg('pwMsg','New password must contain at least 8 characters.');return;}if(!currentPassword){msg('pwMsg','Enter your current password.');return;}
+  try{await api('PUT','/api/account/password',{currentPassword,newPassword});msg('pwMsg','Password changed successfully.',true);['pwCurrent','pwNew','pwConfirm'].forEach(id=>document.getElementById(id).value='');}catch(e){msg('pwMsg',authError(e));}
 };
 
 
@@ -1255,14 +1271,8 @@ async function loadTeacherModules(){
   const box = document.getElementById('teacherModules');
   if(!box) return;
   if(!currentUser || currentUser.role!=='teacher'){ box.innerHTML = ''; return; }
-  try{ await refreshUser(); }catch(e){}
-  if(!currentUser || currentUser.role!=='teacher'){ box.innerHTML = ''; return; }
-  if(currentUser.canManageModules){
-    mountModuleManager('teacherModules','tch');
-  } else {
-    box.innerHTML = '<h3>🗂️ Exam Modules</h3><p class="muted">Only the Admin can add or delete exam modules. Ask the Admin to give you module access if you need it.</p>';
-    refreshModuleViews();
-  }
+  box.innerHTML = '<h3>🗂️ Exam Modules</h3><p class="muted">Only the Administrator can add or delete exam modules. Teachers can select an existing module when creating a Test Series.</p>';
+  refreshModuleViews();
 }
 
 
@@ -1300,12 +1310,19 @@ async function loadTests(){
     const attemptedSet = new Set(attemptedIds||[]);
     document.getElementById('testsHint').textContent = tests.length + ' test series available';
     grid.innerHTML = tests.map(t => {
-      const startBtn = t => (t.attemptPolicy==='once' && attemptedSet.has(t.id)) ? `<button onclick="viewSolution('${t.id}')">📖 View Solution</button>` : `<button onclick="startTest('${t.id}')">Start Test</button>` + solBtn(t);
-      const solBtn = t => attemptedSet.has(t.id) ? ` <button class="secondary" onclick="viewSolution('${t.id}')">📖 Solution</button>` : '';
+      const attempted = attemptedSet.has(t.id);
+      const resultBtn = attempted ? `<button class="secondary" onclick="viewSolution('${t.id}')">📊 View the Result</button>` : '';
       let action;
+      if(attempted){
+        action = t.attemptPolicy==='reattempt'
+          ? `<button onclick="startTest('${t.id}')">🔄 Re-attempt</button> ${resultBtn}`
+          : resultBtn;
+      } else {
+        action = `<button onclick="startTest('${t.id}')">Start Test</button>`;
+      }
       if(t.type === 'paid' && currentUser && currentUser.role === 'student' && !premiumActive){
-        action = `<button class="secondary" onclick="showSection('premium')">🔒 Unlock with Premium</button>` + solBtn(t);
-      } else action = startBtn(t);
+        action = `<button class="secondary" onclick="showSection('premium')">🔒 Unlock with Premium</button>` + resultBtn;
+      }
       return `
       <div class="card">
         <h3>${t.type==='paid' ? '⭐' : '🆓'} ${esc(t.title)}</h3>
@@ -1351,23 +1368,18 @@ async function loadPremium(){
     let gatewayReady = payment.gatewayEnabled === true;
     let gatewayError = '';
     const hasManualUpi=!!String(payment.upiId||'').trim();
-    if(payment.gatewayUrl){
-      try{
-        const remote = await gw(payment.gatewayUrl,'/api/plans');
-        if(Array.isArray(remote.plans)) plans = remote.plans;
-        gatewayReady = remote.paymentsEnabled === true;
-        if(!gatewayReady) gatewayError = 'Razorpay Test Mode is not configured on the payment server.';
-      }catch(e){ gatewayReady = false; gatewayError = 'Online payment is unavailable right now. Please contact the administrator.'; }
-    }
     if(!gatewayReady&&!gatewayError)gatewayError=hasManualUpi
       ? 'Razorpay Test Mode is unavailable; manual UPI payment is available below.'
       : 'No payment method is configured yet. Please contact the administrator.';
     const mine = await api('GET','/api/subscription/mine');
     premiumData = { plans, payment, mine, gatewayReady };
     const pending = mine.requests.find(r=>r.status==='pending');
+    const paused = mine.requests.find(r=>r.status==='paused');
     status.innerHTML = mine.active
       ? `<h3>✅ Premium active</h3><p>${esc(mine.planName)} plan • valid until <b>${fmtDate(mine.expiresAt)}</b>. You can open every paid test series. Renewing adds time on top of what is left.</p>`
-      : `<h3>You are on the Free plan</h3><p class="muted">Get Premium once and open <b>all paid test series</b> — no per-test payment.</p>`;
+      : paused
+        ? `<h3>⏸ Premium paused</h3><p class="muted">An Administrator has paused your Premium access. Your remaining Premium time is preserved until access is resumed.</p>`
+        : `<h3>You are on the Free plan</h3><p class="muted">Get Premium once and open <b>all paid test series</b> — no per-test payment.</p>`;
     if(gatewayError) status.innerHTML += `<p class="muted">${esc(gatewayError)} You can still use manual UPI if it is configured below.</p>`;
     if(pending) status.innerHTML += `<p>⏳ Your payment of ₹${pending.amount} (${esc(pending.planName)}) is waiting for Admin verification.</p>`;
     const savedPayment=readPendingGatewayPayment();
@@ -1384,15 +1396,22 @@ async function loadPremium(){
     </tbody></table></div>` : '<p class="muted">No payments yet.</p>';
   }catch(e){ status.innerHTML = `<p class="muted">${esc(e.message)}</p>`; }
 }
-async function gw(base,path,body){await firebaseReady;const token=await getIdToken();const headers={'Content-Type':'application/json'};if(token)headers.Authorization='Bearer '+token;const url=String(base||'').replace(/\/+$/,'')+path;const r=await fetch(url,{method:body?'POST':'GET',headers,body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||'Payment server error.');return j;}
+async function gw(base,path,body){return api(body?'POST':'GET',path,body);}
+function currentUserId(){return currentUser?.uid||currentUser?.id||'';}
 function readPendingGatewayPayment(){
   try{
-    const saved=JSON.parse(sessionStorage.getItem('cem_pending_gateway_payment')||'null');
-    if(saved&&Date.now()-Number(saved.savedAt)>7*86400000){sessionStorage.removeItem('cem_pending_gateway_payment');return null;}
+    const raw=sessionStorage.getItem('cem_pending_gateway_payment');
+    if(!raw)return null;
+    const saved=JSON.parse(raw);
+    if(!saved||typeof saved!=='object')return null;
+    const savedAt=Number(saved.savedAt)||0;
+    if(!savedAt||Date.now()-savedAt>24*60*60*1000){
+      sessionStorage.removeItem('cem_pending_gateway_payment');
+      return null;
+    }
     return saved;
   }catch(_){return null;}
 }
-function currentUserId(){return currentUser?.uid||currentUser?.id||'';}
 function savePendingGatewayPayment(response,base){
   try{sessionStorage.setItem('cem_pending_gateway_payment',JSON.stringify({studentId:currentUserId(),gatewayUrl:base,response,savedAt:Date.now()}));}catch(_){}
 }
@@ -1494,6 +1513,7 @@ window.choosePlan = function(id, forceManual){
       <div class="muted">${p.days} days of access to all paid test series</div>
     </div>
     ${upi ? `
+      ${payment.qrDataUrl ? `<div style="text-align:center;margin:12px 0"><img src="${esc(payment.qrDataUrl)}" alt="UPI payment QR code" style="width:min(280px,80vw);max-height:280px;object-fit:contain;border:1px solid #e5e7eb;border-radius:12px;padding:8px;background:#fff"><p class="muted">Scan this QR code with any UPI app</p></div>` : ''}
       <p style="margin:14px 0 4px"><b>Pay by UPI</b> to <b>${esc(payment.payeeName||'')}</b></p>
       <p style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><code style="font-size:16px;padding:6px 10px;background:#eef2ff;border-radius:8px">${esc(upi)}</code>
         <button class="secondary" onclick="navigator.clipboard&&navigator.clipboard.writeText('${esc(upi)}');this.textContent='Copied ✓'">Copy UPI ID</button>
@@ -1554,7 +1574,10 @@ window.cancelUndertaking = function(){
 
 window.beginExam = async function(){
   if(!pendingTest) return;
-  activeTest = pendingTest;
+  let started;
+  try{ started=await api('POST','/api/tests/'+encodeURIComponent(pendingTest.id)+'/start',{}); }
+  catch(e){ alert(e.message); return; }
+  activeTest = started;
   pendingTest = null;
   activeLanguage = document.getElementById('utLanguage').value || null;
   activeAnswers = {};
@@ -1777,7 +1800,7 @@ window.submitTest = async function(){
     trackTimeSpent();
     clearInterval(tbTimerInterval);
     exitExamFullscreen();
-    const r = await api('POST', '/api/tests/'+encodeURIComponent(activeTest.id)+'/submit', { answers: activeAnswers, timeBySubject: activeTimeBySubject });
+    const r = await api('POST', '/api/tests/'+encodeURIComponent(activeTest.id)+'/submit', { attemptId: activeTest.attemptId, answers: activeAnswers, timeBySubject: activeTimeBySubject });
     showResultScreen(r);
   }catch(e){ alert(e.message); }
 };
@@ -1818,6 +1841,10 @@ window.showResultScreen = function(r){
       <p class="muted">See each question with the correct answer and a full explanation, one at a time.</p>
       <button class="rh-btn primary" onclick="openSolutionViewer(0)">Open Solutions →</button>
     `;
+    box.insertAdjacentHTML('beforeend','<div id="postExamRating" class="card" style="margin-top:18px"><div class="section-title" style="margin-top:0">⭐ Rate this test</div><p class="muted">How useful was this test for you?</p><div id="ratingStars" style="display:flex;gap:6px;margin:10px 0">'+[1,2,3,4,5].map(n=>'<button type="button" class="secondary" style="font-size:22px;padding:7px 11px" onclick="selectTestRating('+n+')">☆</button>').join('')+'</div><textarea id="ratingFeedback" maxlength="1000" placeholder="Optional feedback" style="width:100%;min-height:80px;padding:10px;border:1px solid #d1d5db;border-radius:10px"></textarea><div class="row" style="margin-top:10px"><span id="ratingMsg" class="muted"></span><button class="primary-btn" type="button" onclick="submitTestRating()">Submit Rating</button></div></div>');
+    window.selectedTestRating=0;
+    window.selectTestRating=function(n){window.selectedTestRating=n;document.querySelectorAll('#ratingStars button').forEach((el,i)=>el.textContent=i<n?'★':'☆');};
+    window.submitTestRating=async function(){try{if(!window.selectedTestRating)throw new Error('Choose a star rating first.');const rr=await api('POST','/api/tests/rating',{testId:r.testId,rating:window.selectedTestRating,feedback:document.getElementById('ratingFeedback').value});msg('ratingMsg',rr.message,true);document.querySelector('#postExamRating button.primary-btn').disabled=true;}catch(e){msg('ratingMsg',e.message);}};
 };
 
 
@@ -2163,15 +2190,12 @@ async function loadMyTests(){
 
 
 async function initializeAuthSession(){
-  await firebaseReady;
-  if(localStorage.getItem('cem_explicit_login')!=='1'){
-    localStorage.removeItem('cem_session');
-    if(cemAuth?.currentUser)try{await cemAuth.signOut();}catch(_){}
-  }
-  const user=await refreshUser();
+const user=await refreshUser();
+  document.getElementById('createAccountHeroBtn')?.classList.toggle('hidden', !!user);
   showSection('home');
   if(user?.role==='student')retryPendingGatewayPayment(true);
 }
+showSection('home');
 loadBranding();
 refreshModuleViews();
 initializeAuthSession().catch(()=>{currentUser=null;updateUI();showSection('home');});
