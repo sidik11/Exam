@@ -632,64 +632,8 @@ footer{padding:32px 16px;color:var(--muted)}
   <h2>Teacher Dashboard</h2>
   <div class="panel-card">
     <p id="teacherWelcome"></p>
+    <p class="muted">Test series and exam modules are managed by the Administrator. You can view notices and use your account settings here.</p>
   </div>
-
-  <div class="panel-card" id="teacherModules" style="margin-top:18px">
-    <h3>🗂️ Exam Modules</h3>
-    <p class="muted">Only the Administrator can add or delete exam modules. Teachers can create and manage their Test Series below.</p>
-  </div>
-
-  <div class="panel-card" style="margin-top:18px">
-    <h3>➕ Add Test Series</h3>
-    <div class="form-row"><label>Test Series Title</label><input id="ntTitle" placeholder="e.g. OSSSC Combined Mock 1"></div>
-    <div class="form-row"><label>Exam Module</label>
-      <select id="ntCategory">
-        <option value="">Loading modules…</option>
-      </select>
-      <p class="muted" style="margin:4px 0 0">This decides which module's Test Series list it appears in — an SSC test won't show under Banking.</p>
-    </div>
-    <div class="form-row"><label>Exam Name (specific)</label><input id="ntExam" placeholder="e.g. SSC CGL, or OSSSC for Odisha" value="Competitive Exam"></div>
-    <div class="form-row">
-      <label>Exam Language(s) — comma separated. First one is the primary language.</label>
-      <input id="ntLanguages" placeholder="e.g. English, Hindi" value="English" onchange="syncSections()">
-      <p class="muted" style="margin:4px 0 0">Add a second (or more) language to let students pick their exam language before starting.</p>
-    </div>
-    <div class="form-row">
-      <label>Sections of the exam</label>
-      <div id="ntPresetChips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
-      <div class="row" style="flex-wrap:nowrap">
-        <input id="ntNewSection" style="flex:1" placeholder="Type a section name, e.g. Reasoning" onkeydown="if(event.key==='Enter'){event.preventDefault();addSectionFromInput()}">
-        <button type="button" class="secondary" onclick="addSectionFromInput()">➕ Add Section</button>
-      </div>
-      <input id="ntSubjects" type="hidden">
-      <p class="muted" style="margin:4px 0 0">Add one section per subject. Students will see these as section tabs during the mock test.</p>
-    </div>
-    <div class="row">
-      <div class="form-row" style="flex:1"><label>Type</label>
-        <select id="ntType"><option value="FREE">Free</option><option value="PAID">Premium (paid users only)</option></select>
-      </div>
-      <div class="form-row" style="flex:1"><label>Duration (minutes)</label><input id="ntDuration" type="number" min="1" value="30"></div>
-      <div class="form-row" style="flex:1"><label>Attempts allowed</label>
-        <select id="ntAttempts"><option value="reattempt">🔁 Reattempt allowed</option><option value="once">🔒 Only one attempt</option></select>
-      </div>
-    </div>
-    <div class="form-row" style="border:1px dashed #ccc;border-radius:10px;padding:12px">
-      <label>📥 Import Questions from Excel (.xlsx / .xls / .csv)</label>
-      <p class="muted" style="margin:0 0 6px">Columns: Question, OptionA, OptionB, OptionC, OptionD, Answer (A/B/C/D), Marks, Negative, Subject.</p>
-      <input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
-      <div class="row" style="margin-top:6px"><button type="button" class="secondary" onclick="importExcel()">Import into Question Builder</button><span id="excelMsg" class="muted"></span></div>
-    </div>
-    <p id="ntSecEmpty" class="muted" style="border:1px dashed #ccc;border-radius:10px;padding:14px">No sections yet. Add a section above (or import an Excel file) and then add questions inside it.</p>
-    <div id="ntQuestions"></div>
-    <div class="row" style="margin-top:14px"><button class="primary-btn" onclick="submitNewTest()">Publish Test Series</button></div>
-    <p id="ntMsg"></p>
-  </div>
-
-  <div class="panel-card" style="margin-top:18px">
-    <h3>My Test Series</h3>
-    <div id="myTests"><p class="muted">Loading…</p></div>
-  </div>
-
   <div class="panel-card" style="margin-top:18px">
     <h3>📢 Notices</h3>
     <div id="teacherNoticePanel" class="notice hidden"></div>
@@ -697,35 +641,22 @@ footer{padding:32px 16px;color:var(--muted)}
 </section>
 
 </main>
-<footer id="siteFooter">Competitive Exam Master</footer>
+<footer id="siteFooter">Competitive Exam Master<br><a href="CompetitiveExamMaster-admin.html" style="color:inherit">🛡️ Admin Panel</a></footer>
 
 <script>
 
-async function getCsrfToken(force=false){
-  if(!force && window.__cemCsrfToken) return window.__cemCsrfToken;
+async function getCsrfToken(){
+  if(window.__cemCsrfToken) return window.__cemCsrfToken;
   const r=await fetch('/api/auth/csrf',{method:'GET',credentials:'same-origin',cache:'no-store'});
   const data=await r.json().catch(()=>({}));
-  if(!r.ok||!data.csrfToken) throw new Error('Security token initialization failed. Please reload the page.');
-  window.__cemCsrfToken=data.csrfToken;
-  return data.csrfToken;
+  if(!r.ok||!data.csrfToken) throw new Error('Security token initialization failed. Refresh the page.');
+  window.__cemCsrfToken=data.csrfToken; return data.csrfToken;
 }
 async function api(method,url,body){
-  const isWrite=!['GET','HEAD','OPTIONS'].includes(method);
-  let csrf=isWrite?await getCsrfToken():null;
-  for(let attempt=0;attempt<2;attempt++){
-    const headers={'Content-Type':'application/json','X-CEM-Portal':'student'};
-    if(isWrite) headers['X-CSRF-Token']=csrf;
-    const r=await fetch(url,{method,headers,credentials:'same-origin',body:body===undefined?undefined:JSON.stringify(body)});
-    const data=await r.json().catch(()=>({}));
-    if(r.status===403 && isWrite && /CSRF validation failed/i.test(String(data.error||'')) && attempt===0){
-      window.__cemCsrfToken=null;
-      csrf=await getCsrfToken(true);
-      continue;
-    }
-    if(!r.ok) throw new Error(data.error||data.message||'Request failed.');
-    return data;
-  }
-  throw new Error('Request failed.');
+  const headers={'Content-Type':'application/json','X-CEM-Portal':'student'};
+  if(method!=='GET'&&method!=='HEAD'&&method!=='OPTIONS') headers['X-CSRF-Token']=await getCsrfToken();
+  const r=await fetch(url,{method,headers,credentials:'same-origin',body:body===undefined?undefined:JSON.stringify(body)});
+  const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||data.message||'Request failed.');return data;
 }
 function esc(value){const s=String(value??'');return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function msg(id,text,ok=false){const el=document.getElementById(id);if(!el)return;el.textContent=String(text||'');el.className=ok?'success':'error';}
@@ -742,7 +673,7 @@ function showSection(id){
   if(id==='premium') loadPremium();
   if(id==='admin') { renderAdmin(); loadSettingsIntoForm(); loadPurchaseRequests(); mountModuleManager('adminModules','adm'); }
   if(id==='tests') loadTests();
-  if(id==='teacher') { loadMyTests(); loadTeacherModules(); loadNotices('teacher'); }
+  if(id==='teacher') loadNotices('teacher');
   if(id==='home' && currentUser && (currentUser.role==='student'||currentUser.role==='teacher')) loadNotices('student');
   if(id==='account') loadAccount();
 }
@@ -1281,10 +1212,17 @@ window.deleteModule = async function(btn, p){
   }catch(e){ msg(p+'ModMsg', e.message); }
 };
 async function loadTeacherModules(){
-  const box=document.getElementById('teacherModules');
-  if(!box || !currentUser || currentUser.role!=='teacher') return;
-  box.innerHTML='<h3>🗂️ Exam Modules</h3><p class="muted">Only the Administrator can add or delete exam modules. Teachers can create Test Series using the available modules below.</p>';
-  renderCategoryOptions();
+  const box = document.getElementById('teacherModules');
+  if(!box) return;
+  if(!currentUser || currentUser.role!=='teacher'){ box.innerHTML = ''; return; }
+  try{ await refreshUser(); }catch(e){}
+  if(!currentUser || currentUser.role!=='teacher'){ box.innerHTML = ''; return; }
+  if(currentUser.canManageModules){
+    mountModuleManager('teacherModules','tch');
+  } else {
+    box.innerHTML = '<h3>🗂️ Exam Modules</h3><p class="muted">Only the Admin can add or delete exam modules. Ask the Admin to give you module access if you need it.</p>';
+    refreshModuleViews();
+  }
 }
 
 
@@ -1496,7 +1434,7 @@ window.choosePlan = function(id, forceManual){
         <div class="muted">Amount to pay</div><div style="font-size:36px;font-weight:800">₹${p.price}</div>
         <div class="muted">${p.days} days of access to all paid test series</div>
       </div>
-      <button style="width:100%;padding:14px;font-size:16px;background:#dc2626;color:#fff;border:0;border-radius:10px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(220,38,38,.22)" onmouseover="this.style.background='#b91c1c'" onmouseout="this.style.background='#dc2626'" onclick="payWithGateway('${esc(p.id)}')">🔒 Pay ₹${p.price} securely</button>
+      <button style="width:100%;padding:14px;font-size:16px" onclick="payWithGateway('${esc(p.id)}')">🔒 Pay ₹${p.price} securely</button>
       <p class="muted" style="text-align:center">UPI • Cards • Net banking • Wallets — Premium activates after Razorpay confirms payment.</p>
       <p class="muted" style="text-align:center">Razorpay Test Mode is enabled for trial payments; test transactions do not charge real money.</p>
       <p id="premMsg" class="muted" style="text-align:center"></p>
