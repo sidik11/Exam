@@ -826,7 +826,7 @@ async function route(req, res) {
 
   const mAttempt=url.pathname.match(/^\/api\/tests\/([^/]+)\/attempts$/);
   if(mAttempt&&method==='POST'){
-    const {user}=await requireRole(req,'teacher');
+    const {user}=await currentUser(req,['admin','teacher']);
     const tests=await allMap('tests'), t=tests[decodeURIComponent(mAttempt[1])];
     if(!t) throw new Error('Test series not found.');
     if(!ownsTest(user,t) && user.role!=='admin') throw Object.assign(new Error('You can only change attempt settings for your own test series.'),{status:403});
@@ -880,7 +880,7 @@ async function route(req, res) {
   }
 
   if(url.pathname==='/api/tests'&&method==='POST'){
-    const {user}=await requireRole(req,'teacher');
+    const {user}=await currentUser(req,['admin','teacher']);
     const b=await body(req);
     const mods=await allMap('modules');
     if(!mods || !Object.values(mods).some(m=>m.name===b.category)) throw new Error('Please choose a valid exam module.');
@@ -905,7 +905,7 @@ async function route(req, res) {
 
   const mDeleteTest=url.pathname.match(/^\/api\/tests\/([^/]+)$/);
   if(mDeleteTest&&method==='DELETE'){
-    const {user}=await requireRole(req,'teacher');
+    const {user}=await currentUser(req,['admin','teacher']);
     const tests=await allMap('tests'), id=decodeURIComponent(mDeleteTest[1]), t=tests[id];
     if(!t) throw new Error('Test series not found.');
     if(!ownsTest(user,t) && user.role!=='admin') throw Object.assign(new Error('You can only delete your own test series.'),{status:403});
